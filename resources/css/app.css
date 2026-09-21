@@ -17,6 +17,11 @@
 @import "./auth.css";
 @import "./dashboard.css";
 @import "./patients.css";
+@import "./visits.css";
+@import "./prescriptions.css";
+@import "./prescriptions.css";
+@import "./payments.css";
+@import "./expenses.css";
 
 /*
 |--------------------------------------------------------------------------
@@ -179,4 +184,45 @@ img {
 
 .table {
     --bs-table-color: var(--text-main);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Registration Screen
+|--------------------------------------------------------------------------
+*/
+
+
+
+.register-card {
+    min-height: 560px;
+}
+
+.register-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+.register-terms {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.register-terms .form-check-input {
+    border-color: var(--border-dark);
+}
+
+@media (max-width: 768px) {
+    .register-card {
+        min-height: auto;
+    }
+
+    .register-form-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
 }

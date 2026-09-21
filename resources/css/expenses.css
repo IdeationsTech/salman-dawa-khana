@@ -1,0 +1,321 @@
+/*
+|--------------------------------------------------------------------------
+| EXPENSES — Summary Cards
+|--------------------------------------------------------------------------
+*/
+
+.expense-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.expense-summary-card {
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.expense-summary-card span,
+.expense-summary-card strong,
+.expense-summary-card small {
+    display: block;
+}
+
+.expense-summary-card span {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.expense-summary-card strong {
+    margin: 6px 0 4px;
+    color: var(--text-main);
+    font-size: 21px;
+}
+
+.expense-summary-card small {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| EXPENSES — Table Panel and Toolbar
+|--------------------------------------------------------------------------
+*/
+
+.expenses-panel {
+    padding: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.expenses-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+
+.expenses-toolbar h2 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 19px;
+}
+
+.expenses-toolbar p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.expenses-toolbar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.expenses-toolbar-actions .form-select {
+    width: 145px;
+    font-size: 13px;
+}
+
+.expense-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    margin-bottom: 18px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+}
+
+.expense-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+.expenses-table {
+    margin-bottom: 0;
+    font-size: 13px;
+}
+
+.expenses-table th {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.expenses-table td {
+    color: var(--text-main);
+    white-space: nowrap;
+}
+
+.expenses-table td strong,
+.expenses-table td small {
+    display: block;
+}
+
+.expenses-table td small {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.expense-amount {
+    font-weight: 600;
+}
+
+/*
+|--------------------------------------------------------------------------
+| EXPENSES — Categories
+|--------------------------------------------------------------------------
+*/
+
+.expense-category {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.utility-category {
+    background: #e3efff;
+    color: #2f65ad;
+}
+
+.supply-category {
+    background: #d9f7e9;
+    color: #168653;
+}
+
+.rent-category {
+    background: #eee7ff;
+    color: #7950f2;
+}
+
+.other-category {
+    background: #fff0d8;
+    color: #b66b00;
+}
+
+/*
+|--------------------------------------------------------------------------
+| EXPENSES — Responsive Layout
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 1100px) {
+    .expense-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .expenses-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .expenses-toolbar-actions {
+        flex-direction: column;
+    }
+
+    .expenses-toolbar-actions .form-select {
+        width: 100%;
+    }
+
+    .expense-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EXPENSES — Add Expense Form
+|--------------------------------------------------------------------------
+*/
+
+.expense-form-panel {
+    margin-bottom: 18px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.expense-form-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.expense-form-heading h2 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 17px;
+}
+
+.expense-form-heading p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.expense-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+}
+
+.expense-field-wide {
+    grid-column: 1 / -1;
+}
+
+.expense-form-panel .form-label {
+    margin-bottom: 7px;
+}
+
+.expense-form-panel .form-label span {
+    color: var(--danger);
+}
+
+/*
+|--------------------------------------------------------------------------
+| EXPENSES — Amount Input
+|--------------------------------------------------------------------------
+*/
+
+.expense-amount-input {
+    display: flex;
+    align-items: center;
+}
+
+.expense-amount-input span {
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-right: 0;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    background: var(--surface-soft);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.expense-amount-input .form-control {
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.expense-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-bottom: 20px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| EXPENSES — Responsive Layout
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 768px) {
+    .expense-form-panel {
+        padding: 18px;
+    }
+
+    .expense-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .expense-field-wide {
+        grid-column: auto;
+    }
+
+    .expense-form-actions {
+        justify-content: stretch;
+    }
+
+    .expense-form-actions .btn {
+        flex: 1;
+    }
+}
+

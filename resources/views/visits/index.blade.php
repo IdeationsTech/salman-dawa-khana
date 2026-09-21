@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Patients — Salman Dawa Khana')
+@section('title', 'Visits — Salman Dawa Khana')
 
 @section('content')
 <div class="app-shell">
 
-    {{-- Patients Sidebar --}}
+    {{-- Visits Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-logo">+</div>
@@ -18,12 +18,12 @@
                 <span>Dashboard</span>
             </a>
 
-            <a href="/patients" class="sidebar-link active">
+            <a href="/patients" class="sidebar-link">
                 <span>♙</span>
                 <span>Patients</span>
             </a>
 
-            <a href="#" class="sidebar-link">
+            <a href="/visits" class="sidebar-link active">
                 <span>▣</span>
                 <span>Visits</span>
             </a>
@@ -62,100 +62,92 @@
         </div>
     </aside>
 
-    {{-- Patients Main Content --}}
+    {{-- Visits Main Content --}}
     <main class="dashboard-main">
 
-        {{-- Page Header --}}
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Clinic management</p>
-                <h1>Patients</h1>
+                <h1>Visits</h1>
                 <p class="page-subtitle">
-                    Manage your patient records and visit history.
+                    Track patient visits and consultation records.
                 </p>
             </div>
 
-            <a href="/patients/create" class="btn btn-primary">
-                + Add Patient
+            <a href="#" class="btn btn-primary">
+                + New Visit
             </a>
         </header>
 
-        {{-- Patient Statistics --}}
-        <section class="patient-stats-grid">
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">Total Patients</span>
-                <strong>1,248</strong>
-                <small>All registered patients</small>
+        {{-- Visit Summary --}}
+        <section class="visit-summary-grid">
+            <article class="visit-summary-card">
+                <span>Today's visits</span>
+                <strong>18</strong>
+                <small class="stat-success">+6 from yesterday</small>
             </article>
 
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">Active Patients</span>
-                <strong>1,186</strong>
-                <small class="stat-success">95% of total records</small>
+            <article class="visit-summary-card">
+                <span>This month's visits</span>
+                <strong>386</strong>
+                <small>September 2026</small>
             </article>
 
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">New This Month</span>
-                <strong>42</strong>
-                <small class="stat-success">+12% from last month</small>
+            <article class="visit-summary-card">
+                <span>Completed visits</span>
+                <strong>372</strong>
+                <small class="stat-success">96% completion rate</small>
             </article>
 
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">Outstanding Balance</span>
-                <strong>PKR 42,500</strong>
-                <small class="stat-warning">12 patients with due</small>
+            <article class="visit-summary-card">
+                <span>Follow-ups</span>
+                <strong>24</strong>
+                <small class="stat-warning">Require attention</small>
             </article>
         </section>
 
-        {{-- Patient Table Panel --}}
-        <section class="patients-panel">
+        {{-- Visit Table --}}
+        <section class="visits-panel">
 
-            <div class="patients-toolbar">
+            <div class="visits-toolbar">
                 <div>
-                    <h2>All patients</h2>
-                    <p>Search and manage patient records.</p>
+                    <h2>Visit records</h2>
+                    <p>View and manage patient visit history.</p>
                 </div>
 
-                <div class="patients-toolbar-actions">
-                    <button class="btn btn-outline-secondary">
-                        Export
-                    </button>
+                <div class="visits-toolbar-actions">
+                    <select class="form-select">
+                        <option>All dates</option>
+                        <option>Today</option>
+                        <option>This week</option>
+                        <option>This month</option>
+                    </select>
 
-                    <a href="/patients/create" class="btn btn-primary">
-                        + New Patient
-                    </a>
+                    <select class="form-select">
+                        <option>All statuses</option>
+                        <option>Completed</option>
+                        <option>Follow-up</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="patient-filters">
-                <div class="patient-search">
-                    <span>⌕</span>
-                    <input
-                        type="search"
-                        placeholder="Search by name, phone or patient ID"
-                    >
-                </div>
-
-                <select class="form-select">
-                    <option>All statuses</option>
-                    <option>Active</option>
-                    <option>Inactive</option>
-                </select>
-
-                <button class="btn btn-light filter-clear">
-                    Clear
-                </button>
+            <div class="visit-search">
+                <span>⌕</span>
+                <input
+                    type="search"
+                    placeholder="Search by patient name or visit ID"
+                >
             </div>
 
             <div class="table-responsive">
-                <table class="table patients-table align-middle">
+                <table class="table visits-table align-middle">
                     <thead>
                         <tr>
-                            <th>Patient ID</th>
-                            <th>Patient Name</th>
-                            <th>Phone Number</th>
-                            <th>Last Visit</th>
-                            <th>Balance</th>
+                            <th>Visit ID</th>
+                            <th>Patient</th>
+                            <th>Date &amp; Time</th>
+                            <th>Visit Type</th>
+                            <th>Amount</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
                         </tr>
@@ -163,17 +155,17 @@
 
                     <tbody>
                         <tr>
-                            <td>P-0001</td>
+                            <td>V-00482</td>
                             <td>
                                 <strong>Muhammad Ali</strong>
-                                <small>Male, 42 years</small>
+                                <small>P-0001</small>
                             </td>
-                            <td>050 123 4567</td>
-                            <td>21 Sep 2026</td>
-                            <td>PKR 0</td>
+                            <td>21 Sep 2026<br><small>10:30 AM</small></td>
+                            <td>Follow-up</td>
+                            <td>PKR 2,500</td>
                             <td>
                                 <span class="status-badge active-badge">
-                                    Active
+                                    Completed
                                 </span>
                             </td>
                             <td class="text-end">
@@ -182,17 +174,17 @@
                         </tr>
 
                         <tr>
-                            <td>P-0002</td>
+                            <td>V-00481</td>
                             <td>
                                 <strong>Fatima Bibi</strong>
-                                <small>Female, 35 years</small>
+                                <small>P-0002</small>
                             </td>
-                            <td>050 234 5678</td>
-                            <td>21 Sep 2026</td>
-                            <td>PKR 1,500</td>
+                            <td>21 Sep 2026<br><small>09:15 AM</small></td>
+                            <td>General visit</td>
+                            <td>PKR 2,500</td>
                             <td>
                                 <span class="status-badge active-badge">
-                                    Active
+                                    Completed
                                 </span>
                             </td>
                             <td class="text-end">
@@ -201,17 +193,17 @@
                         </tr>
 
                         <tr>
-                            <td>P-0003</td>
+                            <td>V-00480</td>
                             <td>
                                 <strong>Ahmed Raza</strong>
-                                <small>Male, 51 years</small>
+                                <small>P-0003</small>
                             </td>
-                            <td>050 345 6789</td>
-                            <td>20 Sep 2026</td>
-                            <td>PKR 0</td>
+                            <td>20 Sep 2026<br><small>04:20 PM</small></td>
+                            <td>General visit</td>
+                            <td>PKR 2,500</td>
                             <td>
                                 <span class="status-badge active-badge">
-                                    Active
+                                    Completed
                                 </span>
                             </td>
                             <td class="text-end">
@@ -220,17 +212,17 @@
                         </tr>
 
                         <tr>
-                            <td>P-0004</td>
+                            <td>V-00479</td>
                             <td>
                                 <strong>Ayesha Khan</strong>
-                                <small>Female, 28 years</small>
+                                <small>P-0004</small>
                             </td>
-                            <td>050 456 7890</td>
-                            <td>18 Sep 2026</td>
-                            <td class="balance-due">PKR 3,200</td>
+                            <td>20 Sep 2026<br><small>02:10 PM</small></td>
+                            <td>Follow-up</td>
+                            <td>PKR 2,500</td>
                             <td>
                                 <span class="status-badge due-badge">
-                                    Payment due
+                                    Follow-up
                                 </span>
                             </td>
                             <td class="text-end">
@@ -239,17 +231,17 @@
                         </tr>
 
                         <tr>
-                            <td>P-0005</td>
+                            <td>V-00478</td>
                             <td>
                                 <strong>Bilal Hussain</strong>
-                                <small>Male, 46 years</small>
+                                <small>P-0005</small>
                             </td>
-                            <td>050 567 8901</td>
-                            <td>15 Sep 2026</td>
-                            <td>PKR 0</td>
+                            <td>19 Sep 2026<br><small>11:45 AM</small></td>
+                            <td>General visit</td>
+                            <td>PKR 2,500</td>
                             <td>
                                 <span class="status-badge active-badge">
-                                    Active
+                                    Completed
                                 </span>
                             </td>
                             <td class="text-end">
@@ -261,7 +253,7 @@
             </div>
 
             <div class="patients-pagination">
-                <span>Showing 1 to 5 of 1,248 patients</span>
+                <span>Showing 1 to 5 of 386 visits</span>
 
                 <div>
                     <button class="pagination-button">‹</button>

@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Patients — Salman Dawa Khana')
+@section('title', 'Prescriptions — Salman Dawa Khana')
 
 @section('content')
 <div class="app-shell">
 
-    {{-- Patients Sidebar --}}
+    {{-- Prescriptions Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-logo">+</div>
@@ -18,17 +18,17 @@
                 <span>Dashboard</span>
             </a>
 
-            <a href="/patients" class="sidebar-link active">
+            <a href="/patients" class="sidebar-link">
                 <span>♙</span>
                 <span>Patients</span>
             </a>
 
-            <a href="#" class="sidebar-link">
+            <a href="/visits" class="sidebar-link">
                 <span>▣</span>
                 <span>Visits</span>
             </a>
 
-            <a href="#" class="sidebar-link">
+            <a href="/prescriptions" class="sidebar-link active">
                 <span>✎</span>
                 <span>Prescriptions</span>
             </a>
@@ -62,100 +62,92 @@
         </div>
     </aside>
 
-    {{-- Patients Main Content --}}
+    {{-- Prescriptions Main Content --}}
     <main class="dashboard-main">
 
-        {{-- Page Header --}}
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Clinic management</p>
-                <h1>Patients</h1>
+                <p class="dashboard-date">Patient care</p>
+                <h1>Prescriptions</h1>
                 <p class="page-subtitle">
-                    Manage your patient records and visit history.
+                    Manage patient nuskhas and prescription records.
                 </p>
             </div>
 
-            <a href="/patients/create" class="btn btn-primary">
-                + Add Patient
+            <a href="#" class="btn btn-primary">
+                + Create Prescription
             </a>
         </header>
 
-        {{-- Patient Statistics --}}
-        <section class="patient-stats-grid">
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">Total Patients</span>
-                <strong>1,248</strong>
-                <small>All registered patients</small>
+        {{-- Prescription Summary --}}
+        <section class="prescription-summary-grid">
+            <article class="prescription-summary-card">
+                <span>Total prescriptions</span>
+                <strong>1,086</strong>
+                <small>All clinic records</small>
             </article>
 
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">Active Patients</span>
-                <strong>1,186</strong>
-                <small class="stat-success">95% of total records</small>
+            <article class="prescription-summary-card">
+                <span>Created this month</span>
+                <strong>164</strong>
+                <small class="stat-success">+14% from last month</small>
             </article>
 
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">New This Month</span>
-                <strong>42</strong>
-                <small class="stat-success">+12% from last month</small>
+            <article class="prescription-summary-card">
+                <span>Today's prescriptions</span>
+                <strong>18</strong>
+                <small>Across today's visits</small>
             </article>
 
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">Outstanding Balance</span>
-                <strong>PKR 42,500</strong>
-                <small class="stat-warning">12 patients with due</small>
+            <article class="prescription-summary-card">
+                <span>Saved templates</span>
+                <strong>20</strong>
+                <small>Reusable nuskha templates</small>
             </article>
         </section>
 
-        {{-- Patient Table Panel --}}
-        <section class="patients-panel">
+        {{-- Prescription Table --}}
+        <section class="prescriptions-panel">
 
-            <div class="patients-toolbar">
+            <div class="prescriptions-toolbar">
                 <div>
-                    <h2>All patients</h2>
-                    <p>Search and manage patient records.</p>
+                    <h2>Prescription records</h2>
+                    <p>View and manage patient prescription history.</p>
                 </div>
 
-                <div class="patients-toolbar-actions">
-                    <button class="btn btn-outline-secondary">
-                        Export
-                    </button>
+                <div class="prescriptions-toolbar-actions">
+                    <select class="form-select">
+                        <option>All dates</option>
+                        <option>Today</option>
+                        <option>This week</option>
+                        <option>This month</option>
+                    </select>
 
-                    <a href="/patients/create" class="btn btn-primary">
-                        + New Patient
-                    </a>
+                    <select class="form-select">
+                        <option>All statuses</option>
+                        <option>Issued</option>
+                        <option>Draft</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="patient-filters">
-                <div class="patient-search">
-                    <span>⌕</span>
-                    <input
-                        type="search"
-                        placeholder="Search by name, phone or patient ID"
-                    >
-                </div>
-
-                <select class="form-select">
-                    <option>All statuses</option>
-                    <option>Active</option>
-                    <option>Inactive</option>
-                </select>
-
-                <button class="btn btn-light filter-clear">
-                    Clear
-                </button>
+            <div class="prescription-search">
+                <span>⌕</span>
+                <input
+                    type="search"
+                    placeholder="Search by patient or prescription ID"
+                >
             </div>
 
             <div class="table-responsive">
-                <table class="table patients-table align-middle">
+                <table class="table prescriptions-table align-middle">
                     <thead>
                         <tr>
-                            <th>Patient ID</th>
-                            <th>Patient Name</th>
-                            <th>Phone Number</th>
-                            <th>Last Visit</th>
-                            <th>Balance</th>
+                            <th>Prescription ID</th>
+                            <th>Patient</th>
+                            <th>Date</th>
+                            <th>Prepared by</th>
+                            <th>Items</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
                         </tr>
@@ -163,17 +155,17 @@
 
                     <tbody>
                         <tr>
-                            <td>P-0001</td>
+                            <td>RX-00842</td>
                             <td>
                                 <strong>Muhammad Ali</strong>
-                                <small>Male, 42 years</small>
+                                <small>P-0001</small>
                             </td>
-                            <td>050 123 4567</td>
                             <td>21 Sep 2026</td>
-                            <td>PKR 0</td>
+                            <td>Dr. Ahmed Khan</td>
+                            <td>4 items</td>
                             <td>
                                 <span class="status-badge active-badge">
-                                    Active
+                                    Issued
                                 </span>
                             </td>
                             <td class="text-end">
@@ -182,17 +174,17 @@
                         </tr>
 
                         <tr>
-                            <td>P-0002</td>
+                            <td>RX-00841</td>
                             <td>
                                 <strong>Fatima Bibi</strong>
-                                <small>Female, 35 years</small>
+                                <small>P-0002</small>
                             </td>
-                            <td>050 234 5678</td>
                             <td>21 Sep 2026</td>
-                            <td>PKR 1,500</td>
+                            <td>Dr. Ahmed Khan</td>
+                            <td>3 items</td>
                             <td>
                                 <span class="status-badge active-badge">
-                                    Active
+                                    Issued
                                 </span>
                             </td>
                             <td class="text-end">
@@ -201,17 +193,17 @@
                         </tr>
 
                         <tr>
-                            <td>P-0003</td>
+                            <td>RX-00840</td>
                             <td>
                                 <strong>Ahmed Raza</strong>
-                                <small>Male, 51 years</small>
+                                <small>P-0003</small>
                             </td>
-                            <td>050 345 6789</td>
                             <td>20 Sep 2026</td>
-                            <td>PKR 0</td>
+                            <td>Dr. Ahmed Khan</td>
+                            <td>5 items</td>
                             <td>
                                 <span class="status-badge active-badge">
-                                    Active
+                                    Issued
                                 </span>
                             </td>
                             <td class="text-end">
@@ -220,36 +212,36 @@
                         </tr>
 
                         <tr>
-                            <td>P-0004</td>
+                            <td>RX-00839</td>
                             <td>
                                 <strong>Ayesha Khan</strong>
-                                <small>Female, 28 years</small>
+                                <small>P-0004</small>
                             </td>
-                            <td>050 456 7890</td>
-                            <td>18 Sep 2026</td>
-                            <td class="balance-due">PKR 3,200</td>
+                            <td>20 Sep 2026</td>
+                            <td>Dr. Ahmed Khan</td>
+                            <td>2 items</td>
                             <td>
-                                <span class="status-badge due-badge">
-                                    Payment due
+                                <span class="status-badge draft-badge">
+                                    Draft
                                 </span>
                             </td>
                             <td class="text-end">
-                                <a href="#" class="table-action">View</a>
+                                <a href="#" class="table-action">Continue</a>
                             </td>
                         </tr>
 
                         <tr>
-                            <td>P-0005</td>
+                            <td>RX-00838</td>
                             <td>
                                 <strong>Bilal Hussain</strong>
-                                <small>Male, 46 years</small>
+                                <small>P-0005</small>
                             </td>
-                            <td>050 567 8901</td>
-                            <td>15 Sep 2026</td>
-                            <td>PKR 0</td>
+                            <td>19 Sep 2026</td>
+                            <td>Dr. Ahmed Khan</td>
+                            <td>4 items</td>
                             <td>
                                 <span class="status-badge active-badge">
-                                    Active
+                                    Issued
                                 </span>
                             </td>
                             <td class="text-end">
@@ -261,7 +253,7 @@
             </div>
 
             <div class="patients-pagination">
-                <span>Showing 1 to 5 of 1,248 patients</span>
+                <span>Showing 1 to 5 of 1,086 prescriptions</span>
 
                 <div>
                     <button class="pagination-button">‹</button>
