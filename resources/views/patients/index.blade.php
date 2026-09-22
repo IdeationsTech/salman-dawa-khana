@@ -1,279 +1,141 @@
 @extends('layouts.app')
 
-@section('title', 'Patients — Salman Dawa Khana')
+@section('title', 'Patients')
 
 @section('content')
-<div class="app-shell">
+<div class="page-header">
+    <div>
+        <span class="eyebrow">PATIENT MANAGEMENT</span>
+        <h1>Patients</h1>
+        <p>Manage your patient records and visit history.</p>
+    </div>
 
-    {{-- Patients Sidebar --}}
-    <aside class="app-sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
+    <a href="{{ route('patients.create') }}" class="btn btn-primary">
+        + Add Patient
+    </a>
+</div>
+
+@if(session('success'))
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="alert alert-danger">
+        Please correct the highlighted information.
+    </div>
+@endif
+
+<div class="card patients-card">
+    <div class="card-header">
+        <form method="GET" action="{{ route('patients.index') }}" class="patients-toolbar">
+            <div class="search-box">
+                <span>⌕</span>
+
+                <input
+                    type="search"
+                    name="search"
+                    value="{{ request('search') }}"
+                    placeholder="Search by patient name, phone or ID"
+                >
+            </div>
+
+            <select name="status" class="form-select">
+                <option value="all" {{ request('status', 'all') === 'all' ? 'selected' : '' }}>
+                    All Statuses
+                </option>
+
+                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>
+                    Active
+                </option>
+
+                <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>
+                    Inactive
+                </option>
+            </select>
+
+            <button type="submit" class="btn btn-outline-primary">
+                Filter
+            </button>
+
+            <a href="{{ route('patients.index') }}" class="btn btn-light">
+                Clear
+            </a>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table patients-table">
+            <thead>
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Gender</th>
+                    <th>Last Visit</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @forelse($patients as $patient)
+                    <tr>
+                        <td>
+                            <strong>{{ $patient->patient_id }}</strong>
+                        </td>
+
+                        <td>
+                            <div class="patient-name">
+                                <span class="avatar-circle">
+                                    {{ strtoupper(substr($patient->full_name, 0, 1)) }}
+                                </span>
+
+                                <span>{{ $patient->full_name }}</span>
+                            </div>
+                        </td>
+
+                        <td>{{ $patient->phone ?? '—' }}</td>
+
+                        <td>{{ $patient->gender ?? '—' }}</td>
+
+                        <td>
+                            {{ optional($patient->updated_at)->format('d M Y') ?? '—' }}
+                        </td>
+
+                        <td>
+                            @if($patient->is_active)
+                                <span class="status-badge status-active">Active</span>
+                            @else
+                                <span class="status-badge status-inactive">Inactive</span>
+                            @endif
+                        </td>
+
+                        <td>
+                            <a
+                                href="{{ route('patients.show', $patient) }}"
+                                class="btn btn-sm btn-outline-primary"
+                            >
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            No patients found.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    @if($patients->hasPages())
+        <div class="card-footer">
+            {{ $patients->links() }}
         </div>
-
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="sidebar-link">
-                <span>▦</span>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="/patients" class="sidebar-link active">
-                <span>♙</span>
-                <span>Patients</span>
-            </a>
-
-            <a href="#" class="sidebar-link">
-                <span>▣</span>
-                <span>Visits</span>
-            </a>
-
-            <a href="#" class="sidebar-link">
-                <span>✎</span>
-                <span>Prescriptions</span>
-            </a>
-
-            <a href="#" class="sidebar-link">
-                <span>₨</span>
-                <span>Payments</span>
-            </a>
-
-            <a href="#" class="sidebar-link">
-                <span>◈</span>
-                <span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="#" class="sidebar-link">
-                <span>◌</span>
-                <span>Reports</span>
-            </a>
-
-            <a href="#" class="sidebar-link">
-                <span>⚙</span>
-                <span>Settings</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <span class="status-dot"></span>
-            System online
-        </div>
-    </aside>
-
-    {{-- Patients Main Content --}}
-    <main class="dashboard-main">
-
-        {{-- Page Header --}}
-        <header class="page-header">
-            <div>
-                <p class="dashboard-date">Clinic management</p>
-                <h1>Patients</h1>
-                <p class="page-subtitle">
-                    Manage your patient records and visit history.
-                </p>
-            </div>
-
-            <a href="/patients/create" class="btn btn-primary">
-                + Add Patient
-            </a>
-        </header>
-
-        {{-- Patient Statistics --}}
-        <section class="patient-stats-grid">
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">Total Patients</span>
-                <strong>1,248</strong>
-                <small>All registered patients</small>
-            </article>
-
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">Active Patients</span>
-                <strong>1,186</strong>
-                <small class="stat-success">95% of total records</small>
-            </article>
-
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">New This Month</span>
-                <strong>42</strong>
-                <small class="stat-success">+12% from last month</small>
-            </article>
-
-            <article class="patient-stat-card">
-                <span class="patient-stat-label">Outstanding Balance</span>
-                <strong>PKR 42,500</strong>
-                <small class="stat-warning">12 patients with due</small>
-            </article>
-        </section>
-
-        {{-- Patient Table Panel --}}
-        <section class="patients-panel">
-
-            <div class="patients-toolbar">
-                <div>
-                    <h2>All patients</h2>
-                    <p>Search and manage patient records.</p>
-                </div>
-
-                <div class="patients-toolbar-actions">
-                    <button class="btn btn-outline-secondary">
-                        Export
-                    </button>
-
-                    <a href="/patients/create" class="btn btn-primary">
-                        + New Patient
-                    </a>
-                </div>
-            </div>
-
-            <div class="patient-filters">
-                <div class="patient-search">
-                    <span>⌕</span>
-                    <input
-                        type="search"
-                        placeholder="Search by name, phone or patient ID"
-                    >
-                </div>
-
-                <select class="form-select">
-                    <option>All statuses</option>
-                    <option>Active</option>
-                    <option>Inactive</option>
-                </select>
-
-                <button class="btn btn-light filter-clear">
-                    Clear
-                </button>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table patients-table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Patient ID</th>
-                            <th>Patient Name</th>
-                            <th>Phone Number</th>
-                            <th>Last Visit</th>
-                            <th>Balance</th>
-                            <th>Status</th>
-                            <th class="text-end">Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <tr>
-                            <td>P-0001</td>
-                            <td>
-                                <strong>Muhammad Ali</strong>
-                                <small>Male, 42 years</small>
-                            </td>
-                            <td>050 123 4567</td>
-                            <td>21 Sep 2026</td>
-                            <td>PKR 0</td>
-                            <td>
-                                <span class="status-badge active-badge">
-                                    Active
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <a href="#" class="table-action">View</a>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>P-0002</td>
-                            <td>
-                                <strong>Fatima Bibi</strong>
-                                <small>Female, 35 years</small>
-                            </td>
-                            <td>050 234 5678</td>
-                            <td>21 Sep 2026</td>
-                            <td>PKR 1,500</td>
-                            <td>
-                                <span class="status-badge active-badge">
-                                    Active
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <a href="#" class="table-action">View</a>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>P-0003</td>
-                            <td>
-                                <strong>Ahmed Raza</strong>
-                                <small>Male, 51 years</small>
-                            </td>
-                            <td>050 345 6789</td>
-                            <td>20 Sep 2026</td>
-                            <td>PKR 0</td>
-                            <td>
-                                <span class="status-badge active-badge">
-                                    Active
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <a href="#" class="table-action">View</a>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>P-0004</td>
-                            <td>
-                                <strong>Ayesha Khan</strong>
-                                <small>Female, 28 years</small>
-                            </td>
-                            <td>050 456 7890</td>
-                            <td>18 Sep 2026</td>
-                            <td class="balance-due">PKR 3,200</td>
-                            <td>
-                                <span class="status-badge due-badge">
-                                    Payment due
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <a href="#" class="table-action">View</a>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>P-0005</td>
-                            <td>
-                                <strong>Bilal Hussain</strong>
-                                <small>Male, 46 years</small>
-                            </td>
-                            <td>050 567 8901</td>
-                            <td>15 Sep 2026</td>
-                            <td>PKR 0</td>
-                            <td>
-                                <span class="status-badge active-badge">
-                                    Active
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <a href="#" class="table-action">View</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="patients-pagination">
-                <span>Showing 1 to 5 of 1,248 patients</span>
-
-                <div>
-                    <button class="pagination-button">‹</button>
-                    <button class="pagination-button active">1</button>
-                    <button class="pagination-button">2</button>
-                    <button class="pagination-button">3</button>
-                    <button class="pagination-button">›</button>
-                </div>
-            </div>
-
-        </section>
-
-    </main>
+    @endif
 </div>
 @endsection

@@ -6,6 +6,7 @@
 <div class="auth-page">
     <div class="auth-card">
 
+        {{-- Login Brand Panel --}}
         <div class="auth-brand-panel">
             <div class="brand-mark">+</div>
 
@@ -23,6 +24,7 @@
             </p>
         </div>
 
+        {{-- Login Form Panel --}}
         <div class="auth-form-panel">
             <div class="auth-form-content">
 
@@ -37,7 +39,26 @@
                     <p>Enter your details to continue.</p>
                 </div>
 
-                <form action="#" method="POST">
+                @if ($errors->any())
+                    <div class="alert alert-danger" role="alert">
+                        <button
+                            type="button"
+                            class="btn-close float-end"
+                            data-dismiss-alert
+                            aria-label="Close"
+                        ></button>
+
+                        {{ $errors->first() }}
+                    </div>
+                @endif
+
+                @if (session('status'))
+                    <div class="alert alert-success" role="alert">
+                        {{ session('status') }}
+                    </div>
+                @endif
+
+                <form action="{{ route('login.submit') }}" method="POST">
                     @csrf
 
                     <div class="mb-3">
@@ -47,12 +68,20 @@
 
                         <input
                             type="email"
-                            class="form-control form-control-lg"
+                            class="form-control form-control-lg @error('email') is-invalid @enderror"
                             id="email"
                             name="email"
+                            value="{{ old('email') }}"
                             placeholder="you@example.com"
                             autocomplete="email"
+                            required
                         >
+
+                        @error('email')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
 
                     <div class="mb-3">
@@ -68,12 +97,19 @@
 
                         <input
                             type="password"
-                            class="form-control form-control-lg"
+                            class="form-control form-control-lg @error('password') is-invalid @enderror"
                             id="password"
                             name="password"
                             placeholder="Enter your password"
                             autocomplete="current-password"
+                            required
                         >
+
+                        @error('password')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
 
                     <div class="form-check mb-4">
@@ -96,7 +132,9 @@
 
                 <div class="auth-footer">
                     <span>New clinic?</span>
-                    <a href="#" class="auth-link">Create an account</a>
+                    <a href="{{ route('register') }}" class="auth-link">
+                        Create an account
+                    </a>
                 </div>
 
                 <div class="secure-note">

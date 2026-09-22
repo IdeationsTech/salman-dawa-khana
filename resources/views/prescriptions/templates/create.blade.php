@@ -14,33 +14,27 @@
 
         <nav class="sidebar-nav">
             <a href="/dashboard" class="sidebar-link">
-                <span>▦</span>
-                <span>Dashboard</span>
+                <span>▦</span><span>Dashboard</span>
             </a>
 
             <a href="/patients" class="sidebar-link">
-                <span>♙</span>
-                <span>Patients</span>
+                <span>♙</span><span>Patients</span>
             </a>
 
             <a href="/visits" class="sidebar-link">
-                <span>▣</span>
-                <span>Visits</span>
+                <span>▣</span><span>Visits</span>
             </a>
 
             <a href="/prescriptions" class="sidebar-link active">
-                <span>✎</span>
-                <span>Prescriptions</span>
+                <span>✎</span><span>Prescriptions</span>
             </a>
 
-            <a href="#" class="sidebar-link">
-                <span>₨</span>
-                <span>Payments</span>
+            <a href="/payments" class="sidebar-link">
+                <span>₨</span><span>Payments</span>
             </a>
 
-            <a href="#" class="sidebar-link">
-                <span>◈</span>
-                <span>Expenses</span>
+            <a href="/expenses" class="sidebar-link">
+                <span>◈</span><span>Expenses</span>
             </a>
         </nav>
 
@@ -133,72 +127,54 @@
                     </div>
                 </div>
 
-                <div class="nuskha-item-list">
+                <div class="nuskha-item-list" data-item-list>
 
                     <div class="nuskha-item-row">
                         <div class="item-number">1</div>
 
                         <div class="form-field">
                             <label class="form-label">Item name</label>
+
                             <input
                                 type="text"
                                 name="items[]"
                                 class="form-control"
-                                value="Herbal mixture"
+                                placeholder="e.g. Herbal mixture"
                             >
                         </div>
 
                         <div class="form-field item-quantity">
                             <label class="form-label">Quantity</label>
+
                             <input
                                 type="text"
                                 name="quantities[]"
                                 class="form-control"
-                                value="100 g"
+                                placeholder="e.g. 100 g"
                             >
                         </div>
 
-                        <button type="button" class="remove-item-button">
-                            ×
-                        </button>
-                    </div>
-
-                    <div class="nuskha-item-row">
-                        <div class="item-number">2</div>
-
-                        <div class="form-field">
-                            <label class="form-label">Item name</label>
-                            <input
-                                type="text"
-                                name="items[]"
-                                class="form-control"
-                                value="Black seed"
-                            >
-                        </div>
-
-                        <div class="form-field item-quantity">
-                            <label class="form-label">Quantity</label>
-                            <input
-                                type="text"
-                                name="quantities[]"
-                                class="form-control"
-                                value="50 g"
-                            >
-                        </div>
-
-                        <button type="button" class="remove-item-button">
+                        <button
+                            type="button"
+                            class="remove-item-button"
+                            aria-label="Remove item"
+                        >
                             ×
                         </button>
                     </div>
 
                 </div>
 
-                <button type="button" class="btn btn-outline-primary add-item-button">
+                <button
+                    type="button"
+                    class="btn btn-outline-primary add-item-button"
+                    data-add-item
+                >
                     + Add another item
                 </button>
             </section>
 
-            {{-- Instructions --}}
+            {{-- Usage Instructions --}}
             <section class="template-form-panel">
                 <div class="template-form-heading">
                     <div class="form-section-number">03</div>
@@ -254,6 +230,7 @@
                 </div>
             </section>
 
+            {{-- Form Actions --}}
             <div class="template-form-actions">
                 <a href="/prescriptions/templates" class="btn btn-light">
                     Cancel
@@ -263,6 +240,7 @@
                     Save template
                 </button>
             </div>
+
         </form>
 
     </main>

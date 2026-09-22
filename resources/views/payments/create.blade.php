@@ -14,33 +14,37 @@
 
         <nav class="sidebar-nav">
             <a href="/dashboard" class="sidebar-link">
-                <span>▦</span>
-                <span>Dashboard</span>
+                <span>▦</span><span>Dashboard</span>
             </a>
 
             <a href="/patients" class="sidebar-link">
-                <span>♙</span>
-                <span>Patients</span>
+                <span>♙</span><span>Patients</span>
             </a>
 
             <a href="/visits" class="sidebar-link">
-                <span>▣</span>
-                <span>Visits</span>
+                <span>▣</span><span>Visits</span>
             </a>
 
             <a href="/prescriptions" class="sidebar-link">
-                <span>✎</span>
-                <span>Prescriptions</span>
+                <span>✎</span><span>Prescriptions</span>
             </a>
 
             <a href="/payments" class="sidebar-link active">
-                <span>₨</span>
-                <span>Payments</span>
+                <span>₨</span><span>Payments</span>
             </a>
 
-            <a href="#" class="sidebar-link">
-                <span>◈</span>
-                <span>Expenses</span>
+            <a href="/expenses" class="sidebar-link">
+                <span>◈</span><span>Expenses</span>
+            </a>
+
+            <div class="sidebar-divider"></div>
+
+            <a href="/reports" class="sidebar-link">
+                <span>◌</span><span>Reports</span>
+            </a>
+
+            <a href="/settings" class="sidebar-link">
+                <span>⚙</span><span>Settings</span>
             </a>
         </nav>
 
@@ -97,8 +101,12 @@
                         </label>
 
                         <select id="bill" name="bill" class="form-select">
-                            <option selected>Bill #B-00482 — 21 Sep 2026</option>
-                            <option>Bill #B-00461 — 05 Sep 2026</option>
+                            <option selected>
+                                Bill #B-00482 — 21 Sep 2026
+                            </option>
+                            <option>
+                                Bill #B-00461 — 05 Sep 2026
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -128,7 +136,7 @@
 
                     <div>
                         <span>Total payable</span>
-                        <strong>PKR 3,500</strong>
+                        <strong data-total-payable>PKR 3,500</strong>
                     </div>
                 </div>
             </section>
@@ -159,6 +167,8 @@
                                 name="amount"
                                 class="form-control"
                                 value="2000"
+                                min="0"
+                                data-payment-amount
                             >
                         </div>
                     </div>
@@ -189,7 +199,7 @@
                             id="payment_date"
                             name="payment_date"
                             class="form-control"
-                            value="2026-09-21"
+                            value="2026-09-22"
                         >
                     </div>
 
@@ -224,10 +234,14 @@
 
                 <div class="remaining-balance-box">
                     <span>Remaining balance after this payment</span>
-                    <strong>PKR 1,500</strong>
+
+                    <strong data-remaining-balance>
+                        PKR 1,500
+                    </strong>
                 </div>
             </section>
 
+            {{-- Form Actions --}}
             <div class="payment-form-actions">
                 <a href="/payments" class="btn btn-light">
                     Cancel
