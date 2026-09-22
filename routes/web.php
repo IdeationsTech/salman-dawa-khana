@@ -112,6 +112,13 @@ Route::get('/payments/create', function () {
 })->name('payments.create');
 
 
+// -- Payments show--
+
+Route::get('/payments/{id}', function ($id) {
+    return view('payments.show');
+})->name('payments.show');
+
+
 // -- Expenses--
 
 
@@ -128,5 +135,85 @@ Route::get('/expenses/create', function () {
 })->name('expenses.create');
 
 
-// -- Expenses Create--
+// -- Expenses Show--
+
+
+Route::get('/expenses/{id}', function ($id) {
+    return view('expenses.show');
+})->name('expenses.show');
+
+
+// -- Reports--
+
+
+Route::get('/reports', function () {
+    return view('reports.index');
+})->name('reports.index');
+
+
+// -- Settings--
+
+
+Route::get('/settings', function () {
+    return view('settings.index');
+})->name('settings.index');
+
+
+// -- Settings Accounts--
+
+
+Route::get('/settings/account', function () {
+    return view('settings.account');
+})->name('settings.account');
+
+
+// -- Settings Payments--
+
+
+Route::get('/settings/payments', function () {
+    return view('settings.payments');
+})->name('settings.payments');
+
+
+// -- Settings notification--
+
+
+Route::get('/settings/notifications', function () {
+    return view('settings.notifications');
+})->name('settings.notifications');
+
+
+// -- Settings security--
+
+
+Route::get('/settings/security', function () {
+    return view('settings.security');
+})->name('settings.security');
+
+
+// -- Users--
+
+
+Route::get('/users', function () {
+    return view('users.index');
+})->name('users.index');
+
+
+// -- Users Create--
+
+
+Route::get('/users/create', function () {
+    return view('users.create');
+})->name('users.create');
+
+
+// -- Users Create--
+
+
+Route::get('/visits/create', function () {
+    return view('visits.create');
+})->name('visits.create');
+
+
+// -- Users Create--
 

@@ -373,3 +373,325 @@
         flex: 1;
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENT DETAIL — Toolbar
+|--------------------------------------------------------------------------
+*/
+
+.payment-detail-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.payment-toolbar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENT DETAIL — Receipt
+|--------------------------------------------------------------------------
+*/
+
+.payment-receipt {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 44px 48px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+}
+
+.receipt-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.receipt-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.receipt-brand-mark {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--brand-teal);
+    color: #ffffff;
+    font-size: 31px;
+    font-weight: 700;
+}
+
+.receipt-brand h1 {
+    margin: 0;
+    color: var(--brand-navy);
+    font-size: 22px;
+}
+
+.receipt-brand p {
+    margin: 3px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.receipt-meta {
+    text-align: right;
+}
+
+.receipt-meta span,
+.receipt-meta strong,
+.receipt-meta small {
+    display: block;
+}
+
+.receipt-meta span {
+    color: var(--brand-teal-dark);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.receipt-meta strong {
+    margin: 4px 0;
+    color: var(--text-main);
+    font-size: 17px;
+}
+
+.receipt-meta small {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.receipt-divider {
+    height: 1px;
+    margin: 26px 0;
+    background: var(--border);
+}
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENT DETAIL — Status and Information
+|--------------------------------------------------------------------------
+*/
+
+.receipt-status-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    padding: 17px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+}
+
+.receipt-status-row span,
+.receipt-status-row strong {
+    display: block;
+}
+
+.receipt-status-row span,
+.receipt-info-grid span,
+.receipt-breakdown span,
+.receipt-notes span {
+    margin-bottom: 5px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.receipt-status-row strong,
+.receipt-info-grid strong {
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+.receipt-paid-status {
+    color: var(--success) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENT DETAIL — Sections
+|--------------------------------------------------------------------------
+*/
+
+.receipt-section {
+    margin-top: 28px;
+}
+
+.receipt-section-heading {
+    margin-bottom: 14px;
+}
+
+.receipt-section-heading h2 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 17px;
+}
+
+.receipt-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.receipt-info-grid span,
+.receipt-info-grid strong {
+    display: block;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENT DETAIL — Breakdown
+|--------------------------------------------------------------------------
+*/
+
+.receipt-breakdown {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.receipt-breakdown > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.receipt-breakdown > div:last-child {
+    border-bottom: 0;
+}
+
+.receipt-breakdown strong {
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+.receipt-total-row {
+    background: var(--surface-soft);
+}
+
+.receipt-paid-row strong {
+    color: var(--success) !important;
+}
+
+.receipt-balance-row {
+    background: #fff6e7;
+}
+
+.receipt-balance-row strong {
+    color: var(--warning) !important;
+    font-size: 16px !important;
+}
+
+.receipt-notes {
+    margin-top: 26px;
+    padding: 16px;
+    border-left: 4px solid var(--brand-teal);
+    background: #f0fffe;
+}
+
+.receipt-notes span,
+.receipt-notes p {
+    display: block;
+}
+
+.receipt-notes p {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.receipt-footer {
+    margin-top: 38px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+}
+
+.receipt-footer p {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.receipt-footer small {
+    display: block;
+    margin-top: 5px;
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENT DETAIL — Responsive and Print
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 768px) {
+    .payment-detail-toolbar,
+    .receipt-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .payment-toolbar-actions {
+        width: 100%;
+    }
+
+    .payment-toolbar-actions .btn {
+        flex: 1;
+    }
+
+    .payment-receipt {
+        padding: 28px 20px;
+    }
+
+    .receipt-status-row,
+    .receipt-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media print {
+    .no-print,
+    .app-sidebar {
+        display: none !important;
+    }
+
+    .app-shell {
+        display: block;
+    }
+
+    .dashboard-main {
+        padding: 0;
+    }
+
+    .payment-receipt {
+        max-width: none;
+        border: 0;
+        box-shadow: none;
+    }
+
+    body {
+        background: #ffffff;
+    }
+}

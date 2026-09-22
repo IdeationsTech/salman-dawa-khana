@@ -1,0 +1,403 @@
+/*
+|--------------------------------------------------------------------------
+| USERS — Summary Cards
+|--------------------------------------------------------------------------
+*/
+
+.users-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.user-summary-card {
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.user-summary-card span,
+.user-summary-card strong,
+.user-summary-card small {
+    display: block;
+}
+
+.user-summary-card span {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.user-summary-card strong {
+    margin: 6px 0 4px;
+    color: var(--text-main);
+    font-size: 21px;
+}
+
+.user-summary-card small {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| USERS — Table Panel
+|--------------------------------------------------------------------------
+*/
+
+.users-panel {
+    padding: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.users-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+
+.users-toolbar h2 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 19px;
+}
+
+.users-toolbar p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.users-toolbar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.users-toolbar-actions .form-select {
+    width: 140px;
+    font-size: 13px;
+}
+
+.user-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    margin-bottom: 18px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+}
+
+.user-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+.users-table {
+    margin-bottom: 0;
+    font-size: 13px;
+}
+
+.users-table th {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.users-table td {
+    color: var(--text-main);
+    white-space: nowrap;
+}
+
+.user-table-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-table-avatar {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #d8f7f5;
+    color: var(--brand-teal-dark);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.user-table-avatar.doctor-avatar {
+    background: #e3efff;
+    color: #2f65ad;
+}
+
+.user-table-avatar.reception-avatar {
+    background: #eee7ff;
+    color: #7950f2;
+}
+
+.user-table-avatar.accountant-avatar {
+    background: #fff0d8;
+    color: #b66b00;
+}
+
+.user-table-identity strong,
+.user-table-identity small {
+    display: block;
+}
+
+.user-table-identity strong {
+    font-size: 13px;
+}
+
+.user-table-identity small {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| USERS — Role Badges
+|--------------------------------------------------------------------------
+*/
+
+.role-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.owner-role {
+    background: #d8f7f5;
+    color: var(--brand-teal-dark);
+}
+
+.doctor-role {
+    background: #e3efff;
+    color: #2f65ad;
+}
+
+.reception-role {
+    background: #eee7ff;
+    color: #7950f2;
+}
+
+.accountant-role {
+    background: #fff0d8;
+    color: #b66b00;
+}
+
+/*
+|--------------------------------------------------------------------------
+| USERS — Responsive Layout
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 1100px) {
+    .users-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .users-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .users-toolbar-actions {
+        flex-direction: column;
+    }
+
+    .users-toolbar-actions .form-select {
+        width: 100%;
+    }
+
+    .users-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| USERS — Create User Form
+|--------------------------------------------------------------------------
+*/
+
+.user-form-panel {
+    margin-bottom: 18px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.user-form-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.user-form-heading h2 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 17px;
+}
+
+.user-form-heading p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.user-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+}
+
+.user-form-panel .form-label {
+    margin-bottom: 7px;
+}
+
+.user-form-panel .form-label span {
+    color: var(--danger);
+}
+
+/*
+|--------------------------------------------------------------------------
+| USERS — Role Information
+|--------------------------------------------------------------------------
+*/
+
+.role-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    background: #eef7f8;
+}
+
+.role-info-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 24px;
+    border-radius: 50%;
+    background: var(--brand-teal);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.role-info-box strong,
+.role-info-box p {
+    display: block;
+}
+
+.role-info-box strong {
+    color: var(--text-main);
+    font-size: 12px;
+}
+
+.role-info-box p {
+    margin: 3px 0 0;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/*
+|--------------------------------------------------------------------------
+| USERS — Account Status
+|--------------------------------------------------------------------------
+*/
+
+.user-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.user-status-row strong,
+.user-status-row small {
+    display: block;
+}
+
+.user-status-row strong {
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+.user-status-row small {
+    margin-top: 3px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.user-status-row .form-check-input {
+    width: 2.5em;
+    height: 1.3em;
+    cursor: pointer;
+}
+
+.user-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-bottom: 20px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| USERS — Responsive Layout
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 768px) {
+    .user-form-panel {
+        padding: 18px;
+    }
+
+    .user-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .user-form-actions {
+        justify-content: stretch;
+    }
+
+    .user-form-actions .btn {
+        flex: 1;
+    }
+}
