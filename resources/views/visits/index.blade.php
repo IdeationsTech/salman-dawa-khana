@@ -5,6 +5,7 @@
 @section('content')
 <div class="app-shell">
 
+    {{-- VISITS — Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-logo">+</div>
@@ -13,45 +14,37 @@
 
         <nav class="sidebar-nav">
             <a href="{{ route('dashboard') }}" class="sidebar-link">
-                <span>▦</span>
-                <span>Dashboard</span>
+                <span>▦</span><span>Dashboard</span>
             </a>
 
             <a href="{{ route('patients.index') }}" class="sidebar-link">
-                <span>♙</span>
-                <span>Patients</span>
+                <span>♙</span><span>Patients</span>
             </a>
 
             <a href="{{ route('visits.index') }}" class="sidebar-link active">
-                <span>▣</span>
-                <span>Visits</span>
+                <span>▣</span><span>Visits</span>
             </a>
 
             <a href="{{ route('prescriptions.index') }}" class="sidebar-link">
-                <span>✎</span>
-                <span>Prescriptions</span>
+                <span>✎</span><span>Prescriptions</span>
             </a>
 
             <a href="{{ route('payments.index') }}" class="sidebar-link">
-                <span>₨</span>
-                <span>Payments</span>
+                <span>₨</span><span>Payments</span>
             </a>
 
             <a href="{{ route('expenses.index') }}" class="sidebar-link">
-                <span>◈</span>
-                <span>Expenses</span>
+                <span>◈</span><span>Expenses</span>
             </a>
 
             <div class="sidebar-divider"></div>
 
             <a href="{{ route('reports.index') }}" class="sidebar-link">
-                <span>◌</span>
-                <span>Reports</span>
+                <span>◌</span><span>Reports</span>
             </a>
 
             <a href="{{ route('settings.index') }}" class="sidebar-link">
-                <span>⚙</span>
-                <span>Settings</span>
+                <span>⚙</span><span>Settings</span>
             </a>
         </nav>
 
@@ -61,14 +54,13 @@
         </div>
     </aside>
 
+    {{-- VISITS — Main Content --}}
     <main class="dashboard-main">
 
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Clinic management</p>
-
                 <h1>Visits</h1>
-
                 <p class="page-subtitle">
                     Track patient visits and consultation records.
                 </p>
@@ -79,101 +71,89 @@
             </a>
         </header>
 
-        @if(session('success'))
-            <div class="alert alert-success">
+        @if (session('success'))
+            <div class="alert alert-success" role="alert">
                 {{ session('success') }}
             </div>
         @endif
 
+        @if ($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- VISITS — Summary --}}
         <section class="visit-summary-grid">
             <article class="visit-summary-card">
                 <span>Today's visits</span>
-
-                <strong>
-                    {{ $todayVisits ?? 0 }}
-                </strong>
-
-                <small class="stat-success">
-                    Today's patient visits
-                </small>
+                <strong>{{ $todayVisits }}</strong>
+                <small>Today's patient visits</small>
             </article>
 
             <article class="visit-summary-card">
                 <span>This month's visits</span>
-
-                <strong>
-                    {{ $monthVisits ?? 0 }}
-                </strong>
-
-                <small>
-                    {{ now()->format('F Y') }}
-                </small>
+                <strong>{{ $monthVisits }}</strong>
+                <small>{{ now('Asia/Dubai')->format('F Y') }}</small>
             </article>
 
             <article class="visit-summary-card">
-                <span>Completed visits</span>
-
-                <strong>
-                    {{ $completedVisits ?? 0 }}
-                </strong>
-
-                <small class="stat-success">
-                    Completed records
-                </small>
+                <span>Total visits</span>
+                <strong>{{ $totalVisits }}</strong>
+                <small>All recorded visits</small>
             </article>
 
             <article class="visit-summary-card">
-                <span>Follow-ups</span>
-
-                <strong>
-                    {{ $followUpVisits ?? 0 }}
-                </strong>
-
-                <small class="stat-warning">
-                    Require attention
-                </small>
+                <span>Follow-up visits</span>
+                <strong>{{ $followUpVisits }}</strong>
+                <small>Visits recorded as Follow-up</small>
             </article>
         </section>
 
+        {{-- VISITS — Records --}}
         <section class="visits-panel">
 
             <div class="visits-toolbar">
                 <div>
                     <h2>Visit records</h2>
-
-                    <p>
-                        View and manage patient visit history.
-                    </p>
+                    <p>View and manage patient visit history.</p>
                 </div>
 
                 <div class="visits-toolbar-actions">
-
                     <select
                         name="date_range"
                         class="form-select"
                         form="visit-filter-form"
+                        aria-label="Filter by date"
                     >
-                        <option value="all dates">
+                        <option
+                            value="all dates"
+                            @selected(request('date_range', 'all dates') === 'all dates')
+                        >
                             All dates
                         </option>
 
                         <option
                             value="today"
-                            {{ request('date_range') === 'today' ? 'selected' : '' }}
+                            @selected(request('date_range') === 'today')
                         >
                             Today
                         </option>
 
                         <option
                             value="this week"
-                            {{ request('date_range') === 'this week' ? 'selected' : '' }}
+                            @selected(request('date_range') === 'this week')
                         >
                             This week
                         </option>
 
                         <option
                             value="this month"
-                            {{ request('date_range') === 'this month' ? 'selected' : '' }}
+                            @selected(request('date_range') === 'this month')
                         >
                             This month
                         </option>
@@ -183,28 +163,32 @@
                         name="status"
                         class="form-select"
                         form="visit-filter-form"
+                        aria-label="Filter by status"
                     >
-                        <option value="all">
+                        <option
+                            value="all"
+                            @selected(request('status', 'all') === 'all')
+                        >
                             All statuses
                         </option>
 
                         <option
                             value="completed"
-                            {{ request('status') === 'completed' ? 'selected' : '' }}
+                            @selected(request('status') === 'completed')
                         >
                             Completed
                         </option>
 
                         <option
                             value="follow-up"
-                            {{ request('status') === 'follow-up' ? 'selected' : '' }}
+                            @selected(request('status') === 'follow-up')
                         >
                             Follow-up
                         </option>
 
                         <option
                             value="cancelled"
-                            {{ request('status') === 'cancelled' ? 'selected' : '' }}
+                            @selected(request('status') === 'cancelled')
                         >
                             Cancelled
                         </option>
@@ -224,7 +208,8 @@
                         type="search"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Search by patient name or visit ID"
+                        placeholder="Search by patient name, phone, patient code or visit ID"
+                        aria-label="Search visits"
                     >
                 </div>
             </form>
@@ -237,55 +222,58 @@
                             <th>Patient</th>
                             <th>Date &amp; Time</th>
                             <th>Visit Type</th>
-                            <th>Amount</th>
+                            <th>Phone</th>
+                            <th>Tashkhees</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        @forelse($visits as $visit)
+                        @forelse ($visits as $visit)
                             <tr>
-                                <td>
-                                    {{ $visit->visit_id }}
-                                </td>
+                                <td>{{ $visit->visit_id }}</td>
 
                                 <td>
                                     <strong>
-                                        {{ $visit->patient_id }}
+                                        {{ $visit->patient?->full_name ?? 'Patient unavailable' }}
                                     </strong>
 
                                     <small>
-                                        Patient ID
+                                        {{ $visit->patient?->patient_code ?? '—' }}
                                     </small>
                                 </td>
 
                                 <td>
-                                    {{ \Carbon\Carbon::parse($visit->visit_date)->format('d M Y') }}
-
-                                    <br>
+                                    {{ $visit->visit_date->format('d M Y') }}
 
                                     <small>
-                                        {{ \Carbon\Carbon::parse($visit->visit_date)->format('h:i A') }}
+                                        {{ $visit->visit_date->format('l') }}
+                                        ·
+                                        {{ $visit->visit_date->format('h:i A') }}
                                     </small>
                                 </td>
 
                                 <td>
-                                    {{ $visit->visit_type ?? 'General visit' }}
+                                    {{ $visit->visit_reason ?: '—' }}
                                 </td>
 
                                 <td>
-                                    PKR {{ number_format($visit->amount ?? 0, 2) }}
+                                    {{ $visit->patient?->phone ?: '—' }}
                                 </td>
 
                                 <td>
-                                    @if(strtolower($visit->status) === 'follow-up')
-                                        <span class="status-badge due-badge">
-                                            Follow-up
+                                    {{ $visit->diagnosis_name ?: 'Not recorded' }}
+                                </td>
+
+                                <td>
+                                    @if ($visit->status)
+                                        <span class="status-badge">
+                                            {{ ucfirst(str_replace('_', ' ', $visit->status)) }}
                                         </span>
                                     @else
-                                        <span class="status-badge active-badge">
-                                            {{ ucfirst($visit->status ?? 'Completed') }}
+                                        <span class="text-muted">
+                                            Not recorded
                                         </span>
                                     @endif
                                 </td>
@@ -301,7 +289,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">
+                                <td colspan="8" class="text-center py-4">
                                     No visits found.
                                 </td>
                             </tr>
@@ -321,9 +309,7 @@
                     {{ $visits->links() }}
                 </div>
             </div>
-
         </section>
-
     </main>
 </div>
 @endsection
