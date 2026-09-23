@@ -28,6 +28,7 @@ class Visit extends Model
         'visit_date',
         'visit_reason',
         'general_notes',
+        'diagnosis_name',
     ];
 
     protected function casts(): array

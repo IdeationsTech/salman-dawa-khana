@@ -3,44 +3,57 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bill;
-use App\Models\Expense;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Visit;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        $clinicId = Auth::user()->clinic_id;
         $today = Carbon::today();
 
-        $totalPatients = Patient::count();
-
-        $todaysVisits = Visit::whereDate(
-            'visit_date',
-            $today
+        $totalPatients = Patient::where(
+            'clinic_id',
+            $clinicId
         )->count();
 
-        $todaysIncome = Payment::whereDate(
-            'payment_date',
-            $today
-        )->sum('amount');
+        $todaysVisits = Visit::where(
+            'clinic_id',
+            $clinicId
+        )
+            ->whereDate('visit_date', $today)
+            ->count();
 
-        $outstandingBalance = Bill::sum('due_amount');
+        $todaysIncome = Payment::where(
+            'clinic_id',
+            $clinicId
+        )
+            ->whereDate('payment_date', $today)
+            ->sum('amount');
 
-        $recentPatients = Patient::latest()
+        $outstandingBalance = Bill::where(
+            'clinic_id',
+            $clinicId
+        )->sum('due_amount');
+
+        $recentPatients = Patient::where(
+            'clinic_id',
+            $clinicId
+        )
+            ->latest('created_at')
             ->take(5)
             ->get();
 
-        $dashboardData = [
+        return view('dashboard.index', [
             'totalPatients' => $totalPatients,
             'todaysVisits' => $todaysVisits,
             'todaysIncome' => $todaysIncome,
             'outstandingBalance' => $outstandingBalance,
             'recentPatients' => $recentPatients,
-        ];
-
-        return view('dashboard.index', $dashboardData);
+        ]);
     }
 }

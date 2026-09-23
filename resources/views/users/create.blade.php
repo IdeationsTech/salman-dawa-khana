@@ -5,7 +5,6 @@
 @section('content')
 <div class="app-shell">
 
-    {{-- User Form Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-logo">+</div>
@@ -13,37 +12,37 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a href="/dashboard" class="sidebar-link">
+            <a href="{{ route('dashboard') }}" class="sidebar-link">
                 <span>▦</span><span>Dashboard</span>
             </a>
 
-            <a href="/patients" class="sidebar-link">
+            <a href="{{ route('patients.index') }}" class="sidebar-link">
                 <span>♙</span><span>Patients</span>
             </a>
 
-            <a href="/visits" class="sidebar-link">
+            <a href="{{ route('visits.index') }}" class="sidebar-link">
                 <span>▣</span><span>Visits</span>
             </a>
 
-            <a href="/prescriptions" class="sidebar-link">
+            <a href="{{ route('prescriptions.index') }}" class="sidebar-link">
                 <span>✎</span><span>Prescriptions</span>
             </a>
 
-            <a href="/payments" class="sidebar-link">
+            <a href="{{ route('payments.index') }}" class="sidebar-link">
                 <span>₨</span><span>Payments</span>
             </a>
 
-            <a href="/expenses" class="sidebar-link">
+            <a href="{{ route('expenses.index') }}" class="sidebar-link">
                 <span>◈</span><span>Expenses</span>
             </a>
 
             <div class="sidebar-divider"></div>
 
-            <a href="/reports" class="sidebar-link">
+            <a href="{{ route('reports.index') }}" class="sidebar-link">
                 <span>◌</span><span>Reports</span>
             </a>
 
-            <a href="/users" class="sidebar-link active">
+            <a href="{{ route('users.index') }}" class="sidebar-link active">
                 <span>♟</span><span>Users &amp; Roles</span>
             </a>
         </nav>
@@ -54,11 +53,10 @@
         </div>
     </aside>
 
-    {{-- User Form Main Content --}}
     <main class="dashboard-main">
 
         <div class="form-page-header">
-            <a href="/users" class="back-link">
+            <a href="{{ route('users.index') }}" class="back-link">
                 ← Back to users
             </a>
 
@@ -66,7 +64,19 @@
             <p>Create a staff account and assign a system role.</p>
         </div>
 
-        <form action="#" method="POST">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <strong>Please correct the following errors:</strong>
+
+                <ul class="mb-0 mt-2">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('users.store') }}" method="POST">
             @csrf
 
             {{-- Personal Details --}}
@@ -76,37 +86,30 @@
 
                     <div>
                         <h2>Personal details</h2>
-                        <p>Enter the new user's contact information.</p>
+                        <p>Enter the new user's account information.</p>
                     </div>
                 </div>
 
                 <div class="user-form-grid">
+
                     <div class="form-field">
-                        <label for="first_name" class="form-label">
-                            First name <span>*</span>
+                        <label for="name" class="form-label">
+                            Full name <span>*</span>
                         </label>
 
                         <input
                             type="text"
-                            id="first_name"
-                            name="first_name"
-                            class="form-control"
-                            placeholder="e.g. Sara"
+                            id="name"
+                            name="name"
+                            class="form-control @error('name') is-invalid @enderror"
+                            value="{{ old('name') }}"
+                            placeholder="e.g. Sara Ahmed"
+                            required
                         >
-                    </div>
 
-                    <div class="form-field">
-                        <label for="last_name" class="form-label">
-                            Last name
-                        </label>
-
-                        <input
-                            type="text"
-                            id="last_name"
-                            name="last_name"
-                            class="form-control"
-                            placeholder="e.g. Ahmed"
-                        >
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="form-field">
@@ -118,24 +121,17 @@
                             type="email"
                             id="email"
                             name="email"
-                            class="form-control"
+                            class="form-control @error('email') is-invalid @enderror"
+                            value="{{ old('email') }}"
                             placeholder="staff@example.com"
+                            required
                         >
+
+                        @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
-                    <div class="form-field">
-                        <label for="phone" class="form-label">
-                            Phone number
-                        </label>
-
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            class="form-control"
-                            placeholder="+971 50 000 0000"
-                        >
-                    </div>
                 </div>
             </section>
 
@@ -151,16 +147,31 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="role" class="form-label">
+                    <label for="role_id" class="form-label">
                         System role <span>*</span>
                     </label>
 
-                    <select id="role" name="role" class="form-select">
-                        <option selected>Select a role</option>
-                        <option>Doctor</option>
-                        <option>Receptionist</option>
-                        <option>Accountant</option>
+                    <select
+                        id="role_id"
+                        name="role_id"
+                        class="form-select @error('role_id') is-invalid @enderror"
+                        required
+                    >
+                        <option value="">Select a role</option>
+
+                        @foreach ($roles as $role)
+                            <option
+                                value="{{ $role->role_id }}"
+                                @selected(old('role_id') == $role->role_id)
+                            >
+                                {{ $role->name }}
+                            </option>
+                        @endforeach
                     </select>
+
+                    @error('role_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="role-info-box">
@@ -189,6 +200,7 @@
                 </div>
 
                 <div class="user-form-grid">
+
                     <div class="form-field">
                         <label for="password" class="form-label">
                             Password <span>*</span>
@@ -198,9 +210,14 @@
                             type="password"
                             id="password"
                             name="password"
-                            class="form-control"
+                            class="form-control @error('password') is-invalid @enderror"
                             placeholder="Create a password"
+                            required
                         >
+
+                        @error('password')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="form-field">
@@ -214,8 +231,10 @@
                             name="password_confirmation"
                             class="form-control"
                             placeholder="Repeat the password"
+                            required
                         >
                     </div>
+
                 </div>
 
                 <div class="user-status-row">
@@ -227,13 +246,16 @@
                     <input
                         class="form-check-input"
                         type="checkbox"
-                        checked
+                        id="is_active"
+                        name="is_active"
+                        value="1"
+                        @checked(old('is_active', true))
                     >
                 </div>
             </section>
 
             <div class="user-form-actions">
-                <a href="/users" class="btn btn-light">
+                <a href="{{ route('users.index') }}" class="btn btn-light">
                     Cancel
                 </a>
 

@@ -30,12 +30,17 @@ class Patient extends Model
         'address',
         'notes',
         'status',
+        'marital_status',
+        'has_children',
+        'children_count',
     ];
 
     protected function casts(): array
     {
         return [
-            'date_of_birth' => 'date',
+        'date_of_birth' => 'date',
+        'has_children' => 'boolean',
+        'children_count' => 'integer',
         ];
     }
 

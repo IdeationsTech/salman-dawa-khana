@@ -1,274 +1,661 @@
 import 'bootstrap';
 
-/*
-|--------------------------------------------------------------------------
-| GLOBAL FRONTEND INITIALIZATION
-|--------------------------------------------------------------------------
-*/
-
 document.addEventListener('DOMContentLoaded', () => {
-    initializePasswordToggles();
-    initializeDismissibleAlerts();
-    initializePrintButtons();
-    initializeNuskhaItemRows();
-    initializePrescriptionItemRows();
+    initPasswordToggles();
+    initAlerts();
+    initPrintButtons();
+    initItemRows();
+    initPaymentCalculation();
+
+    initPatientFilters();
+    initVisitFilters();
+    initPrescriptionFilters();
+    initPaymentFilters();
+    initExpenseFilters();
+    initUserFilters();
+    initTableSearch();
+    initReportActions();
 });
 
 /*
 |--------------------------------------------------------------------------
-| AUTH — Password Visibility
+| Global
 |--------------------------------------------------------------------------
 */
 
-function initializePasswordToggles() {
-    const passwordInputs = document.querySelectorAll(
-        'input[type="password"][data-password-toggle]'
-    );
+function initPasswordToggles() {
+    document
+        .querySelectorAll('input[type="password"][data-password-toggle]')
+        .forEach((input) => {
+            const button = document.querySelector(
+                `[data-toggle-target="${input.id}"]`
+            );
 
-    passwordInputs.forEach((input) => {
-        const toggleButton = document.querySelector(
-            `[data-toggle-target="${input.id}"]`
-        );
+            if (!button) return;
 
-        if (!toggleButton) {
-            return;
-        }
+            button.addEventListener('click', () => {
+                const hidden = input.type === 'password';
 
-        toggleButton.addEventListener('click', () => {
-            const isPassword = input.type === 'password';
-
-            input.type = isPassword ? 'text' : 'password';
-            toggleButton.textContent = isPassword ? 'Hide' : 'Show';
+                input.type = hidden ? 'text' : 'password';
+                button.textContent = hidden ? 'Hide' : 'Show';
+            });
         });
-    });
+}
+
+function initAlerts() {
+    document
+        .querySelectorAll('[data-dismiss-alert]')
+        .forEach((button) => {
+            button.addEventListener('click', () => {
+                button.closest('.alert')?.remove();
+            });
+        });
+}
+
+function initPrintButtons() {
+    document
+        .querySelectorAll('[data-print-page]')
+        .forEach((button) => {
+            button.addEventListener('click', () => {
+                window.print();
+            });
+        });
 }
 
 /*
 |--------------------------------------------------------------------------
-| GLOBAL — Dismissible Alerts
+| Nuskha / Prescription Item Rows
 |--------------------------------------------------------------------------
 */
 
-function initializeDismissibleAlerts() {
-    const alertButtons = document.querySelectorAll(
-        '[data-dismiss-alert]'
+function initItemRows() {
+    initRepeater(
+        '[data-item-list]',
+        '[data-add-item]',
+        '.nuskha-item-row',
+        '.remove-item-button'
     );
 
-    alertButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            const alert = button.closest('.alert');
-
-            if (alert) {
-                alert.remove();
-            }
-        });
-    });
-}
-
-/*
-|--------------------------------------------------------------------------
-| GLOBAL — Print Buttons
-|--------------------------------------------------------------------------
-*/
-
-function initializePrintButtons() {
-    const printButtons = document.querySelectorAll(
-        '[data-print-page]'
+    initRepeater(
+        '[data-prescription-item-list]',
+        '[data-add-prescription-item]',
+        '.prescription-item-row',
+        '[data-remove-prescription-item]'
     );
-
-    printButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            window.print();
-        });
-    });
 }
 
-/*
-|--------------------------------------------------------------------------
-| NUSKHA TEMPLATE — Add and Remove Items
-|--------------------------------------------------------------------------
-*/
+function initRepeater(listSelector, addSelector, rowSelector, removeSelector) {
+    const list = document.querySelector(listSelector);
+    const addButton = document.querySelector(addSelector);
 
-function initializeNuskhaItemRows() {
-    const itemList = document.querySelector('[data-item-list]');
-    const addItemButton = document.querySelector('[data-add-item]');
+    if (!list || !addButton) return;
 
-    if (!itemList || !addItemButton) {
-        return;
-    }
+    updateItemRows(list, rowSelector);
 
-    updateItemNumbers(itemList);
+    addButton.addEventListener('click', () => {
+        const firstRow = list.querySelector(rowSelector);
 
-    addItemButton.addEventListener('click', () => {
-        const firstRow = itemList.querySelector('.nuskha-item-row');
-
-        if (!firstRow) {
-            return;
-        }
+        if (!firstRow) return;
 
         const newRow = firstRow.cloneNode(true);
 
-        newRow.querySelectorAll('input').forEach((input) => {
-            input.value = '';
-        });
-
-        itemList.appendChild(newRow);
-        updateItemNumbers(itemList);
-    });
-
-    itemList.addEventListener('click', (event) => {
-        const removeButton = event.target.closest(
-            '.remove-item-button'
-        );
-
-        if (!removeButton) {
-            return;
-        }
-
-        const rows = itemList.querySelectorAll('.nuskha-item-row');
-
-        if (rows.length === 1) {
-            rows[0].querySelectorAll('input').forEach((input) => {
-                input.value = '';
+        newRow.querySelectorAll('input, textarea, select')
+            .forEach((field) => {
+                field.value = '';
             });
 
+        list.appendChild(newRow);
+        updateItemRows(list, rowSelector);
+    });
+
+    list.addEventListener('click', (event) => {
+        const removeButton = event.target.closest(removeSelector);
+
+        if (!removeButton) return;
+
+        const rows = list.querySelectorAll(rowSelector);
+
+        if (rows.length === 1) {
+            rows[0]
+                .querySelectorAll('input, textarea, select')
+                .forEach((field) => {
+                    field.value = '';
+                });
+
             return;
         }
 
-        removeButton.closest('.nuskha-item-row').remove();
-        updateItemNumbers(itemList);
+        removeButton.closest(rowSelector)?.remove();
+        updateItemRows(list, rowSelector);
     });
 }
 
-/*
-|--------------------------------------------------------------------------
-| PRESCRIPTION — Add and Remove Items
-|--------------------------------------------------------------------------
-*/
-
-function initializePrescriptionItemRows() {
-    const itemList = document.querySelector(
-        '[data-prescription-item-list]'
-    );
-
-    const addItemButton = document.querySelector(
-        '[data-add-prescription-item]'
-    );
-
-    if (!itemList || !addItemButton) {
-        return;
-    }
-
-    updateItemNumbers(itemList);
-
-    addItemButton.addEventListener('click', () => {
-        const firstRow = itemList.querySelector(
-            '.prescription-item-row'
-        );
-
-        if (!firstRow) {
-            return;
-        }
-
-        const newRow = firstRow.cloneNode(true);
-
-        newRow.querySelectorAll('input').forEach((input) => {
-            input.value = '';
-        });
-
-        itemList.appendChild(newRow);
-        updateItemNumbers(itemList);
-    });
-
-    itemList.addEventListener('click', (event) => {
-        const removeButton = event.target.closest(
-            '[data-remove-prescription-item]'
-        );
-
-        if (!removeButton) {
-            return;
-        }
-
-        const rows = itemList.querySelectorAll(
-            '.prescription-item-row'
-        );
-
-        if (rows.length === 1) {
-            rows[0].querySelectorAll('input').forEach((input) => {
-                input.value = '';
-            });
-
-            return;
-        }
-
-        removeButton.closest('.prescription-item-row').remove();
-        updateItemNumbers(itemList);
-    });
-}
-
-/*
-|--------------------------------------------------------------------------
-| SHARED — Item Numbering
-|--------------------------------------------------------------------------
-*/
-
-function updateItemNumbers(itemList) {
-    const rows = itemList.querySelectorAll(
-        '.nuskha-item-row, .prescription-item-row'
-    );
-
-    rows.forEach((row, index) => {
+function updateItemRows(list, rowSelector) {
+    list.querySelectorAll(rowSelector).forEach((row, index) => {
         const number = row.querySelector('.item-number');
 
         if (number) {
             number.textContent = index + 1;
         }
+
+        row.querySelectorAll('input, textarea, select')
+            .forEach((field) => {
+                const name = field.getAttribute('name');
+
+                if (!name) return;
+
+                field.setAttribute(
+                    'name',
+                    name.replace(
+                        /items\[\d+\]/,
+                        `items[${index}]`
+                    )
+                );
+            });
     });
 }
-
 
 /*
 |--------------------------------------------------------------------------
-| PAYMENTS — Remaining Balance Calculation
+| Payment Amount
 |--------------------------------------------------------------------------
 */
 
-document.addEventListener('DOMContentLoaded', () => {
-    initializePaymentCalculation();
-});
+function initPaymentCalculation() {
+    const total = document.querySelector('[data-total-payable]');
+    const amount = document.querySelector('[data-payment-amount]');
+    const remaining = document.querySelector('[data-remaining-balance]');
 
-function initializePaymentCalculation() {
-    const totalElement = document.querySelector(
-        '[data-total-payable]'
-    );
+    if (!total || !amount || !remaining) return;
 
-    const amountInput = document.querySelector(
-        '[data-payment-amount]'
-    );
+    const totalAmount = parseAmount(total.textContent);
 
-    const remainingElement = document.querySelector(
-        '[data-remaining-balance]'
-    );
+    amount.addEventListener('input', () => {
+        const received = Number(amount.value) || 0;
+        const balance = Math.max(totalAmount - received, 0);
 
-    if (!totalElement || !amountInput || !remainingElement) {
-        return;
-    }
-
-    const totalAmount = parseAmount(totalElement.textContent);
-
-    amountInput.addEventListener('input', () => {
-        const receivedAmount = Number(amountInput.value) || 0;
-        const remainingAmount = Math.max(
-            totalAmount - receivedAmount,
-            0
-        );
-
-        remainingElement.textContent =
-            `PKR ${formatAmount(remainingAmount)}`;
+        remaining.textContent = `PKR ${formatAmount(balance)}`;
     });
 }
 
-function parseAmount(value) {
+/*
+|--------------------------------------------------------------------------
+| Patients
+|--------------------------------------------------------------------------
+*/
+
+function initPatientFilters() {
+    const search = document.querySelector('.patient-search input');
+    const status = document.querySelector('.patient-filters select');
+    const clear = document.querySelector('.filter-clear');
+    const rows = document.querySelectorAll('.patients-table tbody tr');
+
+    if (!search || !status || rows.length === 0) return;
+
+    const apply = () => {
+        const term = search.value.trim().toLowerCase();
+        const selected = status.value.trim().toLowerCase();
+
+        rows.forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            const badge = row.querySelector('.status-badge');
+
+            const rowStatus = badge
+                ? badge.textContent.trim().toLowerCase()
+                : '';
+
+            const searchMatch =
+                !term || text.includes(term);
+
+            const statusMatch =
+                selected === 'all' ||
+                selected === 'all statuses' ||
+                rowStatus === selected;
+
+            row.style.display =
+                searchMatch && statusMatch ? '' : 'none';
+        });
+    };
+
+    search.addEventListener('input', apply);
+    status.addEventListener('change', apply);
+
+    clear?.addEventListener('click', () => {
+        search.value = '';
+        status.value = 'all';
+        apply();
+    });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Visits
+|--------------------------------------------------------------------------
+*/
+
+function initVisitFilters() {
+    initDateAndSearch(
+        '.visits-toolbar-actions .form-select:first-child',
+        '.visit-search input',
+        '.visits-table tbody tr',
+        2
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Prescriptions
+|--------------------------------------------------------------------------
+*/
+
+function initPrescriptionFilters() {
+    const date = document.querySelector(
+        '.prescriptions-toolbar-actions .form-select:first-child'
+    );
+
+    const status = document.querySelector(
+        '.prescriptions-toolbar-actions .form-select:nth-child(2)'
+    );
+
+    const search = document.querySelector(
+        '.prescription-search input'
+    );
+
+    const rows = document.querySelectorAll(
+        '.prescriptions-table tbody tr'
+    );
+
+    if (rows.length === 0) return;
+
+    const apply = () => {
+        const term = search?.value.trim().toLowerCase() || '';
+        const range = date?.value.trim().toLowerCase() || 'all dates';
+        const selectedStatus =
+            status?.value.trim().toLowerCase() || 'all';
+
+        const today = new Date();
+
+        rows.forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            const badge = row.querySelector('.status-badge');
+
+            const rowStatus = badge
+                ? badge.textContent.trim().toLowerCase()
+                : '';
+
+            const date = parseTableDate(row.cells[2]?.textContent);
+            const searchMatch = !term || text.includes(term);
+
+            const statusMatch =
+                selectedStatus === 'all' ||
+                selectedStatus === 'all statuses' ||
+                rowStatus === selectedStatus;
+
+            const dateMatch = matchDateRange(date, range, today);
+
+            row.style.display =
+                searchMatch && statusMatch && dateMatch
+                    ? ''
+                    : 'none';
+        });
+    };
+
+    search?.addEventListener('input', apply);
+    date?.addEventListener('change', apply);
+    status?.addEventListener('change', apply);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Payments — method, reference_no, payment_date
+|--------------------------------------------------------------------------
+*/
+
+function initPaymentFilters() {
+    const method = document.querySelector(
+        '.payments-toolbar-actions .form-select:first-child'
+    );
+
+    const date = document.querySelector(
+        '.payments-toolbar-actions .form-select:nth-child(2)'
+    );
+
+    const search = document.querySelector(
+        '.payment-search input'
+    );
+
+    const rows = document.querySelectorAll(
+        '.payments-table tbody tr'
+    );
+
+    if (rows.length === 0) return;
+
+    const apply = () => {
+        const selectedMethod =
+            method?.value.trim().toLowerCase() || 'all';
+
+        const selectedRange =
+            date?.value.trim().toLowerCase() || 'all time';
+
+        const term = search?.value.trim().toLowerCase() || '';
+        const today = new Date();
+
+        rows.forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            const methodElement = row.querySelector(
+                '.payment-method'
+            );
+
+            const rowMethod = methodElement
+                ? methodElement.textContent.trim().toLowerCase()
+                : '';
+
+            const rowDate = parseTableDate(row.cells[2]?.textContent);
+
+            const searchMatch = !term || text.includes(term);
+
+            const methodMatch =
+                selectedMethod === 'all' ||
+                selectedMethod === 'all methods' ||
+                rowMethod === selectedMethod;
+
+            const dateMatch = matchDateRange(
+                rowDate,
+                selectedRange,
+                today
+            );
+
+            row.style.display =
+                searchMatch && methodMatch && dateMatch
+                    ? ''
+                    : 'none';
+        });
+    };
+
+    method?.addEventListener('change', apply);
+    date?.addEventListener('change', apply);
+    search?.addEventListener('input', apply);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Expenses — category, date range
+|--------------------------------------------------------------------------
+*/
+
+function initExpenseFilters() {
+    const category = document.querySelector(
+        '.expenses-toolbar-actions .form-select:first-child'
+    );
+
+    const date = document.querySelector(
+        '.expenses-toolbar-actions .form-select:nth-child(2)'
+    );
+
+    const search = document.querySelector(
+        '.expense-search input'
+    );
+
+    const rows = document.querySelectorAll(
+        '.expenses-table tbody tr'
+    );
+
+    if (rows.length === 0) return;
+
+    const apply = () => {
+        const selectedCategory =
+            category?.value.trim().toLowerCase() || 'all';
+
+        const selectedRange =
+            date?.value.trim().toLowerCase() || 'all time';
+
+        const term = search?.value.trim().toLowerCase() || '';
+        const today = new Date();
+
+        rows.forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            const categoryElement = row.querySelector(
+                '.expense-category'
+            );
+
+            const rowCategory = categoryElement
+                ? categoryElement.textContent.trim().toLowerCase()
+                : '';
+
+            const rowDate = parseTableDate(row.cells[3]?.textContent);
+
+            const searchMatch = !term || text.includes(term);
+
+            const categoryMatch =
+                selectedCategory === 'all' ||
+                selectedCategory === 'all categories' ||
+                rowCategory === selectedCategory;
+
+            const dateMatch = matchDateRange(
+                rowDate,
+                selectedRange,
+                today
+            );
+
+            row.style.display =
+                searchMatch && categoryMatch && dateMatch
+                    ? ''
+                    : 'none';
+        });
+    };
+
+    category?.addEventListener('change', apply);
+    date?.addEventListener('change', apply);
+    search?.addEventListener('input', apply);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Users
+|--------------------------------------------------------------------------
+*/
+
+function initUserFilters() {
+    const search = document.querySelector('.user-search input');
+    const status = document.querySelector(
+        '.users-toolbar-actions .form-select'
+    );
+
+    const rows = document.querySelectorAll(
+        '.users-table tbody tr'
+    );
+
+    if (!search || !status || rows.length === 0) return;
+
+    const apply = () => {
+        const term = search.value.trim().toLowerCase();
+        const selected = status.value.trim().toLowerCase();
+
+        rows.forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            const badge = row.querySelector('.status-badge');
+
+            const rowStatus = badge
+                ? badge.textContent.trim().toLowerCase()
+                : '';
+
+            const searchMatch =
+                !term || text.includes(term);
+
+            const statusMatch =
+                selected === 'all' ||
+                selected === 'all statuses' ||
+                rowStatus === selected;
+
+            row.style.display =
+                searchMatch && statusMatch ? '' : 'none';
+        });
+    };
+
+    search.addEventListener('input', apply);
+    status.addEventListener('change', apply);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Generic Table Search
+|--------------------------------------------------------------------------
+*/
+
+function initTableSearch() {
+    document
+        .querySelectorAll(
+            '.visit-search input, ' +
+            '.prescription-search input, ' +
+            '.payment-search input, ' +
+            '.expense-search input'
+        )
+        .forEach((input) => {
+            input.addEventListener('input', () => {
+                const table = input
+                    .closest('main')
+                    ?.querySelector('tbody');
+
+                if (!table) return;
+
+                const term = input.value.trim().toLowerCase();
+
+                table.querySelectorAll('tr').forEach((row) => {
+                    row.style.display =
+                        row.textContent
+                            .toLowerCase()
+                            .includes(term)
+                            ? ''
+                            : 'none';
+                });
+            });
+        });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Reports
+|--------------------------------------------------------------------------
+*/
+
+function initReportActions() {
+    document
+        .querySelectorAll('.report-apply-button')
+        .forEach((button) => {
+            button.addEventListener('click', () => {
+                button.form?.submit();
+            });
+        });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Helpers
+|--------------------------------------------------------------------------
+*/
+
+function initDateAndSearch(
+    dateSelector,
+    searchSelector,
+    rowSelector,
+    dateColumn
+) {
+    const date = document.querySelector(dateSelector);
+    const search = document.querySelector(searchSelector);
+    const rows = document.querySelectorAll(rowSelector);
+
+    if (rows.length === 0) return;
+
+    const apply = () => {
+        const range = date?.value.trim().toLowerCase() || 'all';
+        const term = search?.value.trim().toLowerCase() || '';
+        const today = new Date();
+
+        rows.forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            const rowDate = parseTableDate(
+                row.cells[dateColumn]?.textContent
+            );
+
+            const searchMatch = !term || text.includes(term);
+            const dateMatch = matchDateRange(
+                rowDate,
+                range,
+                today
+            );
+
+            row.style.display =
+                searchMatch && dateMatch ? '' : 'none';
+        });
+    };
+
+    date?.addEventListener('change', apply);
+    search?.addEventListener('input', apply);
+}
+
+function parseTableDate(value = '') {
+    const match = value.match(
+        /\d{1,2}\s[A-Za-z]{3}\s\d{4}/
+    );
+
+    if (!match) return null;
+
+    const parts = match[0].split(' ');
+    const months = {
+        jan: 0,
+        feb: 1,
+        mar: 2,
+        apr: 3,
+        may: 4,
+        jun: 5,
+        jul: 6,
+        aug: 7,
+        sep: 8,
+        oct: 9,
+        nov: 10,
+        dec: 11,
+    };
+
+    return new Date(
+        Number(parts[2]),
+        months[parts[1].toLowerCase()],
+        Number(parts[0])
+    );
+}
+
+function matchDateRange(date, range, today) {
+    if (!date || range === 'all' || range === 'all dates') {
+        return true;
+    }
+
+    if (range === 'today') {
+        return date.toDateString() === today.toDateString();
+    }
+
+    if (range === 'this week') {
+        const start = new Date(today);
+
+        start.setDate(today.getDate() - today.getDay());
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+
+        return date >= start && date <= end;
+    }
+
+    if (range === 'this month') {
+        return (
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear()
+        );
+    }
+
+    return true;
+}
+
+function parseAmount(value = '') {
     return Number(
         value.replace(/[^0-9.-]+/g, '')
     ) || 0;
@@ -283,1053 +670,185 @@ function formatAmount(value) {
 
 /*
 |--------------------------------------------------------------------------
-| PATIENTS — Search, Status Filter and Clear
+| PATIENTS — Marital Status and Children Fields
 |--------------------------------------------------------------------------
 */
 
-document.addEventListener('DOMContentLoaded', () => {
-    initializePatientSearch();
-});
-
-function initializePatientSearch() {
-    const searchInput = document.querySelector(
-        '.patient-search input'
-    );
-
-    const statusSelect = document.querySelector(
-        '.patient-filters select'
-    );
-
-    const clearButton = document.querySelector(
-        '.filter-clear'
-    );
-
-    const tableRows = document.querySelectorAll(
-        '.patients-table tbody tr'
-    );
-
-    if (!searchInput || !statusSelect || tableRows.length === 0) {
-        return;
-    }
-
-    searchInput.addEventListener(
-        'input',
-        applyPatientFilters
-    );
-
-    statusSelect.addEventListener(
-        'change',
-        applyPatientFilters
-    );
-
-    if (clearButton) {
-        clearButton.addEventListener('click', () => {
-            searchInput.value = '';
-            statusSelect.selectedIndex = 0;
-
-            applyPatientFilters();
-        });
-    }
-
-    function applyPatientFilters() {
-        const searchTerm = searchInput.value
-            .trim()
-            .toLowerCase();
-
-        const selectedStatus = statusSelect.value
-            .trim()
-            .toLowerCase();
-
-        tableRows.forEach((row) => {
-            const rowText = row.textContent
-                .trim()
-                .toLowerCase();
-
-            const statusElement = row.querySelector(
-                '.status-badge'
-            );
-
-            const rowStatus = statusElement
-                ? statusElement.textContent
-                    .trim()
-                    .toLowerCase()
-                : '';
-
-            const searchMatches =
-                searchTerm === '' ||
-                rowText.includes(searchTerm);
-
-            const statusMatches =
-                selectedStatus === 'all statuses' ||
-                rowStatus === selectedStatus;
-
-            row.style.display =
-                searchMatches && statusMatches
-                    ? ''
-                    : 'none';
-        });
-    }
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| TABLES — Generic Search
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeTableSearch(
-        '.visit-search input',
-        '.visits-table tbody tr'
-    );
-
-    initializeTableSearch(
-        '.prescription-search input',
-        '.prescriptions-table tbody tr'
-    );
-
-    initializeTableSearch(
-        '.payment-search input',
-        '.payments-table tbody tr'
-    );
-
-    initializeTableSearch(
-        '.expense-search input',
-        '.expenses-table tbody tr'
-    );
-
-});
-
-function initializeTableSearch(inputSelector, rowSelector) {
-    const searchInput = document.querySelector(inputSelector);
-    const tableRows = document.querySelectorAll(rowSelector);
-
-    if (!searchInput || tableRows.length === 0) {
-        return;
-    }
-
-    searchInput.addEventListener('input', () => {
-        const searchTerm = searchInput.value
-            .trim()
-            .toLowerCase();
-
-        tableRows.forEach((row) => {
-            const rowText = row.textContent.toLowerCase();
-
-            row.style.display = rowText.includes(searchTerm)
-                ? ''
-                : 'none';
-        });
-    });
-}
-
-/*
-|--------------------------------------------------------------------------
-| EXPENSES — Category and Date Filters
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeExpenseFilters();
-});
-
-function initializeExpenseFilters() {
-    const toolbar = document.querySelector(
-        '.expenses-toolbar-actions'
-    );
-
-    const tableRows = document.querySelectorAll(
-        '.expenses-table tbody tr'
-    );
-
-    if (!toolbar || tableRows.length === 0) {
-        return;
-    }
-
-    const selects = toolbar.querySelectorAll('.form-select');
-
-    const categorySelect = selects[0];
-    const dateSelect = selects[1];
-
-    if (!categorySelect || !dateSelect) {
-        return;
-    }
-
-    categorySelect.addEventListener(
-        'change',
-        applyExpenseFilters
-    );
-
-    dateSelect.addEventListener(
-        'change',
-        applyExpenseFilters
-    );
-
-    function applyExpenseFilters() {
-        const selectedCategory = categorySelect.value
-            .trim()
-            .toLowerCase();
-
-        const selectedRange = dateSelect.value
-            .trim()
-            .toLowerCase();
-
-        const today = new Date();
-
-        tableRows.forEach((row) => {
-            const categoryElement = row.querySelector(
-                '.expense-category'
-            );
-
-            const dateCell = row.cells[3];
-
-            if (!categoryElement || !dateCell) {
-                row.style.display = 'none';
-                return;
-            }
-
-            const rowCategory = categoryElement.textContent
-                .trim()
-                .toLowerCase();
-
-            const categoryMatches =
-                selectedCategory === 'all categories' ||
-                rowCategory === selectedCategory;
-
-            const dateMatch = dateCell.textContent
-                .trim()
-                .match(/\d{1,2}\s[A-Za-z]{3}\s\d{4}/);
-
-            let dateMatches = true;
-
-            if (dateMatch) {
-                const rowDate = parseExpenseDate(dateMatch[0]);
-
-                if (selectedRange === 'today') {
-                    dateMatches =
-                        rowDate.toDateString() ===
-                        today.toDateString();
-                }
-
-                if (selectedRange === 'this week') {
-                    const startOfWeek = new Date(today);
-
-                    startOfWeek.setDate(
-                        today.getDate() - today.getDay()
-                    );
-
-                    startOfWeek.setHours(0, 0, 0, 0);
-
-                    const endOfWeek = new Date(startOfWeek);
-
-                    endOfWeek.setDate(
-                        startOfWeek.getDate() + 6
-                    );
-
-                    endOfWeek.setHours(23, 59, 59, 999);
-
-                    dateMatches =
-                        rowDate >= startOfWeek &&
-                        rowDate <= endOfWeek;
-                }
-
-                if (selectedRange === 'this month') {
-                    dateMatches =
-                        rowDate.getMonth() === today.getMonth() &&
-                        rowDate.getFullYear() === today.getFullYear();
-                }
-
-                if (selectedRange === 'all time') {
-                    dateMatches = true;
-                }
-            }
-
-            row.style.display =
-                categoryMatches && dateMatches
-                    ? ''
-                    : 'none';
-        });
-    }
-}
-
-function parseExpenseDate(dateText) {
-    const parts = dateText.split(' ');
-
-    const day = Number(parts[0]);
-    const month = parts[1];
-    const year = Number(parts[2]);
-
-    const monthIndex = {
-        jan: 0,
-        feb: 1,
-        mar: 2,
-        apr: 3,
-        may: 4,
-        jun: 5,
-        jul: 6,
-        aug: 7,
-        sep: 8,
-        oct: 9,
-        nov: 10,
-        dec: 11,
-    };
-
-    return new Date(
-        year,
-        monthIndex[month.toLowerCase()],
-        day
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| VISITS — Status Filter
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeStatusFilter(
-        '.visits-toolbar-actions .form-select:nth-child(2)',
-        '.visits-table tbody tr',
-        '.status-badge'
-    );
-
-    initializeStatusFilter(
-        '.prescriptions-toolbar-actions .form-select:nth-child(2)',
-        '.prescriptions-table tbody tr',
-        '.status-badge'
-    );
-});
-
-function initializeStatusFilter(
-    selectSelector,
-    rowSelector,
-    statusSelector
-) {
-    const statusSelect = document.querySelector(selectSelector);
-    const tableRows = document.querySelectorAll(rowSelector);
-
-    if (!statusSelect || tableRows.length === 0) {
-        return;
-    }
-
-    statusSelect.addEventListener('change', () => {
-        const selectedStatus = statusSelect.value
-            .trim()
-            .toLowerCase();
-
-        tableRows.forEach((row) => {
-            const statusElement = row.querySelector(statusSelector);
-
-            if (!statusElement) {
-                return;
-            }
-
-            const rowStatus = statusElement.textContent
-                .trim()
-                .toLowerCase();
-
-            const shouldShow =
-                selectedStatus.startsWith('all') ||
-                rowStatus === selectedStatus;
-
-            row.style.display = shouldShow ? '' : 'none';
-        });
-    });
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| VISITS — Date Filter
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeVisitDateFilter();
-});
-
-function initializeVisitDateFilter() {
-    const dateSelect = document.querySelector(
-        '.visits-toolbar-actions .form-select:first-child'
-    );
-
-    const tableRows = document.querySelectorAll(
-        '.visits-table tbody tr'
-    );
-
-    if (!dateSelect || tableRows.length === 0) {
-        return;
-    }
-
-    dateSelect.addEventListener('change', () => {
-        const selectedRange = dateSelect.value
-            .trim()
-            .toLowerCase();
-
-        const today = new Date();
-
-        tableRows.forEach((row) => {
-            const dateCell = row.cells[2];
-
-            if (!dateCell) {
-                return;
-            }
-
-            const dateMatch = dateCell.textContent
-                .trim()
-                .match(/\d{1,2}\s[A-Za-z]{3}\s\d{4}/);
-
-            if (!dateMatch) {
-                row.style.display = 'none';
-                return;
-            }
-
-            const rowDate = parseVisitDate(dateMatch[0]);
-            let shouldShow = true;
-
-            if (selectedRange === 'all dates') {
-                shouldShow = true;
-            }
-
-            if (selectedRange === 'today') {
-                shouldShow =
-                    rowDate.toDateString() ===
-                    today.toDateString();
-            }
-
-            if (selectedRange === 'this week') {
-                const startOfWeek = new Date(today);
-
-                startOfWeek.setDate(
-                    today.getDate() - today.getDay()
-                );
-
-                startOfWeek.setHours(0, 0, 0, 0);
-
-                const endOfWeek = new Date(startOfWeek);
-
-                endOfWeek.setDate(
-                    startOfWeek.getDate() + 6
-                );
-
-                endOfWeek.setHours(23, 59, 59, 999);
-
-                shouldShow =
-                    rowDate >= startOfWeek &&
-                    rowDate <= endOfWeek;
-            }
-
-            if (selectedRange === 'this month') {
-                shouldShow =
-                    rowDate.getMonth() === today.getMonth() &&
-                    rowDate.getFullYear() === today.getFullYear();
-            }
-
-            row.style.display = shouldShow ? '' : 'none';
-        });
-    });
-}
-
-function parseVisitDate(dateText) {
-    const parts = dateText.split(' ');
-
-    const day = Number(parts[0]);
-    const month = parts[1];
-    const year = Number(parts[2]);
-
-    const monthIndex = {
-        jan: 0,
-        feb: 1,
-        mar: 2,
-        apr: 3,
-        may: 4,
-        jun: 5,
-        jul: 6,
-        aug: 7,
-        sep: 8,
-        oct: 9,
-        nov: 10,
-        dec: 11,
-    };
-
-    return new Date(
-        year,
-        monthIndex[month.toLowerCase()],
-        day
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| PRESCRIPTIONS — Date Filter
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializePrescriptionDateFilter();
-});
-
-function initializePrescriptionDateFilter() {
-    const dateSelect = document.querySelector(
-        '.prescriptions-toolbar-actions .form-select:first-child'
-    );
-
-    const tableRows = document.querySelectorAll(
-        '.prescriptions-table tbody tr'
-    );
-
-    if (!dateSelect || tableRows.length === 0) {
-        return;
-    }
-
-    dateSelect.addEventListener('change', () => {
-        const selectedRange = dateSelect.value
-            .trim()
-            .toLowerCase();
-
-        const today = new Date();
-
-        tableRows.forEach((row) => {
-            const dateCell = row.cells[2];
-
-            if (!dateCell) {
-                return;
-            }
-
-            const rowDate = new Date(
-                dateCell.textContent.trim()
-            );
-
-            let shouldShow = true;
-
-            if (selectedRange === 'all dates') {
-                shouldShow = true;
-            }
-
-            if (selectedRange === 'today') {
-                shouldShow =
-                    rowDate.toDateString() === today.toDateString();
-            }
-
-            if (selectedRange === 'this week') {
-                const startOfWeek = new Date(today);
-                startOfWeek.setDate(
-                    today.getDate() - today.getDay()
-                );
-                startOfWeek.setHours(0, 0, 0, 0);
-
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(
-                    startOfWeek.getDate() + 6
-                );
-                endOfWeek.setHours(23, 59, 59, 999);
-
-                shouldShow =
-                    rowDate >= startOfWeek &&
-                    rowDate <= endOfWeek;
-            }
-
-            if (selectedRange === 'this month') {
-                shouldShow =
-                    rowDate.getMonth() === today.getMonth() &&
-                    rowDate.getFullYear() === today.getFullYear();
-            }
-
-            row.style.display = shouldShow ? '' : 'none';
-        });
-    });
-}
-
-/*
-|--------------------------------------------------------------------------
-| PAYMENTS — Method and Date Filters
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializePaymentFilters();
-});
-
-function initializePaymentFilters() {
-    const toolbar = document.querySelector(
-        '.payments-toolbar-actions'
-    );
-
-    const tableRows = document.querySelectorAll(
-        '.payments-table tbody tr'
-    );
-
-    if (!toolbar || tableRows.length === 0) {
-        return;
-    }
-
-    const selects = toolbar.querySelectorAll('.form-select');
-
-    const methodSelect = selects[0];
-    const dateSelect = selects[1];
-
-    if (!methodSelect || !dateSelect) {
-        return;
-    }
-
-    methodSelect.addEventListener(
-        'change',
-        applyPaymentFilters
-    );
-
-    dateSelect.addEventListener(
-        'change',
-        applyPaymentFilters
-    );
-
-    function applyPaymentFilters() {
-        const selectedMethod = methodSelect.value
-            .trim()
-            .toLowerCase();
-
-        const selectedRange = dateSelect.value
-            .trim()
-            .toLowerCase();
-
-        const today = new Date();
-
-        tableRows.forEach((row) => {
-            const methodElement = row.querySelector(
-                '.payment-method'
-            );
-
-            const dateCell = row.cells[2];
-
-            if (!methodElement || !dateCell) {
-                row.style.display = 'none';
-                return;
-            }
-
-            const rowMethod = methodElement.textContent
-                .trim()
-                .toLowerCase();
-
-            const normalizedMethod =
-                rowMethod === 'bank'
-                    ? 'bank transfer'
-                    : rowMethod;
-
-            const methodMatches =
-                selectedMethod === 'all methods' ||
-                normalizedMethod === selectedMethod;
-
-            const dateMatch = dateCell.textContent
-                .trim()
-                .match(/\d{1,2}\s[A-Za-z]{3}\s\d{4}/);
-
-            let dateMatches = true;
-
-            if (dateMatch) {
-                const rowDate = parsePaymentDate(
-                    dateMatch[0]
-                );
-
-                if (selectedRange === 'today') {
-                    dateMatches =
-                        rowDate.toDateString() ===
-                        today.toDateString();
-                }
-
-                if (selectedRange === 'this week') {
-                    const startOfWeek = new Date(today);
-
-                    startOfWeek.setDate(
-                        today.getDate() - today.getDay()
-                    );
-
-                    startOfWeek.setHours(0, 0, 0, 0);
-
-                    const endOfWeek = new Date(startOfWeek);
-
-                    endOfWeek.setDate(
-                        startOfWeek.getDate() + 6
-                    );
-
-                    endOfWeek.setHours(23, 59, 59, 999);
-
-                    dateMatches =
-                        rowDate >= startOfWeek &&
-                        rowDate <= endOfWeek;
-                }
-
-                if (selectedRange === 'this month') {
-                    dateMatches =
-                        rowDate.getMonth() === today.getMonth() &&
-                        rowDate.getFullYear() === today.getFullYear();
-                }
-
-                if (selectedRange === 'all time') {
-                    dateMatches = true;
-                }
-            }
-
-            row.style.display =
-                methodMatches && dateMatches
-                    ? ''
-                    : 'none';
-        });
-    }
-}
-
-function parsePaymentDate(dateText) {
-    const parts = dateText.split(' ');
-
-    const day = Number(parts[0]);
-    const month = parts[1];
-    const year = Number(parts[2]);
-
-    const monthIndex = {
-        jan: 0,
-        feb: 1,
-        mar: 2,
-        apr: 3,
-        may: 4,
-        jun: 5,
-        jul: 6,
-        aug: 7,
-        sep: 8,
-        oct: 9,
-        nov: 10,
-        dec: 11,
-    };
-
-    return new Date(
-        year,
-        monthIndex[month.toLowerCase()],
-        day
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| REPORTS — Filters and Actions
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeReportFilters();
-    initializeReportActions();
-});
-
-function initializeReportFilters() {
-    const filterPanel = document.querySelector(
-        '.report-filter-panel'
-    );
-
-    const applyButton = document.querySelector(
-        '.report-apply-button'
-    );
-
-    const periodLabel = document.querySelector(
-        '.report-period-label'
-    );
-
-    if (!filterPanel || !applyButton || !periodLabel) {
-        return;
-    }
-
-    const reportTypeSelect = document.querySelector(
-        '#report_type'
-    );
-
-    const fromDate = document.querySelector(
-        '#from_date'
-    );
-
-    const toDate = document.querySelector(
-        '#to_date'
-    );
-
-    applyButton.addEventListener('click', () => {
-        const reportType = reportTypeSelect
-            ? reportTypeSelect.value
-            : 'Report';
-
-        const fromValue = fromDate
-            ? formatReportDate(fromDate.value)
-            : '';
-
-        const toValue = toDate
-            ? formatReportDate(toDate.value)
-            : '';
-
-        periodLabel.textContent =
-            `${reportType} · ${fromValue} to ${toValue}`;
-
-        applyButton.textContent = 'Applied';
-
-        setTimeout(() => {
-            applyButton.textContent = 'Apply';
-        }, 1500);
-    });
-}
-
-function formatReportDate(dateValue) {
-    if (!dateValue) {
-        return '';
-    }
-
-    const date = new Date(`${dateValue}T00:00:00`);
-
-    return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    });
-}
-
-function initializeReportActions() {
-    const printButton = document.querySelector(
-        '.report-header-actions .btn-outline-secondary'
-    );
-
-    const exportButton = document.querySelector(
-        '.report-header-actions .btn-primary'
-    );
-
-    if (printButton) {
-        printButton.addEventListener('click', () => {
-            window.print();
-        });
-    }
-
-    if (exportButton) {
-        exportButton.addEventListener('click', () => {
-            exportButton.textContent = 'Export ready';
-
-            setTimeout(() => {
-                exportButton.textContent = 'Export report';
-            }, 1500);
-        });
-    }
-}
-
-/*
-|--------------------------------------------------------------------------
-| REPORTS — Date Range Presets
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener('DOMContentLoaded', () => {
-    initializeReportDateRange();
-});
-
-function initializeReportDateRange() {
-    const rangeSelect = document.querySelector(
-        '#date_range'
-    );
-
-    const fromDate = document.querySelector(
-        '#from_date'
-    );
-
-    const toDate = document.querySelector(
-        '#to_date'
-    );
-
-    if (!rangeSelect || !fromDate || !toDate) {
-        return;
-    }
-
-    rangeSelect.addEventListener('change', () => {
-        const selectedRange = rangeSelect.value
-            .trim()
-            .toLowerCase();
-
-        const today = new Date();
-
-        if (selectedRange === 'today') {
-            const todayValue = formatInputDate(today);
-
-            fromDate.value = todayValue;
-            toDate.value = todayValue;
+function initializePatientFamilyFields() {
+    document.querySelectorAll('[data-patient-family-form]').forEach((form) => {
+        if (form.dataset.familyFieldsInitialized === 'true') {
+            return;
         }
 
-        if (selectedRange === 'this week') {
-            const startOfWeek = new Date(today);
+        const maritalStatus = form.querySelector('[name="marital_status"]');
+        const childrenQuestion = form.querySelector('[data-children-question]');
+        const childrenRadios = form.querySelectorAll('[name="has_children"]');
+        const countField = form.querySelector('[data-children-count-field]');
+        const countInput = form.querySelector('[name="children_count"]');
 
-            startOfWeek.setDate(
-                today.getDate() - today.getDay()
-            );
-
-            const endOfWeek = new Date(startOfWeek);
-
-            endOfWeek.setDate(
-                startOfWeek.getDate() + 6
-            );
-
-            fromDate.value = formatInputDate(startOfWeek);
-            toDate.value = formatInputDate(endOfWeek);
+        if (
+            !maritalStatus ||
+            !childrenQuestion ||
+            !childrenRadios.length ||
+            !countField ||
+            !countInput
+        ) {
+            return;
         }
 
-        if (selectedRange === 'this month') {
-            const startOfMonth = new Date(
-                today.getFullYear(),
-                today.getMonth(),
-                1
+        form.dataset.familyFieldsInitialized = 'true';
+
+        function updateFamilyFields() {
+            const isMarried = maritalStatus.value === 'married';
+
+            childrenQuestion.classList.toggle('d-none', !isMarried);
+
+            childrenRadios.forEach((radio) => {
+                radio.disabled = !isMarried;
+                radio.required = isMarried;
+            });
+
+            const selectedChildren = form.querySelector(
+                '[name="has_children"]:checked'
             );
 
-            const endOfMonth = new Date(
-                today.getFullYear(),
-                today.getMonth() + 1,
-                0
-            );
+            const needsCount =
+                isMarried && selectedChildren?.value === '1';
 
-            fromDate.value = formatInputDate(startOfMonth);
-            toDate.value = formatInputDate(endOfMonth);
+            countField.classList.toggle('d-none', !needsCount);
+            countInput.disabled = !needsCount;
+            countInput.required = needsCount;
         }
 
-        if (selectedRange === 'last month') {
-            const startOfLastMonth = new Date(
-                today.getFullYear(),
-                today.getMonth() - 1,
-                1
-            );
+        maritalStatus.addEventListener('change', updateFamilyFields);
 
-            const endOfLastMonth = new Date(
-                today.getFullYear(),
-                today.getMonth(),
-                0
-            );
+        childrenRadios.forEach((radio) => {
+            radio.addEventListener('change', updateFamilyFields);
+        });
 
-            fromDate.value = formatInputDate(
-                startOfLastMonth
-            );
-
-            toDate.value = formatInputDate(
-                endOfLastMonth
-            );
-        }
+        updateFamilyFields();
     });
 }
 
-function formatInputDate(date) {
-    const year = date.getFullYear();
-
-    const month = String(
-        date.getMonth() + 1
-    ).padStart(2, '0');
-
-    const day = String(
-        date.getDate()
-    ).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializePatientFamilyFields
+    );
+} else {
+    initializePatientFamilyFields();
 }
-
 
 /*
 |--------------------------------------------------------------------------
-| USERS — Search, Role and Status Filters
+| VISITS — Gregorian Date, Weekday and Hijri Date
 |--------------------------------------------------------------------------
 */
 
-document.addEventListener('DOMContentLoaded', () => {
-    initializeUserFilters();
-});
+function initializeVisitCalendarFields() {
+    document.querySelectorAll('[data-visit-calendar-form]').forEach((form) => {
+        if (form.dataset.visitCalendarInitialized === 'true') {
+            return;
+        }
 
-function initializeUserFilters() {
-    const searchInput = document.querySelector(
-        '.user-search input'
-    );
+        const dateInput = form.querySelector('[data-visit-date]');
+        const weekdayInput = form.querySelector('[data-visit-weekday]');
+        const hijriInput = form.querySelector('[data-visit-hijri]');
+        const message = form.querySelector('[data-visit-calendar-message]');
 
-    const selects = document.querySelectorAll(
-        '.users-toolbar-actions .form-select'
-    );
+        if (!dateInput || !weekdayInput || !hijriInput || !message) {
+            return;
+        }
 
-    const tableRows = document.querySelectorAll(
-        '.users-table tbody tr'
-    );
+        form.dataset.visitCalendarInitialized = 'true';
 
-    if (
-        !searchInput ||
-        selects.length < 2 ||
-        tableRows.length === 0
-    ) {
-        return;
-    }
-
-    const roleSelect = selects[0];
-    const statusSelect = selects[1];
-
-    searchInput.addEventListener(
-        'input',
-        applyUserFilters
-    );
-
-    roleSelect.addEventListener(
-        'change',
-        applyUserFilters
-    );
-
-    statusSelect.addEventListener(
-        'change',
-        applyUserFilters
-    );
-
-    function applyUserFilters() {
-        const searchTerm = searchInput.value
-            .trim()
-            .toLowerCase();
-
-        const selectedRole = roleSelect.value
-            .trim()
-            .toLowerCase();
-
-        const selectedStatus = statusSelect.value
-            .trim()
-            .toLowerCase();
-
-        tableRows.forEach((row) => {
-            const rowText = row.textContent
-                .trim()
-                .toLowerCase();
-
-            const roleElement = row.querySelector(
-                '.role-badge'
-            );
-
-            const statusElement = row.querySelector(
-                '.status-badge'
-            );
-
-            const rowRole = roleElement
-                ? roleElement.textContent
-                    .trim()
-                    .toLowerCase()
-                : '';
-
-            const rowStatus = statusElement
-                ? statusElement.textContent
-                    .trim()
-                    .toLowerCase()
-                : '';
-
-            const searchMatches =
-                searchTerm === '' ||
-                rowText.includes(searchTerm);
-
-            const roleMatches =
-                selectedRole === 'all roles' ||
-                rowRole === selectedRole;
-
-            const statusMatches =
-                selectedStatus === 'all statuses' ||
-                rowStatus === selectedStatus;
-
-            row.style.display =
-                searchMatches &&
-                roleMatches &&
-                statusMatches
-                    ? ''
-                    : 'none';
+        const weekdayFormatter = new Intl.DateTimeFormat('en-GB', {
+            weekday: 'long',
+            timeZone: 'UTC',
         });
-    }
+
+        let hijriFormatter = null;
+
+        try {
+            const formatter = new Intl.DateTimeFormat('en-GB', {
+                calendar: 'islamic-umalqura',
+                numberingSystem: 'latn',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                era: 'short',
+                timeZone: 'UTC',
+            });
+
+            if (
+                formatter.resolvedOptions().calendar === 'islamic-umalqura'
+            ) {
+                hijriFormatter = formatter;
+            }
+        } catch {
+            hijriFormatter = null;
+        }
+
+        function updateVisitCalendar() {
+            weekdayInput.value = '';
+            hijriInput.value = '';
+
+            if (!dateInput.value || !dateInput.validity.valid) {
+                message.textContent = 'Select a valid Gregorian date.';
+                return;
+            }
+
+            const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateInput.value);
+
+            if (!match) {
+                message.textContent = 'Select a valid Gregorian date.';
+                return;
+            }
+
+            const year = Number(match[1]);
+            const month = Number(match[2]);
+            const day = Number(match[3]);
+
+            // Use a date-only UTC reference to avoid browser timezone shifts.
+            const selectedDate = new Date(
+                Date.UTC(year, month - 1, day, 12)
+            );
+
+            if (
+                selectedDate.getUTCFullYear() !== year ||
+                selectedDate.getUTCMonth() !== month - 1 ||
+                selectedDate.getUTCDate() !== day
+            ) {
+                message.textContent = 'Select a valid Gregorian date.';
+                return;
+            }
+
+            weekdayInput.value = weekdayFormatter.format(selectedDate);
+
+            if (!hijriFormatter) {
+                message.textContent =
+                    'Umm al-Qura conversion is unavailable in this browser.';
+                return;
+            }
+
+            hijriInput.value = hijriFormatter.format(selectedDate);
+
+            message.textContent =
+                'Calculated using the Umm al-Qura calendar.';
+        }
+
+        dateInput.addEventListener('input', updateVisitCalendar);
+        dateInput.addEventListener('change', updateVisitCalendar);
+
+        updateVisitCalendar();
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeVisitCalendarFields
+    );
+} else {
+    initializeVisitCalendarFields();
 }
