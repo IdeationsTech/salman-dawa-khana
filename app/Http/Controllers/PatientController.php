@@ -105,21 +105,33 @@ class PatientController extends Controller
         return view('patients.create');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PATIENTS — Store
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| PATIENTS — Save with Short Patient Code
+|--------------------------------------------------------------------------
+*/
 
     public function store(Request $request)
     {
         $validated = $this->validatePatient($request);
 
-        $validated['clinic_id'] = Auth::user()->clinic_id;
-        $validated['patient_code'] = 'P-' . (string) Str::ulid();
-        $validated['status'] = 'active';
+        \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
+            $patient = Patient::create([
+                ...$validated,
+                'clinic_id' => Auth::user()->clinic_id,
+                'patient_code' => 'TMP-' . (string) Str::ulid(),
+                'status' => 'active',
+            ]);
 
-        Patient::create($validated);
+            $patient->update([
+                'patient_code' => 'P-' . str_pad(
+                    (string) $patient->patient_id,
+                    4,
+                    '0',
+                    STR_PAD_LEFT
+                ),
+            ]);
+        });
 
         return redirect()
             ->route('patients.index')
@@ -127,16 +139,89 @@ class PatientController extends Controller
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | PATIENTS — Profile
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| PATIENTS — Dynamic Patient Profile
+|--------------------------------------------------------------------------
+*/
 
     public function show(Patient $patient)
     {
         $this->ensureClinicAccess($patient);
 
-        return view('patients.show', compact('patient'));
+        $clinicId = (int) Auth::user()->clinic_id;
+
+        $patient->load('clinic');
+
+        $recentVisits = $patient->visits()
+            ->where('clinic_id', $clinicId)
+            ->orderByDesc('visit_date')
+            ->orderByDesc('visit_id')
+            ->limit(5)
+            ->get();
+
+        $recentPrescriptions = $patient->prescriptions()
+            ->where('clinic_id', $clinicId)
+            ->orderByDesc('prescribed_at')
+            ->orderByDesc('prescription_id')
+            ->limit(5)
+            ->get();
+
+        $bills = $patient->bills()
+            ->where('clinic_id', $clinicId)
+            ->whereNotIn('status', ['cancelled', 'void'])
+            ->withSum([
+                'payments as recorded_paid' => function ($query) use ($clinicId) {
+                    $query->where('clinic_id', $clinicId);
+                },
+            ], 'amount')
+            ->get();
+
+        // Calculate balances using integer minor units.
+        $toCents = static function ($amount): int {
+            [$whole, $fraction] = array_pad(
+                explode('.', (string) $amount, 2),
+                2,
+                ''
+            );
+
+            return ((int) $whole * 100)
+                + (int) str_pad(substr($fraction, 0, 2), 2, '0');
+        };
+
+        $billedCents = 0;
+        $paidCents = 0;
+        $dueCents = 0;
+
+        foreach ($bills as $bill) {
+            $total = $toCents($bill->total_amount);
+            $paid = $toCents($bill->recorded_paid ?? '0');
+
+            $billedCents += $total;
+            $paidCents += $paid;
+            $dueCents += max(0, $total - $paid);
+        }
+
+        $totalBilled = $billedCents / 100;
+        $paidAgainstBills = $paidCents / 100;
+        $outstandingBalance = $dueCents / 100;
+
+        $unallocatedPayments = $patient->payments()
+            ->where('clinic_id', $clinicId)
+            ->whereNull('bill_id')
+            ->sum('amount');
+
+        $currency = strtoupper($patient->clinic?->currency ?: 'AED');
+
+        return view('patients.show', compact(
+            'patient',
+            'recentVisits',
+            'recentPrescriptions',
+            'totalBilled',
+            'paidAgainstBills',
+            'outstandingBalance',
+            'unallocatedPayments',
+            'currency'
+        ));
     }
 
     /*

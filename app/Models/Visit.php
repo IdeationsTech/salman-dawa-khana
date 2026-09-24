@@ -29,6 +29,7 @@ class Visit extends Model
         'visit_reason',
         'general_notes',
         'diagnosis_name',
+        'status',
     ];
 
     protected function casts(): array
@@ -40,12 +41,20 @@ class Visit extends Model
 
     public function clinic()
     {
-        return $this->belongsTo(Clinic::class, 'clinic_id', 'clinic_id');
+        return $this->belongsTo(
+            Clinic::class,
+            'clinic_id',
+            'clinic_id'
+        );
     }
 
     public function patient()
     {
-        return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
+        return $this->belongsTo(
+            Patient::class,
+            'patient_id',
+            'patient_id'
+        );
     }
 
     public function recordedBy()

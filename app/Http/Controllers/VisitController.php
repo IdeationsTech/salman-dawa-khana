@@ -12,7 +12,7 @@ class VisitController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | VISITS — List
+    | VISITS — List, Search and Combined Filters
     |--------------------------------------------------------------------------
     */
 
@@ -20,17 +20,52 @@ class VisitController extends Controller
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
+
+            'date_range' => [
+                'nullable',
+                Rule::in([
+                    'all dates',
+                    'today',
+                    'this week',
+                    'this month',
+                ]),
+            ],
+
+            'visit_type' => [
+                'nullable',
+                Rule::in([
+                    'all',
+                    'General visit',
+                    'Follow-up',
+                    'New consultation',
+                    'Prescription refill',
+                ]),
+            ],
+
+            'status' => [
+                'nullable',
+                Rule::in([
+                    'all',
+                    'not_recorded',
+                    'in_progress',
+                    'completed',
+                    'follow_up_required',
+                    'cancelled',
+                ]),
+            ],
         ]);
 
         $clinicId = Auth::user()->clinic_id;
+        $today = now('Asia/Dubai');
 
         $query = Visit::query()
             ->where('clinic_id', $clinicId)
             ->with(['patient', 'recordedBy']);
 
-        if (!empty($filters['search'])) {
-            $search = trim($filters['search']);
+        // Search by patient, phone, reference, diagnosis or visit ID.
+        $search = trim($filters['search'] ?? '');
 
+        if ($search !== '') {
             $query->where(function ($query) use ($search) {
                 $query->where('visit_reason', 'like', "%{$search}%")
                     ->orWhere('diagnosis_name', 'like', "%{$search}%")
@@ -47,15 +82,62 @@ class VisitController extends Controller
             });
         }
 
+        // Date filters use the existing UAE-local visit_date values.
+        $range = $filters['date_range'] ?? 'all dates';
+        $start = null;
+        $end = null;
+
+        if ($range === 'today') {
+            $start = $today->copy()->startOfDay();
+            $end = $start->copy()->addDay();
+        } elseif ($range === 'this week') {
+            // Monday through Sunday.
+            $start = $today->copy()->startOfWeek(1);
+            $end = $start->copy()->addWeek();
+        } elseif ($range === 'this month') {
+            $start = $today->copy()->startOfMonth();
+            $end = $start->copy()->addMonth();
+        }
+
+        if ($start !== null) {
+            $query
+                ->where(
+                    'visit_date',
+                    '>=',
+                    $start->format('Y-m-d H:i:s')
+                )
+                ->where(
+                    'visit_date',
+                    '<',
+                    $end->format('Y-m-d H:i:s')
+                );
+        }
+
+        // Visit type and status are separate filters.
+        $type = $filters['visit_type'] ?? 'all';
+
+        if ($type !== 'all') {
+            $query->where('visit_reason', $type);
+        }
+
+        $status = $filters['status'] ?? 'all';
+
+        if ($status === 'not_recorded') {
+            $query->whereNull('status');
+        } elseif ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        // Filter before pagination so every matching record is included.
         $visits = $query
             ->orderByDesc('visit_date')
             ->orderByDesc('visit_id')
             ->paginate(10)
             ->withQueryString();
 
-        $today = now('Asia/Dubai');
-
-        $totalVisits = Visit::where('clinic_id', $clinicId)->count();
+        // Summary cards show clinic-wide totals.
+        $totalVisits = Visit::where('clinic_id', $clinicId)
+            ->count();
 
         $todayVisits = Visit::where('clinic_id', $clinicId)
             ->whereDate('visit_date', $today->toDateString())
@@ -83,7 +165,7 @@ class VisitController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | VISITS — Create Form
+    | VISITS — Create
     |--------------------------------------------------------------------------
     */
 
@@ -93,12 +175,6 @@ class VisitController extends Controller
 
         return view('visits.create', compact('patients'));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — Save
-    |--------------------------------------------------------------------------
-    */
 
     public function store(Request $request)
     {
@@ -116,7 +192,7 @@ class VisitController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | VISITS — Profile
+    | VISITS — Show
     |--------------------------------------------------------------------------
     */
 
@@ -131,7 +207,7 @@ class VisitController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | VISITS — Edit Form
+    | VISITS — Edit and Update
     |--------------------------------------------------------------------------
     */
 
@@ -143,12 +219,6 @@ class VisitController extends Controller
 
         return view('visits.create', compact('visit', 'patients'));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — Update
-    |--------------------------------------------------------------------------
-    */
 
     public function update(Request $request, Visit $visit)
     {
@@ -191,7 +261,7 @@ class VisitController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | VISITS — Patient Options
+    | VISITS — Patient Options and Access
     |--------------------------------------------------------------------------
     */
 
@@ -207,12 +277,6 @@ class VisitController extends Controller
             ]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — Clinic Access
-    |--------------------------------------------------------------------------
-    */
-
     private function ensureClinicAccess(Visit $visit): void
     {
         abort_unless(
@@ -224,7 +288,7 @@ class VisitController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | VISITS — Validation and Date/Time
+    | VISITS — Validation
     |--------------------------------------------------------------------------
     */
 
@@ -239,7 +303,6 @@ class VisitController extends Controller
                 ->where('clinic_id', Auth::user()->clinic_id),
         ];
 
-        // Keep the patient unchanged when editing an existing visit.
         if ($visit !== null) {
             $patientRules[] = Rule::in([$visit->patient_id]);
         }
@@ -266,6 +329,16 @@ class VisitController extends Controller
                     'Follow-up',
                     'New consultation',
                     'Prescription refill',
+                ]),
+            ],
+
+            'status' => [
+                'required',
+                Rule::in([
+                    'in_progress',
+                    'completed',
+                    'follow_up_required',
+                    'cancelled',
                 ]),
             ],
 
@@ -298,11 +371,16 @@ class VisitController extends Controller
             'visit_reason.required' =>
                 'Please select the visit type.',
 
+            'status.required' =>
+                'Please select the visit status.',
+
+            'status.in' =>
+                'Please select a valid visit status.',
+
             'diagnosis_name.max' =>
                 'The diagnosis name must not exceed 255 characters.',
         ]);
 
-        // Store the entered UAE local date and time in the existing DATETIME column.
         $data['visit_date'] =
             $data['visit_date'] . ' ' . $data['visit_time'] . ':00';
 

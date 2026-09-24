@@ -157,25 +157,343 @@ function updateItemRows(list, rowSelector) {
 
 /*
 |--------------------------------------------------------------------------
-| Payment Amount
+| BILLING — New Bill, Existing Bill and Payment Calculation
 |--------------------------------------------------------------------------
 */
 
 function initPaymentCalculation() {
-    const total = document.querySelector('[data-total-payable]');
-    const amount = document.querySelector('[data-payment-amount]');
-    const remaining = document.querySelector('[data-remaining-balance]');
+    const form = document.querySelector('[data-payment-form]');
 
-    if (!total || !amount || !remaining) return;
+    if (!form || form.dataset.billingInitialized === '1') {
+        return;
+    }
 
-    const totalAmount = parseAmount(total.textContent);
+    form.dataset.billingInitialized = '1';
 
-    amount.addEventListener('input', () => {
-        const received = Number(amount.value) || 0;
-        const balance = Math.max(totalAmount - received, 0);
+    const get = (selector) => form.querySelector(selector);
 
-        remaining.textContent = `PKR ${formatAmount(balance)}`;
+    const mode = get('[data-payment-mode]');
+    const patient = get('[data-payment-patient]');
+    const bill = get('[data-payment-bill]');
+
+    const subtotal = get('[data-bill-subtotal]');
+    const discount = get('[data-bill-discount]');
+    const amount = get('[data-payment-amount]');
+
+    const method = get('[data-payment-method]');
+    const reference = get('[data-payment-reference]');
+    const notes = get('[data-payment-notes]');
+    const referenceStar = get('[data-payment-reference-star]');
+
+    const newSection = get('[data-new-bill-section]');
+    const newFields = get('[data-new-bill-fields]');
+    const existingSection = get('[data-existing-bill-section]');
+
+    const otherDue = get('[data-payment-other-due]');
+    const selectedDue = get('[data-total-payable]');
+    const totalDue = get('[data-payment-total-due]');
+
+    const remaining = get('[data-remaining-balance]');
+    const patientRemaining = get('[data-patient-remaining]');
+    const remainingLabel = get('[data-payment-remaining-label]');
+
+    const otherLabel = get('[data-other-due-label]');
+    const currentLabel = get('[data-current-bill-label]');
+    const dateLabel = get('[data-payment-date-label]');
+
+    const help = get('[data-payment-help]');
+    const emptyMessage = get('[data-bill-empty-message]');
+    const receiptLink = get('[data-bill-receipt-link]');
+    const submitButton = get('[data-payment-submit]');
+
+    if (!mode || !patient || !bill || !amount || !subtotal || !discount) {
+        return;
+    }
+
+    const currency = form.dataset.currency || 'AED';
+    const editing = form.dataset.editing === '1';
+
+    let bills;
+
+    try {
+        bills = JSON.parse(
+            get('[data-payment-bills]')?.textContent || '[]'
+        );
+
+        if (!Array.isArray(bills)) {
+            throw new Error('Invalid bill data.');
+        }
+    } catch {
+        help.textContent = 'Bill details could not load. Reload this page.';
+        submitButton.disabled = true;
+        return;
+    }
+
+    const money = (cents) => {
+        const number = Number(cents) / 100;
+
+        return `${currency} ${number.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        })}`;
+    };
+
+    const readCents = (input) => {
+        const value = input.value.trim();
+
+        if (!/^\d+(?:\.\d{1,2})?$/.test(value)) {
+            return null;
+        }
+
+        const [whole, fraction = ''] = value.split('.');
+
+        return Number(whole) * 100
+            + Number(fraction.padEnd(2, '0'));
+    };
+
+    const relatedBills = () => bills.filter(
+        (item) => String(item.patient_id) === patient.value
+    );
+
+    const update = () => {
+        const isNew = mode.value === 'new_bill';
+        const isExisting = mode.value === 'existing_bill';
+        const isUnallocated = mode.value === 'unallocated';
+
+        newSection.hidden = !isNew;
+        newFields.disabled = !isNew;
+        existingSection.hidden = !isExisting;
+
+        bill.disabled = editing || !isExisting;
+        bill.required = isExisting && !editing;
+
+        amount.min = isNew ? '0' : '0.01';
+
+        subtotal.setCustomValidity('');
+        discount.setCustomValidity('');
+        amount.setCustomValidity('');
+        bill.setCustomValidity('');
+
+        const records = relatedBills();
+
+        const selected = records.find(
+            (item) => String(item.bill_id) === bill.value
+        );
+
+        const outstanding = records.reduce(
+            (sum, item) => sum + Number(item.due_cents),
+            0
+        );
+
+        const charges = readCents(subtotal);
+        const reduction = readCents(discount);
+        const received = readCents(amount);
+        const receivedForPreview = received ?? 0;
+
+        let current = 0;
+        let others = outstanding;
+        let validBill = true;
+
+        if (isNew) {
+            otherLabel.textContent = 'Previous outstanding bills';
+            currentLabel.textContent = 'New bill total';
+            dateLabel.textContent = 'Bill / payment date and time';
+
+            validBill = charges !== null
+                && charges > 0
+                && reduction !== null
+                && reduction < charges;
+
+            if (
+                charges !== null
+                && charges > 0
+                && reduction !== null
+                && reduction >= charges
+            ) {
+                discount.setCustomValidity(
+                    'Discount must be less than the charges amount.'
+                );
+            }
+
+            current = validBill ? charges - reduction : 0;
+
+            help.textContent =
+                'Previous dues are not added to the new bill. This payment applies only to the new bill.';
+        } else if (isExisting) {
+            otherLabel.textContent = 'Other outstanding bills';
+            currentLabel.textContent = 'Selected bill due';
+            dateLabel.textContent = 'Payment date and time';
+
+            validBill = Boolean(selected);
+            current = selected ? Number(selected.due_cents) : 0;
+            others = outstanding - current;
+
+            if (bill.value && !selected) {
+                bill.setCustomValidity(
+                    'Select a bill belonging to this patient.'
+                );
+            }
+
+            help.textContent =
+                'This payment reduces only the selected bill. Other bills remain unchanged.';
+        } else {
+            otherLabel.textContent = 'Outstanding bills';
+            currentLabel.textContent = 'Unallocated payment';
+            dateLabel.textContent = 'Payment date and time';
+
+            help.textContent =
+                'This existing unallocated payment is not applied to a bill.';
+        }
+
+        amount.max = !isUnallocated && validBill
+            ? (current / 100).toFixed(2)
+            : '9999999999.99';
+
+        const overpaid = !isUnallocated
+            && validBill
+            && received !== null
+            && received > current;
+
+        if (overpaid) {
+            amount.setCustomValidity(
+                'Received amount cannot exceed this bill’s remaining balance.'
+            );
+        }
+
+        otherDue.textContent = patient.value ? money(others) : '—';
+
+        selectedDue.textContent = isUnallocated
+            ? '—'
+            : (validBill ? money(current) : '—');
+
+        totalDue.textContent = patient.value
+            ? money(isNew ? outstanding + current : outstanding)
+            : '—';
+
+        remainingLabel.textContent = isUnallocated
+            ? 'Outstanding bills remain unchanged'
+            : 'This bill’s remaining balance';
+
+        if (isUnallocated) {
+            remaining.textContent = patient.value
+                ? money(outstanding)
+                : '—';
+
+            patientRemaining.textContent = patient.value
+                ? money(outstanding)
+                : '—';
+        } else if (overpaid) {
+            remaining.textContent = 'Amount exceeds bill balance';
+            patientRemaining.textContent = '—';
+        } else if (validBill) {
+            const billRemaining = current - receivedForPreview;
+
+            remaining.textContent = money(billRemaining);
+
+            patientRemaining.textContent = patient.value
+                ? money(others + billRemaining)
+                : '—';
+        } else {
+            remaining.textContent = '—';
+            patientRemaining.textContent = '—';
+        }
+
+        const receiving = received !== null && received > 0;
+
+        method.disabled = !receiving;
+        method.required = receiving;
+
+        reference.disabled = !receiving;
+        notes.disabled = !receiving;
+
+        const needsReference = receiving
+            && ['bank', 'card'].includes(method.value);
+
+        reference.required = needsReference;
+        referenceStar.hidden = !needsReference;
+
+        reference.placeholder = needsReference
+            ? 'Required transaction reference'
+            : 'Optional reference';
+
+        emptyMessage.hidden = !(
+            isExisting
+            && patient.value
+            && records.every((item) =>
+                Number(item.due_cents) <= 0
+                && String(item.bill_id) !== bill.value
+            )
+        );
+
+        receiptLink.hidden = !(isExisting && selected);
+
+        if (isExisting && selected) {
+            receiptLink.href = selected.receipt_url;
+        } else {
+            receiptLink.removeAttribute('href');
+        }
+
+        submitButton.textContent = editing
+            ? 'Update payment'
+            : (isNew
+                ? (receiving ? 'Save bill and payment' : 'Save unpaid bill')
+                : 'Save payment');
+    };
+
+    const rebuildBills = (keep = '') => {
+        bill.replaceChildren(new Option('Select bill', ''));
+
+        relatedBills()
+            .filter((item) =>
+                Number(item.due_cents) > 0
+                || String(item.bill_id) === String(keep)
+            )
+            .forEach((item) => {
+                bill.add(new Option(
+                    `${item.bill_no} — ${money(item.due_cents)} due`,
+                    String(item.bill_id)
+                ));
+            });
+
+        bill.value = String(keep);
+
+        if (bill.selectedIndex < 0) {
+            bill.value = '';
+        }
+
+        update();
+    };
+
+    patient.addEventListener('change', () => rebuildBills(''));
+
+    mode.addEventListener('change', update);
+    bill.addEventListener('change', update);
+    method.addEventListener('change', update);
+
+    [subtotal, discount, amount].forEach((input) => {
+        input.addEventListener('input', update);
     });
+
+    form.addEventListener('submit', (event) => {
+        update();
+
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+            return;
+        }
+
+        // Prevent accidental repeated clicks while this submission is loading.
+        submitButton.disabled = true;
+        submitButton.textContent = 'Saving…';
+    });
+
+    window.addEventListener('pageshow', () => {
+        submitButton.disabled = false;
+        update();
+    });
+
+    rebuildBills(bill.dataset.selectedBill || '');
 }
 
 /*
@@ -229,17 +547,33 @@ function initPatientFilters() {
 
 /*
 |--------------------------------------------------------------------------
-| Visits
+| VISITS — Server Filters
 |--------------------------------------------------------------------------
 */
 
 function initVisitFilters() {
-    initDateAndSearch(
-        '.visits-toolbar-actions .form-select:first-child',
-        '.visit-search input',
-        '.visits-table tbody tr',
-        2
+    const form = document.querySelector(
+        '[data-server-visit-filters]'
     );
+
+    if (!form || form.dataset.visitFiltersInitialized === 'true') {
+        return;
+    }
+
+    form.dataset.visitFiltersInitialized = 'true';
+
+    // Includes dropdowns connected through form="visit-filter-form".
+    Array.from(form.elements).forEach((element) => {
+        if (element.tagName !== 'SELECT') {
+            return;
+        }
+
+        element.addEventListener('change', () => {
+            form.requestSubmit();
+        });
+    });
+
+    // Search submits through Enter or the Search / Apply button.
 }
 
 /*
@@ -307,74 +641,31 @@ function initPrescriptionFilters() {
 
 /*
 |--------------------------------------------------------------------------
-| Payments — method, reference_no, payment_date
+| PAYMENTS — Server-side Filters
 |--------------------------------------------------------------------------
 */
 
 function initPaymentFilters() {
-    const method = document.querySelector(
-        '.payments-toolbar-actions .form-select:first-child'
-    );
+    const form = document.querySelector('[data-server-payment-filters]');
 
-    const date = document.querySelector(
-        '.payments-toolbar-actions .form-select:nth-child(2)'
-    );
+    if (!form || form.dataset.filtersInitialized === '1') {
+        return;
+    }
 
-    const search = document.querySelector(
-        '.payment-search input'
-    );
+    form.dataset.filtersInitialized = '1';
 
-    const rows = document.querySelectorAll(
-        '.payments-table tbody tr'
-    );
+    const method = form.elements.namedItem('method');
+    const dateRange = form.elements.namedItem('date_range');
 
-    if (rows.length === 0) return;
-
-    const apply = () => {
-        const selectedMethod =
-            method?.value.trim().toLowerCase() || 'all';
-
-        const selectedRange =
-            date?.value.trim().toLowerCase() || 'all time';
-
-        const term = search?.value.trim().toLowerCase() || '';
-        const today = new Date();
-
-        rows.forEach((row) => {
-            const text = row.textContent.toLowerCase();
-            const methodElement = row.querySelector(
-                '.payment-method'
-            );
-
-            const rowMethod = methodElement
-                ? methodElement.textContent.trim().toLowerCase()
-                : '';
-
-            const rowDate = parseTableDate(row.cells[2]?.textContent);
-
-            const searchMatch = !term || text.includes(term);
-
-            const methodMatch =
-                selectedMethod === 'all' ||
-                selectedMethod === 'all methods' ||
-                rowMethod === selectedMethod;
-
-            const dateMatch = matchDateRange(
-                rowDate,
-                selectedRange,
-                today
-            );
-
-            row.style.display =
-                searchMatch && methodMatch && dateMatch
-                    ? ''
-                    : 'none';
-        });
+    const applyFilters = () => {
+        form.requestSubmit();
     };
 
-    method?.addEventListener('change', apply);
-    date?.addEventListener('change', apply);
-    search?.addEventListener('input', apply);
+    method?.addEventListener('change', applyFilters);
+    dateRange?.addEventListener('change', applyFilters);
+
+    // Search runs with Enter or the Search button.
+    // Laravel applies all filters before pagination.
 }
 
 /*
@@ -498,7 +789,7 @@ function initUserFilters() {
 
 /*
 |--------------------------------------------------------------------------
-| Generic Table Search
+| GLOBAL — Search Only on Client-filtered Tables
 |--------------------------------------------------------------------------
 */
 
@@ -511,22 +802,41 @@ function initTableSearch() {
             '.expense-search input'
         )
         .forEach((input) => {
+            const form = input.form;
+
+            if (
+                form?.matches(
+                    '[data-server-payment-filters], ' +
+                    '[data-server-visit-filters], ' +
+                    '[data-server-filters]'
+                )
+            ) {
+                return;
+            }
+
+            if (input.dataset.tableSearchInitialized === '1') {
+                return;
+            }
+
+            input.dataset.tableSearchInitialized = '1';
+
             input.addEventListener('input', () => {
                 const table = input
                     .closest('main')
                     ?.querySelector('tbody');
 
-                if (!table) return;
+                if (!table) {
+                    return;
+                }
 
                 const term = input.value.trim().toLowerCase();
 
                 table.querySelectorAll('tr').forEach((row) => {
-                    row.style.display =
-                        row.textContent
-                            .toLowerCase()
-                            .includes(term)
-                            ? ''
-                            : 'none';
+                    row.style.display = row.textContent
+                        .toLowerCase()
+                        .includes(term)
+                        ? ''
+                        : 'none';
                 });
             });
         });
@@ -851,4 +1161,179 @@ if (document.readyState === 'loading') {
     );
 } else {
     initializeVisitCalendarFields();
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PRESCRIPTIONS — Patient Visits and Saved Templates
+|--------------------------------------------------------------------------
+*/
+
+function initializeDynamicPrescriptionForm() {
+    const form = document.querySelector('[data-prescription-form]');
+
+    if (!form || form.dataset.dynamicPrescriptionInitialized === 'true') {
+        return;
+    }
+
+    const patientSelect = form.querySelector('[data-rx-patient]');
+    const visitSelect = form.querySelector('[data-rx-visit]');
+    const templateSelect = form.querySelector('[data-rx-template]');
+    const templateSection = form.querySelector('[data-rx-template-section]');
+    const applyButton = form.querySelector('[data-rx-apply-template]');
+    const itemList = form.querySelector('[data-prescription-item-list]');
+    const instructions = form.querySelector('[data-rx-instructions]');
+    const message = form.querySelector('[data-rx-template-message]');
+    const dataElement = form.querySelector('[data-rx-template-data]');
+    const modeInputs = form.querySelectorAll('[name="prescription_type"]');
+
+    if (
+        !patientSelect || !visitSelect || !templateSelect ||
+        !templateSection || !applyButton || !itemList ||
+        !instructions || !message || !dataElement
+    ) {
+        return;
+    }
+
+    form.dataset.dynamicPrescriptionInitialized = 'true';
+
+    /*
+    | Patient → matching visits
+    */
+
+    function updatePatientVisits() {
+        const patientId = patientSelect.value;
+
+        Array.from(visitSelect.options).forEach((option) => {
+            if (option.value === '') {
+                return;
+            }
+
+            const belongsToPatient =
+                option.dataset.patientId === patientId;
+
+            option.hidden = !belongsToPatient;
+            option.disabled = !belongsToPatient;
+
+            if (!belongsToPatient && option.selected) {
+                visitSelect.value = '';
+            }
+        });
+    }
+
+    patientSelect.addEventListener('change', updatePatientVisits);
+    updatePatientVisits();
+
+    /*
+    | Custom/template mode
+    */
+
+    function updatePrescriptionMode() {
+        const mode = form.querySelector(
+            '[name="prescription_type"]:checked'
+        )?.value;
+
+        const usingTemplate = mode === 'template';
+
+        templateSection.classList.toggle('d-none', !usingTemplate);
+        templateSelect.disabled = !usingTemplate;
+        templateSelect.required = usingTemplate;
+
+        modeInputs.forEach((input) => {
+            input.closest('.prescription-choice')
+                ?.classList.toggle('active', input.checked);
+        });
+    }
+
+    modeInputs.forEach((input) => {
+        input.addEventListener('change', updatePrescriptionMode);
+    });
+
+    updatePrescriptionMode();
+
+    /*
+    | Load saved template into editable item rows
+    */
+
+    let templates = [];
+
+    try {
+        templates = JSON.parse(dataElement.textContent);
+    } catch {
+        message.textContent = 'Template data could not be loaded.';
+        applyButton.disabled = true;
+        return;
+    }
+
+    applyButton.addEventListener('click', () => {
+        const template = templates.find(
+            (entry) => String(entry.id) === templateSelect.value
+        );
+
+        if (!template) {
+            message.textContent = 'Please select a saved template.';
+            return;
+        }
+
+        if (!Array.isArray(template.items) || template.items.length === 0) {
+            message.textContent = 'This template has no items.';
+            return;
+        }
+
+        const firstRow = itemList.querySelector('.prescription-item-row');
+
+        if (!firstRow) {
+            message.textContent = 'An item row is required to load the template.';
+            return;
+        }
+
+        const hasCurrentContent =
+            instructions.value.trim() !== '' ||
+            Array.from(itemList.querySelectorAll('input')).some(
+                (input) => input.value.trim() !== ''
+            );
+
+        if (
+            hasCurrentContent &&
+            !window.confirm(
+                'Replace the current items and patient instructions with this template?'
+            )
+        ) {
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        template.items.forEach((item, index) => {
+            const row = firstRow.cloneNode(true);
+
+            row.querySelector('.item-number').textContent = index + 1;
+
+            row.querySelectorAll('[data-rx-field]').forEach((input) => {
+                const field = input.dataset.rxField;
+
+                input.name = `items[${index}][${field}]`;
+                input.value = item[field] ?? '';
+                input.classList.remove('is-invalid');
+            });
+
+            fragment.appendChild(row);
+        });
+
+        itemList.replaceChildren(fragment);
+        instructions.value = template.instructions ?? '';
+
+        message.textContent =
+            'Template loaded. Review or edit the items before saving.';
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeDynamicPrescriptionForm
+    );
+} else {
+    initializeDynamicPrescriptionForm();
 }

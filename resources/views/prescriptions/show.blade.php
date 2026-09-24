@@ -5,7 +5,7 @@
 @section('content')
 <div class="app-shell">
 
-    {{-- Prescription Detail Sidebar --}}
+    {{-- PRESCRIPTION DETAIL — Sidebar --}}
     <aside class="app-sidebar no-print">
         <div class="sidebar-brand">
             <div class="sidebar-logo">+</div>
@@ -13,34 +13,23 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a href="/dashboard" class="sidebar-link">
-                <span>▦</span>
-                <span>Dashboard</span>
+            <a href="{{ url('/dashboard') }}" class="sidebar-link">
+                <span>▦</span><span>Dashboard</span>
             </a>
-
-            <a href="/patients" class="sidebar-link">
-                <span>♙</span>
-                <span>Patients</span>
+            <a href="{{ url('/patients') }}" class="sidebar-link">
+                <span>♙</span><span>Patients</span>
             </a>
-
-            <a href="/visits" class="sidebar-link">
-                <span>▣</span>
-                <span>Visits</span>
+            <a href="{{ url('/visits') }}" class="sidebar-link">
+                <span>▣</span><span>Visits</span>
             </a>
-
-            <a href="/prescriptions" class="sidebar-link active">
-                <span>✎</span>
-                <span>Prescriptions</span>
+            <a href="{{ url('/prescriptions') }}" class="sidebar-link active">
+                <span>✎</span><span>Prescriptions</span>
             </a>
-
-            <a href="#" class="sidebar-link">
-                <span>₨</span>
-                <span>Payments</span>
+            <a href="{{ url('/payments') }}" class="sidebar-link">
+                <span>₨</span><span>Payments</span>
             </a>
-
-            <a href="#" class="sidebar-link">
-                <span>◈</span>
-                <span>Expenses</span>
+            <a href="{{ url('/expenses') }}" class="sidebar-link">
+                <span>◈</span><span>Expenses</span>
             </a>
         </nav>
 
@@ -50,72 +39,109 @@
         </div>
     </aside>
 
-    {{-- Prescription Detail Main Content --}}
     <main class="dashboard-main">
 
+        @if (session('success'))
+            <div class="alert alert-success no-print" role="alert">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <div class="prescription-detail-toolbar no-print">
-            <a href="/prescriptions" class="back-link">
+            <a href="{{ route('prescriptions.index') }}" class="back-link">
                 ← Back to prescriptions
             </a>
 
             <div class="prescription-toolbar-actions">
-                <button type="button" class="btn btn-outline-secondary">
-                    Download PDF
-                </button>
+                <a
+                    href="{{ route('prescriptions.edit', $prescription) }}"
+                    class="btn btn-outline-secondary"
+                >
+                    Edit prescription
+                </a>
 
-                <button type="button" class="btn btn-primary" onclick="window.print()">
-                    Print prescription
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-print-page
+                >
+                    Print / Save PDF
                 </button>
             </div>
         </div>
 
         <article class="prescription-document">
 
-            {{-- Document Header --}}
+            {{-- PRESCRIPTION DETAIL — Header --}}
             <header class="prescription-document-header">
-                <div>
-                    <div class="prescription-brand">
-                        <div class="prescription-brand-mark">+</div>
-                        <div>
-                            <h1>Salman Dawa Khana</h1>
-                            <p>Patient Care &amp; Herbal Wellness</p>
-                        </div>
+                <div class="prescription-brand">
+                    <div class="prescription-brand-mark">+</div>
+                    <div>
+                        <h1>
+                            {{ $prescription->clinic?->name ?? 'Salman Dawa Khana' }}
+                        </h1>
+                        <p>Patient Care &amp; Herbal Wellness</p>
                     </div>
                 </div>
 
                 <div class="prescription-document-meta">
                     <span>PRESCRIPTION</span>
-                    <strong>RX-00842</strong>
-                    <small>21 September 2026</small>
+                    <strong>{{ $prescription->prescription_no }}</strong>
+                    <small>
+                        {{ $prescription->prescribed_at->format('d F Y, h:i A') }}
+                    </small>
+                    <small>
+                        Status: {{ ucfirst($prescription->status) }}
+                    </small>
                 </div>
             </header>
 
             <div class="prescription-document-divider"></div>
 
-            {{-- Patient Information --}}
+            {{-- PRESCRIPTION DETAIL — Patient --}}
             <section class="prescription-patient-info">
                 <div>
                     <span>Patient name</span>
-                    <strong>Muhammad Ali</strong>
+                    <strong>
+                        {{ $prescription->patient?->full_name ?? '—' }}
+                    </strong>
                 </div>
 
                 <div>
                     <span>Patient ID</span>
-                    <strong>P-0001</strong>
+                    <strong>
+                        {{ $prescription->patient?->patient_code ?? '—' }}
+                    </strong>
                 </div>
 
                 <div>
-                    <span>Age / Gender</span>
-                    <strong>42 years / Male</strong>
+                    <span>Phone</span>
+                    <strong>
+                        {{ $prescription->patient?->phone ?: '—' }}
+                    </strong>
                 </div>
 
                 <div>
-                    <span>Visit type</span>
-                    <strong>Follow-up visit</strong>
+                    <span>Visit</span>
+                    <strong>
+                        @if ($prescription->visit)
+                            #{{ $prescription->visit->visit_id }}
+                            — {{ $prescription->visit->visit_reason }}
+                        @else
+                            No linked visit
+                        @endif
+                    </strong>
                 </div>
             </section>
 
-            {{-- Prescription Title --}}
+            @if ($prescription->visit?->diagnosis_name)
+                <section class="prescription-instructions">
+                    <h2>Tashkhees</h2>
+                    <p>{{ $prescription->visit->diagnosis_name }}</p>
+                </section>
+            @endif
+
+            {{-- PRESCRIPTION DETAIL — Items --}}
             <section class="prescription-document-section">
                 <div class="document-section-heading">
                     <span class="document-section-number">Rx</span>
@@ -126,69 +152,73 @@
                     <div class="prescription-table-row prescription-table-header">
                         <span>#</span>
                         <span>Item / ingredient</span>
-                        <span>Quantity</span>
-                        <span>Dosage and frequency</span>
+                        <span>Dosage</span>
+                        <span>Schedule and instructions</span>
                     </div>
 
-                    <div class="prescription-table-row">
-                        <span>01</span>
-                        <strong>Herbal mixture</strong>
-                        <span>100 g</span>
-                        <span>2 teaspoons, twice daily</span>
-                    </div>
+                    @forelse ($prescription->items as $item)
+                        <div class="prescription-table-row">
+                            <span>{{ $loop->iteration }}</span>
+                            <strong>{{ $item->item_name }}</strong>
+                            <span>{{ $item->dosage ?: '—' }}</span>
 
-                    <div class="prescription-table-row">
-                        <span>02</span>
-                        <strong>Black seed</strong>
-                        <span>50 g</span>
-                        <span>1 teaspoon, once daily</span>
-                    </div>
+                            <div>
+                                @if ($item->frequency)
+                                    <div>Frequency: {{ $item->frequency }}</div>
+                                @endif
 
-                    <div class="prescription-table-row">
-                        <span>03</span>
-                        <strong>Honey blend</strong>
-                        <span>250 ml</span>
-                        <span>1 tablespoon, after meals</span>
-                    </div>
+                                @if ($item->duration)
+                                    <div>Duration: {{ $item->duration }}</div>
+                                @endif
 
-                    <div class="prescription-table-row">
-                        <span>04</span>
-                        <strong>Herbal tea blend</strong>
-                        <span>100 g</span>
-                        <span>One cup, at night</span>
-                    </div>
+                                @if ($item->timing)
+                                    <div>Timing: {{ $item->timing }}</div>
+                                @endif
+
+                                @if ($item->instructions)
+                                    <div>{{ $item->instructions }}</div>
+                                @endif
+
+                                @if (
+                                    !$item->frequency &&
+                                    !$item->duration &&
+                                    !$item->timing &&
+                                    !$item->instructions
+                                )
+                                    —
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <p>No prescription items recorded.</p>
+                    @endforelse
                 </div>
             </section>
 
-            {{-- Instructions --}}
+            {{-- PRESCRIPTION DETAIL — Instructions --}}
             <section class="prescription-instructions">
                 <h2>Patient instructions</h2>
-                <p>
-                    Take the prescribed nuskha regularly after meals with warm water.
-                    Follow the instructions carefully and return for a follow-up visit
-                    as advised.
-                </p>
+                <p>{!! nl2br(e($prescription->general_instructions ?: 'No additional instructions.')) !!}</p>
             </section>
 
-            {{-- Footer --}}
             <footer class="prescription-document-footer">
                 <div>
                     <span>Prepared by</span>
-                    <strong>Dr. Ahmed Khan</strong>
+                    <strong>
+                        {{ $prescription->createdBy?->name ?? '—' }}
+                    </strong>
                 </div>
 
                 <div class="signature-area">
-                    <span>Doctor's signature</span>
+                    <span>Signature</span>
                     <div></div>
                 </div>
             </footer>
 
             <div class="prescription-print-note">
-                This prescription is issued by Salman Dawa Khana.
+                Prescription status: {{ ucfirst($prescription->status) }}.
             </div>
-
         </article>
-
     </main>
 </div>
 @endsection

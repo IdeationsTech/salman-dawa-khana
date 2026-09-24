@@ -74,10 +74,18 @@ Route::middleware('auth')->group(function () {
         ExpenseController::class
     );
 
-    Route::resource(
-        'payments',
-        PaymentController::class
-    );
+    /*
+|--------------------------------------------------------------------------
+| Payments and Bill Receipt
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/payments/bills/{bill}', [
+    PaymentController::class,
+    'billReceipt',
+])->name('payments.bills.show');
+
+Route::resource('payments', PaymentController::class);
 
     /*
     |----------------------------------------------------------------------

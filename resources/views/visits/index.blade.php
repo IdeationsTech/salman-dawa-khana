@@ -3,6 +3,29 @@
 @section('title', 'Visits — Salman Dawa Khana')
 
 @section('content')
+@php
+    $statusLabels = [
+        'in_progress' => 'In progress',
+        'completed' => 'Completed',
+        'follow_up_required' => 'Follow-up required',
+        'cancelled' => 'Cancelled',
+    ];
+
+    $dateOptions = [
+        'all dates' => 'All dates',
+        'today' => 'Today',
+        'this week' => 'This week',
+        'this month' => 'This month',
+    ];
+
+    $visitTypes = [
+        'General visit',
+        'Follow-up',
+        'New consultation',
+        'Prescription refill',
+    ];
+@endphp
+
 <div class="app-shell">
 
     {{-- VISITS — Sidebar --}}
@@ -16,23 +39,18 @@
             <a href="{{ route('dashboard') }}" class="sidebar-link">
                 <span>▦</span><span>Dashboard</span>
             </a>
-
             <a href="{{ route('patients.index') }}" class="sidebar-link">
                 <span>♙</span><span>Patients</span>
             </a>
-
             <a href="{{ route('visits.index') }}" class="sidebar-link active">
                 <span>▣</span><span>Visits</span>
             </a>
-
             <a href="{{ route('prescriptions.index') }}" class="sidebar-link">
                 <span>✎</span><span>Prescriptions</span>
             </a>
-
             <a href="{{ route('payments.index') }}" class="sidebar-link">
                 <span>₨</span><span>Payments</span>
             </a>
-
             <a href="{{ route('expenses.index') }}" class="sidebar-link">
                 <span>◈</span><span>Expenses</span>
             </a>
@@ -42,7 +60,6 @@
             <a href="{{ route('reports.index') }}" class="sidebar-link">
                 <span>◌</span><span>Reports</span>
             </a>
-
             <a href="{{ route('settings.index') }}" class="sidebar-link">
                 <span>⚙</span><span>Settings</span>
             </a>
@@ -54,7 +71,6 @@
         </div>
     </aside>
 
-    {{-- VISITS — Main Content --}}
     <main class="dashboard-main">
 
         <header class="page-header">
@@ -114,7 +130,7 @@
             </article>
         </section>
 
-        {{-- VISITS — Records --}}
+        {{-- VISITS — Filters and Records --}}
         <section class="visits-panel">
 
             <div class="visits-toolbar">
@@ -123,40 +139,39 @@
                     <p>View and manage patient visit history.</p>
                 </div>
 
-                <div class="visits-toolbar-actions">
+                <div class="visits-toolbar-actions flex-wrap">
                     <select
                         name="date_range"
                         class="form-select"
                         form="visit-filter-form"
                         aria-label="Filter by date"
                     >
-                        <option
-                            value="all dates"
-                            @selected(request('date_range', 'all dates') === 'all dates')
-                        >
-                            All dates
-                        </option>
+                        @foreach ($dateOptions as $value => $label)
+                            <option
+                                value="{{ $value }}"
+                                @selected(request('date_range', 'all dates') === $value)
+                            >
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
 
-                        <option
-                            value="today"
-                            @selected(request('date_range') === 'today')
-                        >
-                            Today
-                        </option>
+                    <select
+                        name="visit_type"
+                        class="form-select"
+                        form="visit-filter-form"
+                        aria-label="Filter by visit type"
+                    >
+                        <option value="all">All visit types</option>
 
-                        <option
-                            value="this week"
-                            @selected(request('date_range') === 'this week')
-                        >
-                            This week
-                        </option>
-
-                        <option
-                            value="this month"
-                            @selected(request('date_range') === 'this month')
-                        >
-                            This month
-                        </option>
+                        @foreach ($visitTypes as $type)
+                            <option
+                                value="{{ $type }}"
+                                @selected(request('visit_type') === $type)
+                            >
+                                {{ $type }}
+                            </option>
+                        @endforeach
                     </select>
 
                     <select
@@ -173,25 +188,20 @@
                         </option>
 
                         <option
-                            value="completed"
-                            @selected(request('status') === 'completed')
+                            value="not_recorded"
+                            @selected(request('status') === 'not_recorded')
                         >
-                            Completed
+                            Not recorded
                         </option>
 
-                        <option
-                            value="follow-up"
-                            @selected(request('status') === 'follow-up')
-                        >
-                            Follow-up
-                        </option>
-
-                        <option
-                            value="cancelled"
-                            @selected(request('status') === 'cancelled')
-                        >
-                            Cancelled
-                        </option>
+                        @foreach ($statusLabels as $value => $label)
+                            <option
+                                value="{{ $value }}"
+                                @selected(request('status') === $value)
+                            >
+                                {{ $label }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
             </div>
@@ -200,10 +210,10 @@
                 method="GET"
                 action="{{ route('visits.index') }}"
                 id="visit-filter-form"
+                data-server-visit-filters
             >
                 <div class="visit-search">
                     <span>⌕</span>
-
                     <input
                         type="search"
                         name="search"
@@ -211,6 +221,16 @@
                         placeholder="Search by patient name, phone, patient code or visit ID"
                         aria-label="Search visits"
                     >
+                </div>
+
+                <div class="d-flex gap-2 mb-3">
+                    <button type="submit" class="btn btn-primary">
+                        Search / Apply
+                    </button>
+
+                    <a href="{{ route('visits.index') }}" class="btn btn-light">
+                        Clear
+                    </a>
                 </div>
             </form>
 
@@ -238,7 +258,6 @@
                                     <strong>
                                         {{ $visit->patient?->full_name ?? 'Patient unavailable' }}
                                     </strong>
-
                                     <small>
                                         {{ $visit->patient?->patient_code ?? '—' }}
                                     </small>
@@ -246,7 +265,6 @@
 
                                 <td>
                                     {{ $visit->visit_date->format('d M Y') }}
-
                                     <small>
                                         {{ $visit->visit_date->format('l') }}
                                         ·
@@ -254,9 +272,7 @@
                                     </small>
                                 </td>
 
-                                <td>
-                                    {{ $visit->visit_reason ?: '—' }}
-                                </td>
+                                <td>{{ $visit->visit_reason ?: '—' }}</td>
 
                                 <td>
                                     {{ $visit->patient?->phone ?: '—' }}
@@ -267,9 +283,17 @@
                                 </td>
 
                                 <td>
-                                    @if ($visit->status)
+                                    @if ($visit->status === 'completed')
+                                        <span class="status-badge active-badge">
+                                            Completed
+                                        </span>
+                                    @elseif ($visit->status === 'follow_up_required')
+                                        <span class="status-badge due-badge">
+                                            Follow-up required
+                                        </span>
+                                    @elseif ($visit->status)
                                         <span class="status-badge">
-                                            {{ ucfirst(str_replace('_', ' ', $visit->status)) }}
+                                            {{ $statusLabels[$visit->status] ?? $visit->status }}
                                         </span>
                                     @else
                                         <span class="text-muted">
@@ -290,7 +314,7 @@
                         @empty
                             <tr>
                                 <td colspan="8" class="text-center py-4">
-                                    No visits found.
+                                    No visits match the selected filters.
                                 </td>
                             </tr>
                         @endforelse
@@ -305,9 +329,7 @@
                     of {{ $visits->total() }} visits
                 </span>
 
-                <div>
-                    {{ $visits->links() }}
-                </div>
+                <div>{{ $visits->links() }}</div>
             </div>
         </section>
     </main>

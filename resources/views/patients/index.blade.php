@@ -230,7 +230,7 @@
                                 </td>
 
                                 <td>
-                                    @if($patient->is_active)
+                                    @if($patient->status === 'active')
                                         <span class="status-badge active-badge">
                                             Active
                                         </span>

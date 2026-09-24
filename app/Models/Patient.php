@@ -33,6 +33,7 @@ class Patient extends Model
         'marital_status',
         'has_children',
         'children_count',
+        'emirates_id',
     ];
 
     protected function casts(): array

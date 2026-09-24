@@ -31,6 +31,13 @@
         'New consultation',
         'Prescription refill',
     ];
+
+    $statusOptions = [
+        'in_progress' => 'In progress',
+        'completed' => 'Completed',
+        'follow_up_required' => 'Follow-up required',
+        'cancelled' => 'Cancelled',
+    ];
 @endphp
 
 <div class="app-shell">
@@ -46,23 +53,18 @@
             <a href="{{ url('/dashboard') }}" class="sidebar-link">
                 <span>▦</span><span>Dashboard</span>
             </a>
-
             <a href="{{ url('/patients') }}" class="sidebar-link">
                 <span>♙</span><span>Patients</span>
             </a>
-
             <a href="{{ url('/visits') }}" class="sidebar-link active">
                 <span>▣</span><span>Visits</span>
             </a>
-
             <a href="{{ url('/prescriptions') }}" class="sidebar-link">
                 <span>✎</span><span>Prescriptions</span>
             </a>
-
             <a href="{{ url('/payments') }}" class="sidebar-link">
                 <span>₨</span><span>Payments</span>
             </a>
-
             <a href="{{ url('/expenses') }}" class="sidebar-link">
                 <span>◈</span><span>Expenses</span>
             </a>
@@ -83,13 +85,12 @@
             </a>
 
             <h1>{{ $editing ? 'Edit visit' : 'Create new visit' }}</h1>
-            <p>Record the visit date, time and diagnosis.</p>
+            <p>Record the visit date, time, status and diagnosis.</p>
         </div>
 
         @if ($errors->any())
             <div class="alert alert-danger" role="alert">
                 <strong>Please correct the following:</strong>
-
                 <ul class="mb-0 mt-2">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -111,11 +112,10 @@
                 @method('PUT')
             @endif
 
-            {{-- VISITS — Patient Information --}}
+            {{-- VISITS — Patient --}}
             <section class="visit-form-panel">
                 <div class="visit-form-heading">
                     <div class="form-section-number">01</div>
-
                     <div>
                         <h2>Patient information</h2>
                         <p>Select the patient for this visit.</p>
@@ -174,11 +174,10 @@
                 </div>
             </section>
 
-            {{-- VISITS — Date, Calendar and Time --}}
+            {{-- VISITS — Date and Time --}}
             <section class="visit-form-panel">
                 <div class="visit-form-heading">
                     <div class="form-section-number">02</div>
-
                     <div>
                         <h2>Visit details</h2>
                         <p>Day and Hijri date update automatically.</p>
@@ -186,7 +185,6 @@
                 </div>
 
                 <div class="visit-form-grid">
-
                     <div class="form-field">
                         <label for="visit_date" class="form-label">
                             Gregorian Date <span>*</span>
@@ -210,9 +208,7 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="visit_day" class="form-label">
-                            Day
-                        </label>
+                        <label for="visit_day" class="form-label">Day</label>
 
                         <input
                             type="text"
@@ -299,11 +295,61 @@
                 </div>
             </section>
 
-            {{-- VISITS — Diagnosis and Notes --}}
+            {{-- VISITS — Status --}}
             <section class="visit-form-panel">
                 <div class="visit-form-heading">
                     <div class="form-section-number">03</div>
+                    <div>
+                        <h2>Visit status</h2>
+                        <p>Select the current state of this visit.</p>
+                    </div>
+                </div>
 
+                <div class="visit-form-grid">
+                    <div class="form-field">
+                        <label for="visit_status" class="form-label">
+                            Status <span>*</span>
+                        </label>
+
+                        <select
+                            id="visit_status"
+                            name="status"
+                            class="form-select @error('status') is-invalid @enderror"
+                            required
+                        >
+                            <option value="">Select status</option>
+
+                            @foreach ($statusOptions as $value => $label)
+                                <option
+                                    value="{{ $value }}"
+                                    @selected(
+                                        old('status', $editing ? $visit->status : 'in_progress')
+                                        === $value
+                                    )
+                                >
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @error('status')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+
+                        @if ($editing && $visit->status === null)
+                            <small class="form-help">
+                                This older visit has no recorded status.
+                                Select its actual status before saving.
+                            </small>
+                        @endif
+                    </div>
+                </div>
+            </section>
+
+            {{-- VISITS — Tashkhees and Notes --}}
+            <section class="visit-form-panel">
+                <div class="visit-form-heading">
+                    <div class="form-section-number">04</div>
                     <div>
                         <h2>Tashkhees and notes</h2>
                         <p>Record the illness or complaint for this visit.</p>
@@ -311,7 +357,6 @@
                 </div>
 
                 <div class="visit-form-grid">
-
                     <div class="form-field visit-field-wide">
                         <label for="diagnosis_name" class="form-label">
                             Tashkhees / Illness Name

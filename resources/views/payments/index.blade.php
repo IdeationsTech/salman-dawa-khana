@@ -4,73 +4,16 @@
 
 @section('content')
 <div class="app-shell">
-
-    <aside class="app-sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="{{ route('dashboard') }}" class="sidebar-link">
-                <span>▦</span>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('patients.index') }}" class="sidebar-link">
-                <span>♙</span>
-                <span>Patients</span>
-            </a>
-
-            <a href="{{ route('visits.index') }}" class="sidebar-link">
-                <span>▣</span>
-                <span>Visits</span>
-            </a>
-
-            <a href="{{ route('prescriptions.index') }}" class="sidebar-link">
-                <span>✎</span>
-                <span>Prescriptions</span>
-            </a>
-
-            <a href="{{ route('payments.index') }}" class="sidebar-link active">
-                <span>₨</span>
-                <span>Payments</span>
-            </a>
-
-            <a href="{{ route('expenses.index') }}" class="sidebar-link">
-                <span>◈</span>
-                <span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="{{ route('reports.index') }}" class="sidebar-link">
-                <span>◌</span>
-                <span>Reports</span>
-            </a>
-
-            <a href="{{ route('settings.index') }}" class="sidebar-link">
-                <span>⚙</span>
-                <span>Settings</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <span class="status-dot"></span>
-            System online
-        </div>
-    </aside>
+    @include('payments._sidebar')
 
     <main class="dashboard-main">
-
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Clinic finances</p>
-
                 <h1>Payments</h1>
 
                 <p class="page-subtitle">
-                    Track patient payments, income and outstanding balances.
+                    Track patient payments and outstanding bills.
                 </p>
             </div>
 
@@ -80,121 +23,111 @@
         </header>
 
         @if(session('success'))
-            <div class="alert alert-success">
+            <div class="alert alert-success" role="alert">
                 {{ session('success') }}
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <ul class="mb-0">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- PAYMENTS — Clinic Summary --}}
         <section class="payment-summary-grid">
             <article class="payment-summary-card">
-                <span>Today's income</span>
-
-                <strong>
-                    PKR {{ number_format($todayReceived ?? 0, 2) }}
-                </strong>
-
-                <small class="stat-success">
-                    Payments received today
-                </small>
+                <span>Today's receipts</span>
+                <strong>{{ $currency }} {{ number_format($todayReceived, 2) }}</strong>
+                <small class="stat-success">Payments received today</small>
             </article>
 
             <article class="payment-summary-card">
-                <span>This month's income</span>
-
-                <strong>
-                    PKR {{ number_format($monthReceived ?? 0, 2) }}
-                </strong>
-
-                <small>
-                    {{ now()->format('F Y') }}
-                </small>
+                <span>This month's receipts</span>
+                <strong>{{ $currency }} {{ number_format($monthReceived, 2) }}</strong>
+                <small>{{ $monthLabel }}</small>
             </article>
 
             <article class="payment-summary-card">
                 <span>Total received</span>
-
-                <strong>
-                    PKR {{ number_format($totalReceived ?? 0, 2) }}
-                </strong>
-
-                <small>
-                    All clinic payments
-                </small>
+                <strong>{{ $currency }} {{ number_format($totalReceived, 2) }}</strong>
+                <small>All recorded payments</small>
             </article>
 
             <article class="payment-summary-card">
-                <span>Outstanding dues</span>
-
+                <span>Outstanding bills</span>
                 <strong>
-                    PKR {{ number_format($outstandingBalance ?? 0, 2) }}
+                    {{ $currency }} {{ number_format($outstandingBalance, 2) }}
                 </strong>
-
-                <small class="stat-warning">
-                    Patient balances
-                </small>
+                <small class="stat-warning">Excludes unallocated payments</small>
             </article>
         </section>
 
-        <section class="payments-panel">
+        <p class="text-muted small">
+            Unallocated payments:
+            <strong>
+                {{ $currency }} {{ number_format($unallocatedReceived, 2) }}
+            </strong>.
+            Included in total received, but not applied to bills.
+            Summary cards show clinic totals regardless of the filters below.
+        </p>
 
+        {{-- PAYMENTS — Search and Filters --}}
+        <section class="payments-panel">
             <div class="payments-toolbar">
                 <div>
                     <h2>Payment records</h2>
-
-                    <p>
-                        Recent patient payments and transactions.
-                    </p>
+                    <p>Search all recorded payments.</p>
                 </div>
 
                 <div class="payments-toolbar-actions">
-
                     <select
                         name="method"
                         class="form-select"
                         form="payment-filter-form"
+                        aria-label="Payment method"
                     >
-                        <option value="all">
+                        <option value="all" @selected($method === 'all')>
                             All methods
                         </option>
 
-                        @foreach($paymentMethods as $method)
-                            <option
-                                value="{{ $method }}"
-                                {{ request('method') === $method ? 'selected' : '' }}
-                            >
-                                {{ ucfirst($method) }}
-                            </option>
-                        @endforeach
+                        <option value="cash" @selected($method === 'cash')>
+                            Cash
+                        </option>
+
+                        <option value="bank" @selected($method === 'bank')>
+                            Bank transfer
+                        </option>
+
+                        <option value="card" @selected($method === 'card')>
+                            Card
+                        </option>
                     </select>
 
                     <select
                         name="date_range"
                         class="form-select"
                         form="payment-filter-form"
+                        aria-label="Payment date range"
                     >
-                        <option value="this month">
-                            This month
+                        <option value="all time" @selected($dateRange === 'all time')>
+                            All time
                         </option>
 
-                        <option
-                            value="today"
-                            {{ request('date_range') === 'today' ? 'selected' : '' }}
-                        >
+                        <option value="today" @selected($dateRange === 'today')>
                             Today
                         </option>
 
-                        <option
-                            value="this week"
-                            {{ request('date_range') === 'this week' ? 'selected' : '' }}
-                        >
+                        <option value="this week" @selected($dateRange === 'this week')>
                             This week
                         </option>
 
-                        <option
-                            value="all time"
-                            {{ request('date_range') === 'all time' ? 'selected' : '' }}
-                        >
-                            All time
+                        <option value="this month" @selected($dateRange === 'this month')>
+                            This month
                         </option>
                     </select>
                 </div>
@@ -204,19 +137,34 @@
                 method="GET"
                 action="{{ route('payments.index') }}"
                 id="payment-filter-form"
+                data-server-payment-filters
             >
                 <div class="payment-search">
-                    <span>⌕</span>
+                    <span aria-hidden="true">⌕</span>
 
                     <input
                         type="search"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Search by patient, payment ID or reference"
+                        maxlength="160"
+                        aria-label="Search payments"
+                        placeholder="Patient name, phone, patient code, payment ID or reference"
                     >
+
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Search
+                    </button>
+
+                    <a
+                        href="{{ route('payments.index') }}"
+                        class="btn btn-light btn-sm"
+                    >
+                        Clear
+                    </a>
                 </div>
             </form>
 
+            {{-- PAYMENTS — Records Table --}}
             <div class="table-responsive">
                 <table class="table payments-table align-middle">
                     <thead>
@@ -234,54 +182,65 @@
                     <tbody>
                         @forelse($payments as $payment)
                             @php
-                                $method = strtolower($payment->method);
+                                $rowMethod = strtolower(trim($payment->method));
 
-                                $methodClass = match ($method) {
-                                    'cash' => 'cash-method',
-                                    'bank', 'bank transfer' => 'bank-method',
-                                    'card' => 'card-method',
-                                    default => 'bank-method',
-                                };
+                                $isBank = in_array(
+                                    $rowMethod,
+                                    ['bank', 'bank transfer', 'bank_transfer'],
+                                    true
+                                );
+
+                                $methodLabel = $isBank
+                                    ? 'Bank transfer'
+                                    : ucfirst($rowMethod);
+
+                                $methodClass = $isBank
+                                    ? 'bank-method'
+                                    : ($rowMethod === 'cash'
+                                        ? 'cash-method'
+                                        : 'card-method');
                             @endphp
 
                             <tr>
-                                <td>
-                                    {{ $payment->payment_id }}
-                                </td>
+                                <td>PAY-{{ $payment->payment_id }}</td>
 
                                 <td>
                                     <strong>
-                                        {{ $payment->patient->full_name ?? 'Patient #' . $payment->patient_id }}
+                                        {{ $payment->patient?->full_name ?? 'Patient unavailable' }}
                                     </strong>
 
                                     <small>
-                                        P-{{ str_pad($payment->patient_id, 4, '0', STR_PAD_LEFT) }}
+                                        {{ $payment->patient?->patient_code ?? '—' }}
+                                    </small>
+
+                                    <small>
+                                        {{ $payment->patient?->phone ?? '—' }}
                                     </small>
                                 </td>
 
                                 <td>
-                                    {{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}
-
-                                    <br>
-
+                                    {{ $payment->payment_date->format('d M Y') }}
                                     <small>
-                                        {{ \Carbon\Carbon::parse($payment->payment_date)->format('h:i A') }}
+                                        {{ $payment->payment_date->format('h:i A') }}
                                     </small>
                                 </td>
 
                                 <td>
                                     <span class="payment-method {{ $methodClass }}">
-                                        {{ ucfirst($payment->method) }}
+                                        {{ $methodLabel }}
                                     </span>
+
+                                    @if(!$payment->bill_id)
+                                        <small>Unallocated</small>
+                                    @endif
                                 </td>
 
                                 <td class="payment-amount">
-                                    PKR {{ number_format($payment->amount, 2) }}
+                                    {{ $currency }}
+                                    {{ number_format($payment->amount, 2) }}
                                 </td>
 
-                                <td>
-                                    {{ $payment->reference_no ?? '—' }}
-                                </td>
+                                <td>{{ $payment->reference_no ?: '—' }}</td>
 
                                 <td class="text-end">
                                     <a
@@ -294,8 +253,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">
-                                    No payments found.
+                                <td colspan="7" class="text-center py-4">
+                                    No payments match your filters.
                                 </td>
                             </tr>
                         @endforelse
@@ -314,9 +273,7 @@
                     {{ $payments->links() }}
                 </div>
             </div>
-
         </section>
-
     </main>
 </div>
 @endsection
