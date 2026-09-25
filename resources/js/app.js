@@ -578,65 +578,33 @@ function initVisitFilters() {
 
 /*
 |--------------------------------------------------------------------------
-| Prescriptions
+| PRESCRIPTIONS — Server-side Filters
 |--------------------------------------------------------------------------
 */
 
 function initPrescriptionFilters() {
-    const date = document.querySelector(
-        '.prescriptions-toolbar-actions .form-select:first-child'
+    const form = document.querySelector(
+        '[data-server-prescription-filters]'
     );
 
-    const status = document.querySelector(
-        '.prescriptions-toolbar-actions .form-select:nth-child(2)'
-    );
+    if (!form || form.dataset.filtersInitialized === '1') {
+        return;
+    }
 
-    const search = document.querySelector(
-        '.prescription-search input'
-    );
+    form.dataset.filtersInitialized = '1';
 
-    const rows = document.querySelectorAll(
-        '.prescriptions-table tbody tr'
-    );
+    const dateRange = form.elements.namedItem('date_range');
+    const status = form.elements.namedItem('status');
 
-    if (rows.length === 0) return;
-
-    const apply = () => {
-        const term = search?.value.trim().toLowerCase() || '';
-        const range = date?.value.trim().toLowerCase() || 'all dates';
-        const selectedStatus =
-            status?.value.trim().toLowerCase() || 'all';
-
-        const today = new Date();
-
-        rows.forEach((row) => {
-            const text = row.textContent.toLowerCase();
-            const badge = row.querySelector('.status-badge');
-
-            const rowStatus = badge
-                ? badge.textContent.trim().toLowerCase()
-                : '';
-
-            const date = parseTableDate(row.cells[2]?.textContent);
-            const searchMatch = !term || text.includes(term);
-
-            const statusMatch =
-                selectedStatus === 'all' ||
-                selectedStatus === 'all statuses' ||
-                rowStatus === selectedStatus;
-
-            const dateMatch = matchDateRange(date, range, today);
-
-            row.style.display =
-                searchMatch && statusMatch && dateMatch
-                    ? ''
-                    : 'none';
-        });
+    const applyFilters = () => {
+        form.requestSubmit();
     };
 
-    search?.addEventListener('input', apply);
-    date?.addEventListener('change', apply);
-    status?.addEventListener('change', apply);
+    dateRange?.addEventListener('change', applyFilters);
+    status?.addEventListener('change', applyFilters);
+
+    // Search submits with Enter or the Search / Apply button.
+    // Laravel filters all matching records before pagination.
 }
 
 /*

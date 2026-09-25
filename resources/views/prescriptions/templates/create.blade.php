@@ -1,168 +1,196 @@
 @extends('layouts.app')
 
-@section('title', 'Create Nuskha Template — Salman Dawa Khana')
+@section(
+    'title',
+    isset($template)
+        ? 'Edit Nuskha Template — Salman Dawa Khana'
+        : 'Create Nuskha Template — Salman Dawa Khana'
+)
 
 @section('content')
+@php
+    $editing = isset($template) && $template->exists;
+
+    $defaultItems = $editing
+        ? $template->items->map(
+            fn ($item) => $item->only(
+                \App\Models\NuskhaItem::ITEM_FIELDS
+            )
+        )->all()
+        : [[]];
+
+    $items = old('items', $defaultItems);
+
+    $items = is_array($items)
+        ? array_values(array_filter($items, 'is_array'))
+        : [];
+
+    if (empty($items)) {
+        $items = [[]];
+    }
+
+    $selectedStatus = (string) old(
+        'is_active',
+        $editing ? (int) $template->is_active : 1
+    );
+@endphp
+
 <div class="app-shell">
+    @include('layouts._sidebar')
 
-    {{-- Template Form Sidebar --}}
-    <aside class="app-sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="sidebar-link">
-                <span>▦</span><span>Dashboard</span>
-            </a>
-
-            <a href="/patients" class="sidebar-link">
-                <span>♙</span><span>Patients</span>
-            </a>
-
-            <a href="/visits" class="sidebar-link">
-                <span>▣</span><span>Visits</span>
-            </a>
-
-            <a href="/prescriptions" class="sidebar-link active">
-                <span>✎</span><span>Prescriptions</span>
-            </a>
-
-            <a href="/payments" class="sidebar-link">
-                <span>₨</span><span>Payments</span>
-            </a>
-
-            <a href="/expenses" class="sidebar-link">
-                <span>◈</span><span>Expenses</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <span class="status-dot"></span>
-            System online
-        </div>
-    </aside>
-
-    {{-- Template Form Main Content --}}
     <main class="dashboard-main">
 
-        <div class="form-page-header">
-            <a href="/prescriptions/templates" class="back-link">
+        {{-- NUSKHA TEMPLATE — Heading --}}
+        <div class="form-page-header no-print">
+            <a
+                href="{{ route('prescriptions.templates.index') }}"
+                class="back-link"
+            >
                 ← Back to templates
             </a>
 
-            <h1>Create new nuskha template</h1>
-            <p>Save a reusable prescription for future patient visits.</p>
+            <h1>
+                {{ $editing
+                    ? 'Edit nuskha template'
+                    : 'Create new nuskha template' }}
+            </h1>
+
+            <p>
+                Save ingredients, quantities and instructions
+                for future prescriptions.
+            </p>
         </div>
 
-        <form action="#" method="POST">
+        {{-- NUSKHA TEMPLATE — Validation Errors --}}
+        @if ($errors->any())
+            <div class="alert alert-danger no-print" role="alert">
+                <strong>Please correct the following:</strong>
+
+                <ul class="mb-0 mt-2">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- NUSKHA TEMPLATE — Create / Update --}}
+        <form
+            action="{{ $editing
+                ? route('prescriptions.templates.update', $template)
+                : route('prescriptions.templates.store') }}"
+            method="POST"
+            data-template-form
+            class="no-print"
+        >
             @csrf
 
-            {{-- Basic Information --}}
+            @if ($editing)
+                @method('PUT')
+            @endif
+
+            {{-- NUSKHA TEMPLATE — Basic Information --}}
             <section class="template-form-panel">
                 <div class="template-form-heading">
                     <div class="form-section-number">01</div>
 
                     <div>
                         <h2>Basic information</h2>
-                        <p>Give this reusable nuskha a clear name and category.</p>
+                        <p>Give this reusable nuskha a clear name.</p>
                     </div>
                 </div>
 
                 <div class="template-form-grid">
                     <div class="form-field">
                         <label for="template_name" class="form-label">
-                            Template name <span>*</span>
+                            Template name *
                         </label>
 
                         <input
                             type="text"
                             id="template_name"
-                            name="template_name"
-                            class="form-control"
-                            placeholder="e.g. Joint Comfort"
+                            name="name"
+                            class="form-control @error('name') is-invalid @enderror"
+                            value="{{ old('name', $template->name ?? '') }}"
+                            maxlength="160"
+                            placeholder="Enter nuskha name"
+                            required
                         >
+
+                        @error('name')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
 
                     <div class="form-field">
-                        <label for="category" class="form-label">
-                            Category
+                        <label for="template_status" class="form-label">
+                            Status *
                         </label>
 
-                        <select id="category" name="category" class="form-select">
-                            <option selected>Select category</option>
-                            <option>General wellness</option>
-                            <option>Digestive care</option>
-                            <option>Joint care</option>
-                            <option>Respiratory care</option>
-                            <option>Energy and vitality</option>
+                        <select
+                            id="template_status"
+                            name="is_active"
+                            class="form-select"
+                            required
+                        >
+                            <option
+                                value="1"
+                                @selected($selectedStatus === '1')
+                            >
+                                Active
+                            </option>
+
+                            <option
+                                value="0"
+                                @selected($selectedStatus === '0')
+                            >
+                                Inactive
+                            </option>
                         </select>
-                    </div>
 
-                    <div class="form-field template-field-wide">
-                        <label for="description" class="form-label">
-                            Description
-                        </label>
-
-                        <textarea
-                            id="description"
-                            name="description"
-                            class="form-control"
-                            rows="3"
-                            placeholder="Describe the purpose of this nuskha..."
-                        ></textarea>
+                        <small class="form-help">
+                            Only active templates appear when creating a prescription.
+                        </small>
                     </div>
                 </div>
             </section>
 
-            {{-- Nuskha Items --}}
+            {{-- NUSKHA TEMPLATE — Ingredients --}}
             <section class="template-form-panel">
                 <div class="template-form-heading">
                     <div class="form-section-number">02</div>
 
                     <div>
-                        <h2>Nuskha items</h2>
-                        <p>Add the ingredients or items included in this template.</p>
+                        <h2>Nuskha ingredients</h2>
+                        <p>
+                            Add each ingredient and its quantity/unit.
+                            Dosage is kept separately for a patient's prescription.
+                        </p>
                     </div>
                 </div>
 
                 <div class="nuskha-item-list" data-item-list>
+                    @foreach ($items as $index => $item)
+                        <div class="nuskha-item-row">
+                            <div class="item-number">{{ $index + 1 }}</div>
 
-                    <div class="nuskha-item-row">
-                        <div class="item-number">1</div>
+                            @include('prescriptions._item-fields', [
+                                'item' => $item,
+                                'index' => $index,
+                                'quantityRequired' => true,
+                            ])
 
-                        <div class="form-field">
-                            <label class="form-label">Item name</label>
-
-                            <input
-                                type="text"
-                                name="items[]"
-                                class="form-control"
-                                placeholder="e.g. Herbal mixture"
+                            <button
+                                type="button"
+                                class="remove-item-button"
+                                aria-label="Remove ingredient"
                             >
+                                ×
+                            </button>
                         </div>
-
-                        <div class="form-field item-quantity">
-                            <label class="form-label">Quantity</label>
-
-                            <input
-                                type="text"
-                                name="quantities[]"
-                                class="form-control"
-                                placeholder="e.g. 100 g"
-                            >
-                        </div>
-
-                        <button
-                            type="button"
-                            class="remove-item-button"
-                            aria-label="Remove item"
-                        >
-                            ×
-                        </button>
-                    </div>
-
+                    @endforeach
                 </div>
 
                 <button
@@ -172,76 +200,139 @@
                 >
                     + Add another item
                 </button>
+
+                <p class="form-help mt-2 mb-0">
+                    Maximum 100 ingredients. Quantity supports up to three decimal places.
+                </p>
             </section>
 
-            {{-- Usage Instructions --}}
+            {{-- NUSKHA TEMPLATE — Instructions --}}
             <section class="template-form-panel">
                 <div class="template-form-heading">
                     <div class="form-section-number">03</div>
 
                     <div>
-                        <h2>Usage instructions</h2>
-                        <p>Define how the patient should use this nuskha.</p>
+                        <h2>General instructions</h2>
+                        <p>
+                            These notes are copied into a prescription
+                            when this template is loaded.
+                        </p>
                     </div>
                 </div>
 
-                <div class="template-form-grid">
-                    <div class="form-field">
-                        <label for="dosage" class="form-label">
-                            Dosage / quantity per use
-                        </label>
+                <div class="form-field">
+                    <label for="template_instructions" class="form-label">
+                        Instructions and notes
+                    </label>
 
-                        <input
-                            type="text"
-                            id="dosage"
-                            name="dosage"
-                            class="form-control"
-                            placeholder="e.g. 2 teaspoons"
-                        >
-                    </div>
-
-                    <div class="form-field">
-                        <label for="frequency" class="form-label">
-                            Frequency
-                        </label>
-
-                        <select id="frequency" name="frequency" class="form-select">
-                            <option selected>Select frequency</option>
-                            <option>Once daily</option>
-                            <option>Twice daily</option>
-                            <option>Three times daily</option>
-                            <option>As directed</option>
-                        </select>
-                    </div>
-
-                    <div class="form-field template-field-wide">
-                        <label for="instructions" class="form-label">
-                            Additional instructions
-                        </label>
-
-                        <textarea
-                            id="instructions"
-                            name="instructions"
-                            class="form-control"
-                            rows="3"
-                            placeholder="e.g. Take after meals with warm water..."
-                        ></textarea>
-                    </div>
+                    <textarea
+                        id="template_instructions"
+                        name="instructions"
+                        class="form-control"
+                        rows="4"
+                        maxlength="10000"
+                        placeholder="Enter general instructions..."
+                    >{{ old('instructions', $template->instructions ?? '') }}</textarea>
                 </div>
+
+                @if ($editing)
+                    <p class="form-help mt-2 mb-0">
+                        Updating this template does not change prescriptions already saved for patients.
+                    </p>
+                @endif
             </section>
 
-            {{-- Form Actions --}}
+            {{-- NUSKHA TEMPLATE — Actions --}}
             <div class="template-form-actions">
-                <a href="/prescriptions/templates" class="btn btn-light">
+                @if ($editing)
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary"
+                        data-print-nuskha
+                    >
+                        Print for Pansar
+                    </button>
+                @endif
+
+                <a
+                    href="{{ route('prescriptions.templates.index') }}"
+                    class="btn btn-light"
+                >
                     Cancel
                 </a>
 
                 <button type="submit" class="btn btn-primary">
-                    Save template
+                    {{ $editing ? 'Update template' : 'Save template' }}
                 </button>
             </div>
-
         </form>
+
+        {{-- PANSAR PRINT — Ingredient List Only --}}
+        @if ($editing)
+            <section
+                class="nuskha-print-sheet"
+                data-nuskha-print-sheet
+                aria-label="Nuskha ingredient list for pansar"
+            >
+                <header class="nuskha-print-header">
+                    <div>
+                        <p class="nuskha-print-kicker">
+                            Salman Dawa Khana
+                        </p>
+
+                        <h1>{{ $template->name }}</h1>
+
+                        <p class="nuskha-print-subtitle">
+                            Nuskha preparation list
+                        </p>
+                    </div>
+
+                    <div class="nuskha-print-date">
+                        Prepared on<br>
+                        <strong>
+                            {{ now('Asia/Dubai')->format('d M Y') }}
+                        </strong>
+                    </div>
+                </header>
+
+                <table class="nuskha-print-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Ingredient</th>
+                            <th class="nuskha-print-quantity">Quantity</th>
+                            <th>Unit</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach ($template->items as $item)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $item->item_name }}</td>
+                                <td class="nuskha-print-quantity">
+                                    {{ rtrim(rtrim(number_format(
+                                        (float) $item->quantity,
+                                        3,
+                                        '.',
+                                        ''
+                                    ), '0'), '.') }}
+                                </td>
+                                <td>
+                                    {{ \App\Models\NuskhaItem::UNITS[$item->unit]
+                                        ?? $item->unit }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                <footer class="nuskha-print-footer">
+                    <span>Pansar / prepared by: ____________________</span>
+                    <span>Checked by: ____________________</span>
+                </footer>
+            </section>
+        @endif
 
     </main>
 </div>

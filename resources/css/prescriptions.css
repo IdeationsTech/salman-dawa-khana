@@ -1146,3 +1146,21 @@
         flex: 1 1 100%;
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| NUSKHA TEMPLATES — Mobile Filter Toolbar Correction
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 768px) {
+    .templates-toolbar {
+        align-items: stretch;
+    }
+
+    .templates-toolbar .template-search,
+    .templates-toolbar .template-category-select {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
