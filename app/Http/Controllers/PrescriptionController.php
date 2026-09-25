@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\NuskhaItem;
 use App\Models\NuskhaTemplate;
 use App\Models\Patient;
 use App\Models\Prescription;
 use App\Models\Visit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,7 +18,7 @@ class PrescriptionController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | PRESCRIPTIONS — List
+    | PRESCRIPTIONS — List and Filters
     |--------------------------------------------------------------------------
     */
 
@@ -39,7 +41,7 @@ class PrescriptionController extends Controller
 
         $query = Prescription::query()
             ->where('clinic_id', $clinicId)
-            ->with('patient')
+            ->with(['patient', 'createdBy'])
             ->withCount('items');
 
         $search = trim($filters['search'] ?? '');
@@ -47,9 +49,8 @@ class PrescriptionController extends Controller
         if ($search !== '') {
             $query->where(function ($query) use ($search) {
                 $query->where('prescription_no', 'like', "%{$search}%")
-                    ->orWhereHas('patient', function ($patientQuery) use ($search) {
-                        $patientQuery
-                            ->where('full_name', 'like', "%{$search}%")
+                    ->orWhereHas('patient', function ($patients) use ($search) {
+                        $patients->where('full_name', 'like', "%{$search}%")
                             ->orWhere('patient_code', 'like', "%{$search}%")
                             ->orWhere('phone', 'like', "%{$search}%");
                     });
@@ -96,8 +97,7 @@ class PrescriptionController extends Controller
             ->whereBetween('prescribed_at', [
                 $now->copy()->startOfMonth()->format('Y-m-d H:i:s'),
                 $now->copy()->endOfMonth()->format('Y-m-d H:i:s'),
-            ])
-            ->count();
+            ])->count();
 
         $todayPrescriptions = Prescription::where('clinic_id', $clinicId)
             ->whereDate('prescribed_at', $now->toDateString())
@@ -118,7 +118,7 @@ class PrescriptionController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | PRESCRIPTIONS — Create and Store
+    | PRESCRIPTIONS — Create / Store
     |--------------------------------------------------------------------------
     */
 
@@ -156,7 +156,7 @@ class PrescriptionController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | PRESCRIPTIONS — Show
+    | PRESCRIPTIONS — Show / Edit / Update
     |--------------------------------------------------------------------------
     */
 
@@ -165,27 +165,17 @@ class PrescriptionController extends Controller
         $this->ensureClinicAccess($prescription);
 
         $prescription->load([
-            'clinic',
-            'patient',
-            'visit',
-            'createdBy',
-            'items',
+            'clinic', 'patient', 'visit', 'createdBy', 'items',
         ]);
 
         return view('prescriptions.show', compact('prescription'));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PRESCRIPTIONS — Edit and Update
-    |--------------------------------------------------------------------------
-    */
-
     public function edit(Prescription $prescription)
     {
         $this->ensureClinicAccess($prescription);
 
-        $prescription->load('items');
+        $prescription->load(['items', 'createdBy']);
 
         return view('prescriptions.create', array_merge(
             $this->formData(),
@@ -200,7 +190,13 @@ class PrescriptionController extends Controller
         $data = $this->validatePrescription($request, $prescription);
 
         DB::transaction(function () use ($prescription, $data) {
-            $prescription->update([
+            $lockedPrescription = Prescription::query()
+                ->where('clinic_id', Auth::user()->clinic_id)
+                ->whereKey($prescription->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedPrescription->update([
                 'patient_id' => $data['patient_id'],
                 'visit_id' => $data['visit_id'] ?? null,
                 'prescribed_at' => $data['prescribed_at'],
@@ -209,21 +205,15 @@ class PrescriptionController extends Controller
                 'status' => $data['status'],
             ]);
 
-            $prescription->items()->delete();
+            $lockedPrescription->items()->delete();
 
-            $this->saveItems($prescription, $data['items']);
+            $this->saveItems($lockedPrescription, $data['items']);
         });
 
         return redirect()
             ->route('prescriptions.show', $prescription)
             ->with('success', 'Prescription updated successfully.');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | PRESCRIPTIONS — Delete
-    |--------------------------------------------------------------------------
-    */
 
     public function destroy(Prescription $prescription)
     {
@@ -241,7 +231,7 @@ class PrescriptionController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | PRESCRIPTIONS — Form Data
+    | PRESCRIPTIONS — Form Data and Template Ingredients
     |--------------------------------------------------------------------------
     */
 
@@ -255,12 +245,7 @@ class PrescriptionController extends Controller
 
         $visits = Visit::where('clinic_id', $clinicId)
             ->orderByDesc('visit_date')
-            ->get([
-                'visit_id',
-                'patient_id',
-                'visit_date',
-                'visit_reason',
-            ]);
+            ->get(['visit_id', 'patient_id', 'visit_date', 'visit_reason']);
 
         $templates = NuskhaTemplate::where('clinic_id', $clinicId)
             ->where('is_active', true)
@@ -268,21 +253,13 @@ class PrescriptionController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Only send the fields needed to populate the prescription form.
         $templateData = $templates->map(function ($template) {
             return [
                 'id' => $template->nuskha_template_id,
                 'instructions' => $template->instructions,
-                'items' => $template->items->map(function ($item) {
-                    return [
-                        'item_name' => $item->item_name,
-                        'dosage' => $item->dosage,
-                        'frequency' => $item->frequency,
-                        'duration' => $item->duration,
-                        'timing' => $item->timing,
-                        'instructions' => $item->instructions,
-                    ];
-                })->values()->all(),
+                'items' => $template->items->map(
+                    fn ($item) => $item->only(NuskhaItem::ITEM_FIELDS)
+                )->values()->all(),
             ];
         })->values()->all();
 
@@ -301,7 +278,6 @@ class PrescriptionController extends Controller
     ): array {
         $clinicId = Auth::user()->clinic_id;
 
-        // Validate the patient first, then validate the visit against that patient.
         $patientRules = [
             'required',
             'integer',
@@ -359,23 +335,26 @@ class PrescriptionController extends Controller
             ],
 
             'general_instructions' => [
-                'nullable',
-                'string',
+                'nullable', 'string', 'max:10000',
             ],
 
-            'items' => [
-                'required',
-                'array',
-                'min:1',
-                'max:100',
-            ],
-
+            'items' => ['required', 'array', 'min:1', 'max:100'],
             'items.*' => ['required', 'array'],
+            'items.*.item_name' => ['required', 'string', 'max:160'],
 
-            'items.*.item_name' => [
-                'required',
-                'string',
-                'max:160',
+            'items.*.quantity' => [
+                'nullable',
+                'required_with:items.*.unit',
+                'numeric',
+                'min:0.001',
+                'max:999999999.999',
+                'decimal:0,3',
+            ],
+
+            'items.*.unit' => [
+                'nullable',
+                'required_with:items.*.quantity',
+                Rule::in(array_keys(NuskhaItem::UNITS)),
             ],
 
             'items.*.dosage' => ['nullable', 'string', 'max:80'],
@@ -386,21 +365,16 @@ class PrescriptionController extends Controller
         ], [
             'visit_id.exists' =>
                 'Select a visit belonging to the selected patient.',
-
-            'prescribed_at.required' =>
-                'Please enter the prescription date and time.',
-
             'template_id.required' =>
                 'Please select a saved nuskha template.',
-
             'template_id.exists' =>
                 'The selected template is unavailable.',
-
-            'items.required' =>
-                'Please add at least one prescription item.',
-
             'items.*.item_name.required' =>
                 'Every prescription item must have a name.',
+            'items.*.quantity.required_with' =>
+                'Enter a quantity when a unit is selected.',
+            'items.*.unit.required_with' =>
+                'Select a unit when a quantity is entered.',
         ]);
 
         $data['patient_id'] = $patientData['patient_id'];
@@ -413,7 +387,7 @@ class PrescriptionController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | PRESCRIPTIONS — Save Item Snapshot
+    | PRESCRIPTIONS — Independent Item Snapshot
     |--------------------------------------------------------------------------
     */
 
@@ -422,15 +396,12 @@ class PrescriptionController extends Controller
         array $items
     ): void {
         foreach (array_values($items) as $index => $item) {
-            $prescription->items()->create([
-                'item_name' => $item['item_name'],
-                'dosage' => $item['dosage'] ?? null,
-                'frequency' => $item['frequency'] ?? null,
-                'duration' => $item['duration'] ?? null,
-                'timing' => $item['timing'] ?? null,
-                'instructions' => $item['instructions'] ?? null,
-                'sort_order' => $index + 1,
-            ]);
+            $prescription->items()->create(
+                array_merge(
+                    Arr::only($item, NuskhaItem::ITEM_FIELDS),
+                    ['sort_order' => $index + 1]
+                )
+            );
         }
     }
 

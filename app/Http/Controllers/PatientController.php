@@ -64,7 +64,7 @@ class PatientController extends Controller
         $patients = $query
             ->latest('created_at')
             ->orderByDesc('patient_id')
-            ->paginate(10)
+            ->paginate(100)
             ->withQueryString();
 
         $totalPatients = Patient::where('clinic_id', $clinicId)

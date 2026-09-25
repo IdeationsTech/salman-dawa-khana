@@ -132,7 +132,7 @@ class VisitController extends Controller
         $visits = $query
             ->orderByDesc('visit_date')
             ->orderByDesc('visit_id')
-            ->paginate(10)
+            ->paginate(100)
             ->withQueryString();
 
         // Summary cards show clinic-wide totals.

@@ -1,0 +1,9 @@
+/*
+|--------------------------------------------------------------------------
+| Pagination — Hide Duplicate Results Summary
+|--------------------------------------------------------------------------
+*/
+
+.patients-pagination nav > .d-sm-flex > div:first-child {
+    display: none;
+}

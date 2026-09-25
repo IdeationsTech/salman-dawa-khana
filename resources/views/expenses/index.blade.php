@@ -3,8 +3,13 @@
 @section('title', 'Expenses — Salman Dawa Khana')
 
 @section('content')
-<div class="app-shell">
+@php
+    $selectedCategory = request('category') ?: 'all';
+    $selectedDateRange = request('date_range') ?: 'all time';
+@endphp
 
+<div class="app-shell">
+    {{-- EXPENSES — Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-logo">+</div>
@@ -13,45 +18,37 @@
 
         <nav class="sidebar-nav">
             <a href="{{ route('dashboard') }}" class="sidebar-link">
-                <span>▦</span>
-                <span>Dashboard</span>
+                <span>▦</span><span>Dashboard</span>
             </a>
 
             <a href="{{ route('patients.index') }}" class="sidebar-link">
-                <span>♙</span>
-                <span>Patients</span>
+                <span>♙</span><span>Patients</span>
             </a>
 
             <a href="{{ route('visits.index') }}" class="sidebar-link">
-                <span>▣</span>
-                <span>Visits</span>
+                <span>▣</span><span>Visits</span>
             </a>
 
             <a href="{{ route('prescriptions.index') }}" class="sidebar-link">
-                <span>✎</span>
-                <span>Prescriptions</span>
+                <span>✎</span><span>Prescriptions</span>
             </a>
 
             <a href="{{ route('payments.index') }}" class="sidebar-link">
-                <span>₨</span>
-                <span>Payments</span>
+                <span>▤</span><span>Payments</span>
             </a>
 
             <a href="{{ route('expenses.index') }}" class="sidebar-link active">
-                <span>◈</span>
-                <span>Expenses</span>
+                <span>◈</span><span>Expenses</span>
             </a>
 
             <div class="sidebar-divider"></div>
 
             <a href="{{ route('reports.index') }}" class="sidebar-link">
-                <span>◌</span>
-                <span>Reports</span>
+                <span>◌</span><span>Reports</span>
             </a>
 
             <a href="{{ route('settings.index') }}" class="sidebar-link">
-                <span>⚙</span>
-                <span>Settings</span>
+                <span>⚙</span><span>Settings</span>
             </a>
         </nav>
 
@@ -62,11 +59,9 @@
     </aside>
 
     <main class="dashboard-main">
-
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Clinic finances</p>
-
                 <h1>Expenses</h1>
 
                 <p class="page-subtitle">
@@ -80,11 +75,26 @@
         </header>
 
         @if(session('success'))
-            <div class="alert alert-success">
+            <div class="alert alert-success" role="alert">
                 {{ session('success') }}
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <ul class="mb-0">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+
+                <a href="{{ route('expenses.index') }}" class="alert-link">
+                    Reset filters
+                </a>
+            </div>
+        @endif
+
+        {{-- EXPENSES — Summary Cards --}}
         <section class="expense-summary-grid">
             <article class="expense-summary-card">
                 <span>Today's expenses</span>
@@ -93,9 +103,7 @@
                     PKR {{ number_format($todayExpenses ?? 0, 2) }}
                 </strong>
 
-                <small>
-                    {{ $todayExpenseCount ?? 0 }} transactions
-                </small>
+                <small>{{ $todayExpenseCount ?? 0 }} transactions</small>
             </article>
 
             <article class="expense-summary-card">
@@ -105,17 +113,13 @@
                     PKR {{ number_format($monthExpenses ?? 0, 2) }}
                 </strong>
 
-                <small>
-                    {{ now()->format('F Y') }}
-                </small>
+                <small>{{ now('Asia/Dubai')->format('F Y') }}</small>
             </article>
 
             <article class="expense-summary-card">
                 <span>Highest category</span>
 
-                <strong>
-                    {{ $highestExpenseCategory ?? '—' }}
-                </strong>
+                <strong>{{ $highestExpenseCategory ?? '—' }}</strong>
 
                 <small>
                     PKR {{ number_format($highestCategoryAmount ?? 0, 2) }}
@@ -129,38 +133,41 @@
                     PKR {{ number_format($netIncome ?? 0, 2) }}
                 </strong>
 
-                <small class="stat-success">
-                    After expenses
-                </small>
+                <small>Payments received minus expenses this month</small>
             </article>
         </section>
 
-        <section class="expenses-panel">
+        <p class="text-muted small">
+            Summary cards show clinic totals.
+            The filters below apply to expense records.
+        </p>
 
+        {{-- EXPENSES — Filters --}}
+        <section class="expenses-panel">
             <div class="expenses-toolbar">
                 <div>
                     <h2>Expense records</h2>
-
-                    <p>
-                        Recent clinic expenses and operating costs.
-                    </p>
+                    <p>Search and filter all clinic expense records.</p>
                 </div>
 
                 <div class="expenses-toolbar-actions">
-
                     <select
                         name="category"
                         class="form-select"
                         form="expense-filter-form"
+                        aria-label="Expense category"
                     >
-                        <option value="all">
+                        <option
+                            value="all"
+                            @selected($selectedCategory === 'all')
+                        >
                             All categories
                         </option>
 
                         @foreach($categories as $category)
                             <option
                                 value="{{ $category }}"
-                                {{ request('category') === $category ? 'selected' : '' }}
+                                @selected($selectedCategory === $category)
                             >
                                 {{ $category }}
                             </option>
@@ -171,30 +178,34 @@
                         name="date_range"
                         class="form-select"
                         form="expense-filter-form"
+                        aria-label="Expense date range"
                     >
-                        <option value="this month">
-                            This month
+                        <option
+                            value="all time"
+                            @selected($selectedDateRange === 'all time')
+                        >
+                            All time
                         </option>
 
                         <option
                             value="today"
-                            {{ request('date_range') === 'today' ? 'selected' : '' }}
+                            @selected($selectedDateRange === 'today')
                         >
                             Today
                         </option>
 
                         <option
                             value="this week"
-                            {{ request('date_range') === 'this week' ? 'selected' : '' }}
+                            @selected($selectedDateRange === 'this week')
                         >
                             This week
                         </option>
 
                         <option
-                            value="all time"
-                            {{ request('date_range') === 'all time' ? 'selected' : '' }}
+                            value="this month"
+                            @selected($selectedDateRange === 'this month')
                         >
-                            All time
+                            This month
                         </option>
                     </select>
                 </div>
@@ -204,19 +215,34 @@
                 method="GET"
                 action="{{ route('expenses.index') }}"
                 id="expense-filter-form"
+                data-server-filters
             >
                 <div class="expense-search">
-                    <span>⌕</span>
+                    <span aria-hidden="true">⌕</span>
 
                     <input
                         type="search"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Search by description, vendor or expense ID"
+                        maxlength="160"
+                        aria-label="Search expenses"
+                        placeholder="Search by description, category or expense ID"
                     >
+
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Search
+                    </button>
+
+                    <a
+                        href="{{ route('expenses.index') }}"
+                        class="btn btn-light btn-sm"
+                    >
+                        Clear
+                    </a>
                 </div>
             </form>
 
+            {{-- EXPENSES — Results --}}
             <div class="table-responsive">
                 <table class="table expenses-table align-middle">
                     <thead>
@@ -240,21 +266,24 @@
                                     'rent' => 'rent-category',
                                     default => 'other-category',
                                 };
+
+                                $method = strtolower(trim($expense->payment_method ?? ''));
+
+                                $methodLabel = match ($method) {
+                                    'bank', 'bank transfer', 'bank_transfer' => 'Bank transfer',
+                                    'cash' => 'Cash',
+                                    'card' => 'Card',
+                                    default => $expense->payment_method ?: '—',
+                                };
                             @endphp
 
                             <tr>
-                                <td>
-                                    {{ $expense->expense_id }}
-                                </td>
+                                <td>{{ $expense->expense_id }}</td>
 
                                 <td>
                                     <strong>
-                                        {{ $expense->description ?? 'Expense record' }}
+                                        {{ $expense->description ?: 'Not recorded' }}
                                     </strong>
-
-                                    <small>
-                                        {{ $expense->notes ?? 'Clinic expense' }}
-                                    </small>
                                 </td>
 
                                 <td>
@@ -264,12 +293,10 @@
                                 </td>
 
                                 <td>
-                                    {{ \Carbon\Carbon::parse($expense->expense_date)->format('d M Y') }}
+                                    {{ $expense->expense_date?->format('d M Y') ?? '—' }}
                                 </td>
 
-                                <td>
-                                    {{ $expense->payment_method ?? '—' }}
-                                </td>
+                                <td>{{ $methodLabel }}</td>
 
                                 <td class="expense-amount">
                                     PKR {{ number_format($expense->amount, 2) }}
@@ -286,8 +313,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">
-                                    No expenses found.
+                                <td colspan="7" class="text-center py-4">
+                                    No expenses match your search and filters.
                                 </td>
                             </tr>
                         @endforelse
@@ -302,13 +329,9 @@
                     of {{ $expenses->total() }} expenses
                 </span>
 
-                <div>
-                    {{ $expenses->links() }}
-                </div>
+                <div>{{ $expenses->links() }}</div>
             </div>
-
         </section>
-
     </main>
 </div>
 @endsection

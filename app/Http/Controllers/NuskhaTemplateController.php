@@ -2,47 +2,56 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\NuskhaItem;
 use App\Models\NuskhaTemplate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class NuskhaTemplateController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | TEMPLATES — List and Filters
+    |--------------------------------------------------------------------------
+    */
+
     public function index(Request $request)
     {
-        $clinicId = Auth::user()->clinic_id;
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:160'],
+            'status' => [
+                'nullable',
+                Rule::in(['all', 'active', 'inactive']),
+            ],
+        ]);
 
-        $query = NuskhaTemplate::where(
-            'clinic_id',
-            $clinicId
-        )->withCount('items');
+        $query = NuskhaTemplate::query()
+            ->where('clinic_id', Auth::user()->clinic_id)
+            ->withCount('items');
 
-        if ($request->filled('search')) {
-            $search = $request->search;
+        $search = trim($filters['search'] ?? '');
 
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere(
-                        'instructions',
-                        'like',
-                        "%{$search}%"
-                    );
+        if ($search !== '') {
+            $query->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('instructions', 'like', "%{$search}%")
+                    ->orWhereHas('items', function ($items) use ($search) {
+                        $items->where('item_name', 'like', "%{$search}%");
+                    });
             });
         }
 
-        if (
-            $request->filled('status') &&
-            $request->status !== 'all'
-        ) {
-            $query->where(
-                'is_active',
-                $request->status === 'active'
-            );
+        $status = $filters['status'] ?? 'all';
+
+        if ($status !== 'all') {
+            $query->where('is_active', $status === 'active');
         }
 
         $templates = $query
-            ->latest('nuskha_template_id')
+            ->orderByDesc('nuskha_template_id')
             ->paginate(12)
             ->withQueryString();
 
@@ -52,6 +61,12 @@ class NuskhaTemplateController extends Controller
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | TEMPLATES — Create and Store
+    |--------------------------------------------------------------------------
+    */
+
     public function create()
     {
         return view('prescriptions.templates.create');
@@ -59,109 +74,37 @@ class NuskhaTemplateController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:160',
-            ],
+        $data = $this->validateTemplate($request);
 
-            'instructions' => [
-                'nullable',
-                'string',
-            ],
-
-            'is_active' => [
-                'nullable',
-                'boolean',
-            ],
-
-            'items' => [
-                'required',
-                'array',
-                'min:1',
-            ],
-
-            'items.*.item_name' => [
-                'required',
-                'string',
-                'max:160',
-            ],
-
-            'items.*.dosage' => [
-                'nullable',
-                'string',
-                'max:80',
-            ],
-
-            'items.*.frequency' => [
-                'nullable',
-                'string',
-                'max:80',
-            ],
-
-            'items.*.duration' => [
-                'nullable',
-                'string',
-                'max:80',
-            ],
-
-            'items.*.timing' => [
-                'nullable',
-                'string',
-                'max:80',
-            ],
-
-            'items.*.instructions' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-        ]);
-
-        $template = DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($data) {
             $template = NuskhaTemplate::create([
                 'clinic_id' => Auth::user()->clinic_id,
-                'name' => $validated['name'],
-                'instructions' => $validated['instructions'] ?? null,
-                'is_active' => $validated['is_active'] ?? true,
+                'name' => $data['name'],
+                'instructions' => $data['instructions'] ?? null,
+                'is_active' => $data['is_active'],
             ]);
 
-            foreach ($validated['items'] as $index => $item) {
-                $template->items()->create([
-                    'item_name' => $item['item_name'],
-                    'dosage' => $item['dosage'] ?? null,
-                    'frequency' => $item['frequency'] ?? null,
-                    'duration' => $item['duration'] ?? null,
-                    'timing' => $item['timing'] ?? null,
-                    'instructions' => $item['instructions'] ?? null,
-                    'sort_order' => $index + 1,
-                ]);
-            }
-
-            return $template;
+            $this->saveItems($template, $data['items']);
         });
 
         return redirect()
-            ->route(
-                'prescriptions.templates.show',
-                $template
-            )
-            ->with(
-                'success',
-                'Nuskha template created successfully.'
-            );
+            ->route('prescriptions.templates.index')
+            ->with('success', 'Nuskha template saved successfully.');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEMPLATES — View / Edit
+    |--------------------------------------------------------------------------
+    */
 
     public function show(NuskhaTemplate $template)
     {
         $this->ensureClinicAccess($template);
 
-        $template->load('items');
-
-        return view(
-            'prescriptions.templates.show',
-            compact('template')
+        return redirect()->route(
+            'prescriptions.templates.edit',
+            $template
         );
     }
 
@@ -177,128 +120,135 @@ class NuskhaTemplateController extends Controller
         );
     }
 
-    public function update(
-        Request $request,
-        NuskhaTemplate $template
-    ) {
+    public function update(Request $request, NuskhaTemplate $template)
+    {
         $this->ensureClinicAccess($template);
 
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:160',
-            ],
+        $data = $this->validateTemplate($request);
 
-            'instructions' => [
-                'nullable',
-                'string',
-            ],
+        DB::transaction(function () use ($template, $data) {
+            $lockedTemplate = NuskhaTemplate::query()
+                ->where('clinic_id', Auth::user()->clinic_id)
+                ->whereKey($template->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            'is_active' => [
-                'nullable',
-                'boolean',
-            ],
-
-            'items' => [
-                'required',
-                'array',
-                'min:1',
-            ],
-
-            'items.*.item_name' => [
-                'required',
-                'string',
-                'max:160',
-            ],
-
-            'items.*.dosage' => [
-                'nullable',
-                'string',
-                'max:80',
-            ],
-
-            'items.*.frequency' => [
-                'nullable',
-                'string',
-                'max:80',
-            ],
-
-            'items.*.duration' => [
-                'nullable',
-                'string',
-                'max:80',
-            ],
-
-            'items.*.timing' => [
-                'nullable',
-                'string',
-                'max:80',
-            ],
-
-            'items.*.instructions' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-        ]);
-
-        DB::transaction(function () use (
-            $validated,
-            $template
-        ) {
-            $template->update([
-                'name' => $validated['name'],
-                'instructions' => $validated['instructions'] ?? null,
-                'is_active' => $validated['is_active'] ?? false,
+            $lockedTemplate->update([
+                'name' => $data['name'],
+                'instructions' => $data['instructions'] ?? null,
+                'is_active' => $data['is_active'],
             ]);
 
-            $template->items()->delete();
+            $lockedTemplate->items()->delete();
 
-            foreach ($validated['items'] as $index => $item) {
-                $template->items()->create([
-                    'item_name' => $item['item_name'],
-                    'dosage' => $item['dosage'] ?? null,
-                    'frequency' => $item['frequency'] ?? null,
-                    'duration' => $item['duration'] ?? null,
-                    'timing' => $item['timing'] ?? null,
-                    'instructions' => $item['instructions'] ?? null,
-                    'sort_order' => $index + 1,
-                ]);
-            }
+            $this->saveItems($lockedTemplate, $data['items']);
         });
 
         return redirect()
-            ->route(
-                'prescriptions.templates.show',
-                $template
-            )
-            ->with(
-                'success',
-                'Nuskha template updated successfully.'
-            );
+            ->route('prescriptions.templates.index')
+            ->with('success', 'Nuskha template updated successfully.');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEMPLATES — Delete
+    |--------------------------------------------------------------------------
+    */
 
     public function destroy(NuskhaTemplate $template)
     {
         $this->ensureClinicAccess($template);
 
-        $template->delete();
+        DB::transaction(function () use ($template) {
+            $template->items()->delete();
+            $template->delete();
+        });
 
         return redirect()
             ->route('prescriptions.templates.index')
-            ->with(
-                'success',
-                'Nuskha template deleted successfully.'
+            ->with('success', 'Nuskha template deleted successfully.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEMPLATES — Validation
+    |--------------------------------------------------------------------------
+    */
+
+    private function validateTemplate(Request $request): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:160'],
+            'instructions' => ['nullable', 'string', 'max:10000'],
+            'is_active' => ['required', 'boolean'],
+
+            'items' => ['required', 'array', 'min:1', 'max:100'],
+            'items.*' => ['required', 'array'],
+
+            'items.*.item_name' => ['required', 'string', 'max:160'],
+
+            'items.*.quantity' => [
+                'required',
+                'numeric',
+                'min:0.001',
+                'max:999999999.999',
+                'decimal:0,3',
+            ],
+
+            'items.*.unit' => [
+                'required',
+                Rule::in(array_keys(NuskhaItem::UNITS)),
+            ],
+
+            'items.*.dosage' => ['nullable', 'string', 'max:80'],
+            'items.*.frequency' => ['nullable', 'string', 'max:80'],
+            'items.*.duration' => ['nullable', 'string', 'max:80'],
+            'items.*.timing' => ['nullable', 'string', 'max:80'],
+            'items.*.instructions' => ['nullable', 'string', 'max:255'],
+        ], [
+            'items.required' => 'Add at least one ingredient.',
+            'items.*.item_name.required' =>
+                'Enter a name for every ingredient.',
+            'items.*.quantity.required' =>
+                'Enter a quantity for every ingredient.',
+            'items.*.quantity.min' =>
+                'Ingredient quantity must be greater than zero.',
+            'items.*.quantity.decimal' =>
+                'Quantity can have up to three decimal places.',
+            'items.*.unit.required' =>
+                'Select a unit for every ingredient.',
+            'items.*.unit.in' =>
+                'Select a unit from the available list.',
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEMPLATES — Save Ingredients and Clinic Access
+    |--------------------------------------------------------------------------
+    */
+
+    private function saveItems(
+        NuskhaTemplate $template,
+        array $items
+    ): void {
+        foreach (array_values($items) as $index => $item) {
+            $template->items()->create(
+                array_merge(
+                    Arr::only($item, NuskhaItem::ITEM_FIELDS),
+                    ['sort_order' => $index + 1]
+                )
             );
+        }
     }
 
     private function ensureClinicAccess(
         NuskhaTemplate $template
-    ) {
-        abort_if(
-            $template->clinic_id !== Auth::user()->clinic_id,
-            403
+    ): void {
+        abort_unless(
+            (int) $template->clinic_id ===
+                (int) Auth::user()->clinic_id,
+            404
         );
     }
 }

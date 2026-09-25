@@ -22,6 +22,8 @@ class PrescriptionItem extends Model
     protected $fillable = [
         'prescription_id',
         'item_name',
+        'quantity',
+        'unit',
         'dosage',
         'frequency',
         'duration',
@@ -29,6 +31,14 @@ class PrescriptionItem extends Model
         'instructions',
         'sort_order',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'quantity' => 'decimal:3',
+            'sort_order' => 'integer',
+        ];
+    }
 
     public function prescription()
     {

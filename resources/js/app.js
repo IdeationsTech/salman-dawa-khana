@@ -670,74 +670,34 @@ function initPaymentFilters() {
 
 /*
 |--------------------------------------------------------------------------
-| Expenses — category, date range
+| EXPENSES — Server-side Category and Date Filters
 |--------------------------------------------------------------------------
 */
 
 function initExpenseFilters() {
-    const category = document.querySelector(
-        '.expenses-toolbar-actions .form-select:first-child'
+    const form = document.querySelector(
+        '#expense-filter-form[data-server-filters]'
     );
 
-    const date = document.querySelector(
-        '.expenses-toolbar-actions .form-select:nth-child(2)'
-    );
+    if (!form || form.dataset.expenseFiltersInitialized === '1') {
+        return;
+    }
 
-    const search = document.querySelector(
-        '.expense-search input'
-    );
+    form.dataset.expenseFiltersInitialized = '1';
 
-    const rows = document.querySelectorAll(
-        '.expenses-table tbody tr'
-    );
+    // Includes dropdowns linked through form="expense-filter-form".
+    const category = form.elements.namedItem('category');
+    const dateRange = form.elements.namedItem('date_range');
 
-    if (rows.length === 0) return;
-
-    const apply = () => {
-        const selectedCategory =
-            category?.value.trim().toLowerCase() || 'all';
-
-        const selectedRange =
-            date?.value.trim().toLowerCase() || 'all time';
-
-        const term = search?.value.trim().toLowerCase() || '';
-        const today = new Date();
-
-        rows.forEach((row) => {
-            const text = row.textContent.toLowerCase();
-            const categoryElement = row.querySelector(
-                '.expense-category'
-            );
-
-            const rowCategory = categoryElement
-                ? categoryElement.textContent.trim().toLowerCase()
-                : '';
-
-            const rowDate = parseTableDate(row.cells[3]?.textContent);
-
-            const searchMatch = !term || text.includes(term);
-
-            const categoryMatch =
-                selectedCategory === 'all' ||
-                selectedCategory === 'all categories' ||
-                rowCategory === selectedCategory;
-
-            const dateMatch = matchDateRange(
-                rowDate,
-                selectedRange,
-                today
-            );
-
-            row.style.display =
-                searchMatch && categoryMatch && dateMatch
-                    ? ''
-                    : 'none';
-        });
+    const applyFilters = () => {
+        form.requestSubmit();
     };
 
-    category?.addEventListener('change', apply);
-    date?.addEventListener('change', apply);
-    search?.addEventListener('input', apply);
+    category?.addEventListener('change', applyFilters);
+    dateRange?.addEventListener('change', applyFilters);
+
+    // Search uses Enter or the Search button.
+    // Laravel combines search, category and date before pagination.
 }
 
 /*
@@ -1336,4 +1296,62 @@ if (document.readyState === 'loading') {
     );
 } else {
     initializeDynamicPrescriptionForm();
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PRESCRIPTIONS — Sidebar Submenu
+|--------------------------------------------------------------------------
+*/
+
+function initializePrescriptionSidebarSubmenu() {
+    const source = document.querySelector(
+        'template[data-prescription-submenu]'
+    );
+
+    if (!source) {
+        return;
+    }
+
+    const parentPath = new URL(
+        source.dataset.parentUrl,
+        window.location.origin
+    ).pathname.replace(/\/+$/, '');
+
+    document.querySelectorAll('.sidebar-nav').forEach((navigation) => {
+        if (navigation.querySelector('.sidebar-subnav')) {
+            return;
+        }
+
+        const parentLink = Array.from(
+            navigation.querySelectorAll('a.sidebar-link')
+        ).find((link) => {
+            const linkPath = new URL(
+                link.href,
+                window.location.origin
+            ).pathname.replace(/\/+$/, '');
+
+            return linkPath === parentPath;
+        });
+
+        if (!parentLink) {
+            return;
+        }
+
+        parentLink.classList.add('active');
+
+        parentLink.after(
+            source.content.cloneNode(true)
+        );
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializePrescriptionSidebarSubmenu
+    );
+} else {
+    initializePrescriptionSidebarSubmenu();
 }

@@ -4,236 +4,180 @@
 
 @section('content')
 <div class="app-shell">
-
-    <aside class="app-sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="{{ route('dashboard') }}" class="sidebar-link">
-                <span>▦</span>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('patients.index') }}" class="sidebar-link">
-                <span>♙</span>
-                <span>Patients</span>
-            </a>
-
-            <a href="{{ route('visits.index') }}" class="sidebar-link">
-                <span>▣</span>
-                <span>Visits</span>
-            </a>
-
-            <a href="{{ route('prescriptions.index') }}" class="sidebar-link active">
-                <span>✎</span>
-                <span>Prescriptions</span>
-            </a>
-
-            <a href="{{ route('payments.index') }}" class="sidebar-link">
-                <span>₨</span>
-                <span>Payments</span>
-            </a>
-
-            <a href="{{ route('expenses.index') }}" class="sidebar-link">
-                <span>◈</span>
-                <span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="{{ route('reports.index') }}" class="sidebar-link">
-                <span>◌</span>
-                <span>Reports</span>
-            </a>
-
-            <a href="{{ route('settings.index') }}" class="sidebar-link">
-                <span>⚙</span>
-                <span>Settings</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <span class="status-dot"></span>
-            System online
-        </div>
-    </aside>
+    @include('layouts._sidebar')
 
     <main class="dashboard-main">
 
+        {{-- PRESCRIPTIONS — Page Header --}}
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Patient care</p>
-
                 <h1>Prescriptions</h1>
-
                 <p class="page-subtitle">
                     Manage patient nuskhas and prescription records.
                 </p>
             </div>
 
-            <a href="{{ route('prescriptions.create') }}" class="btn btn-primary">
-                + Create Prescription
-            </a>
+            <div class="d-flex flex-wrap gap-2">
+                <a
+                    href="{{ route('prescriptions.templates.index') }}"
+                    class="btn btn-outline-primary"
+                >
+                    Nuskha Templates
+                </a>
+
+                <a
+                    href="{{ route('prescriptions.create') }}"
+                    class="btn btn-primary"
+                >
+                    + Create Prescription
+                </a>
+            </div>
         </header>
 
-        @if(session('success'))
-            <div class="alert alert-success">
+        {{-- PRESCRIPTIONS — Messages --}}
+        @if (session('success'))
+            <div class="alert alert-success" role="alert">
                 {{ session('success') }}
             </div>
         @endif
 
+        @if ($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <strong>Please correct the following:</strong>
+
+                <ul class="mb-0 mt-2">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        {{-- PRESCRIPTIONS — Summary --}}
         <section class="prescription-summary-grid">
             <article class="prescription-summary-card">
                 <span>Total prescriptions</span>
-
-                <strong>
-                    {{ number_format($totalPrescriptions ?? $prescriptions->total()) }}
-                </strong>
-
+                <strong>{{ number_format($totalPrescriptions) }}</strong>
                 <small>All clinic records</small>
             </article>
 
             <article class="prescription-summary-card">
                 <span>Created this month</span>
-
-                <strong>
-                    {{ number_format($monthlyPrescriptions ?? 0) }}
-                </strong>
-
-                <small class="stat-success">
-                    Current month
-                </small>
+                <strong>{{ number_format($monthlyPrescriptions) }}</strong>
+                <small class="stat-success">Current month</small>
             </article>
 
             <article class="prescription-summary-card">
                 <span>Today's prescriptions</span>
-
-                <strong>
-                    {{ number_format($todayPrescriptions ?? 0) }}
-                </strong>
-
-                <small>
-                    Today's records
-                </small>
+                <strong>{{ number_format($todayPrescriptions) }}</strong>
+                <small>Today's records</small>
             </article>
 
             <article class="prescription-summary-card">
                 <span>Saved templates</span>
-
-                <strong>
-                    {{ number_format($savedTemplates ?? 0) }}
-                </strong>
-
-                <small>
-                    Reusable nuskha templates
-                </small>
+                <strong>{{ number_format($savedTemplates) }}</strong>
+                <small>Active reusable nuskha templates</small>
             </article>
         </section>
 
+        {{-- PRESCRIPTIONS — Records --}}
         <section class="prescriptions-panel">
 
             <div class="prescriptions-toolbar">
                 <div>
                     <h2>Prescription records</h2>
-
-                    <p>
-                        View and manage patient prescription history.
-                    </p>
+                    <p>View and manage patient prescription history.</p>
                 </div>
 
                 <div class="prescriptions-toolbar-actions">
-
                     <select
                         name="date_range"
                         class="form-select"
                         form="prescription-filter-form"
+                        aria-label="Filter prescriptions by date"
                     >
-                        <option value="all dates">
-                            All dates
-                        </option>
-
-                        <option
-                            value="today"
-                            {{ request('date_range') === 'today' ? 'selected' : '' }}
-                        >
-                            Today
-                        </option>
-
-                        <option
-                            value="this week"
-                            {{ request('date_range') === 'this week' ? 'selected' : '' }}
-                        >
-                            This week
-                        </option>
-
-                        <option
-                            value="this month"
-                            {{ request('date_range') === 'this month' ? 'selected' : '' }}
-                        >
-                            This month
-                        </option>
+                        @foreach ([
+                            'all dates' => 'All dates',
+                            'today' => 'Today',
+                            'this week' => 'This week',
+                            'this month' => 'This month',
+                        ] as $value => $label)
+                            <option
+                                value="{{ $value }}"
+                                @selected(request('date_range', 'all dates') === $value)
+                            >
+                                {{ $label }}
+                            </option>
+                        @endforeach
                     </select>
 
                     <select
                         name="status"
                         class="form-select"
                         form="prescription-filter-form"
+                        aria-label="Filter prescriptions by status"
                     >
-                        <option value="all">
-                            All statuses
-                        </option>
-
-                        <option
-                            value="issued"
-                            {{ request('status') === 'issued' ? 'selected' : '' }}
-                        >
-                            Issued
-                        </option>
-
-                        <option
-                            value="draft"
-                            {{ request('status') === 'draft' ? 'selected' : '' }}
-                        >
-                            Draft
-                        </option>
-
-                        <option
-                            value="cancelled"
-                            {{ request('status') === 'cancelled' ? 'selected' : '' }}
-                        >
-                            Cancelled
-                        </option>
+                        @foreach ([
+                            'all' => 'All statuses',
+                            'issued' => 'Issued',
+                            'draft' => 'Draft',
+                            'cancelled' => 'Cancelled',
+                        ] as $value => $label)
+                            <option
+                                value="{{ $value }}"
+                                @selected(request('status', 'all') === $value)
+                            >
+                                {{ $label }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
             </div>
 
+            {{-- PRESCRIPTIONS — Server Search --}}
             <form
                 method="GET"
                 action="{{ route('prescriptions.index') }}"
                 id="prescription-filter-form"
+                data-server-filters
+                data-server-prescription-filters
             >
                 <div class="prescription-search">
-                    <span>⌕</span>
+                    <span aria-hidden="true">⌕</span>
 
                     <input
                         type="search"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Search by patient or prescription ID"
+                        maxlength="255"
+                        placeholder="Search by patient name, phone or prescription number"
+                        aria-label="Search prescriptions"
                     >
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Search / Apply
+                    </button>
+
+                    <a
+                        href="{{ route('prescriptions.index') }}"
+                        class="btn btn-light btn-sm"
+                    >
+                        Reset
+                    </a>
                 </div>
             </form>
 
+            {{-- PRESCRIPTIONS — Table --}}
             <div class="table-responsive">
                 <table class="table prescriptions-table align-middle">
                     <thead>
                         <tr>
                             <th>Prescription ID</th>
                             <th>Patient</th>
-                            <th>Date</th>
+                            <th>Date &amp; time</th>
                             <th>Prepared by</th>
                             <th>Items</th>
                             <th>Status</th>
@@ -242,54 +186,71 @@
                     </thead>
 
                     <tbody>
-                        @forelse($prescriptions as $prescription)
+                        @forelse ($prescriptions as $prescription)
                             @php
-                                $status = strtolower($prescription->status ?? 'issued');
-                                $itemsCount = data_get($prescription, 'items_count', 0);
+                                $status = strtolower(
+                                    $prescription->status ?? ''
+                                );
+
+                                $badgeClass = match ($status) {
+                                    'issued' => 'active-badge',
+                                    'draft' => 'draft-badge',
+                                    'cancelled' => 'bg-danger-subtle text-danger',
+                                    default => 'bg-secondary-subtle text-secondary',
+                                };
                             @endphp
 
                             <tr>
                                 <td>
-                                    {{ $prescription->prescription_id }}
+                                    <span title="{{ $prescription->prescription_no }}">
+                                        #{{ $prescription->prescription_id }}
+                                    </span>
                                 </td>
 
                                 <td>
                                     <strong>
-                                        {{ $prescription->patient_id }}
+                                        {{ $prescription->patient?->full_name ?? '—' }}
                                     </strong>
 
-                                    <small>
-                                        Patient ID
+                                    <small class="d-block">
+                                        {{ $prescription->patient?->patient_code ?? '—' }}
+                                    </small>
+
+                                    @if ($prescription->patient?->phone)
+                                        <small class="d-block">
+                                            {{ $prescription->patient->phone }}
+                                        </small>
+                                    @endif
+                                </td>
+
+                                <td>
+                                    {{ $prescription->prescribed_at?->format('d M Y') ?? '—' }}
+
+                                    <small class="d-block">
+                                        {{ $prescription->prescribed_at?->format('h:i A') ?? '' }}
                                     </small>
                                 </td>
 
                                 <td>
-                                    {{ \Carbon\Carbon::parse($prescription->prescription_date)->format('d M Y') }}
+                                    {{ $prescription->createdBy?->name ?? '—' }}
                                 </td>
 
                                 <td>
-                                    {{ $prescription->created_by ?? 'Clinic staff' }}
+                                    {{ $prescription->items_count }}
+                                    {{ $prescription->items_count === 1 ? 'item' : 'items' }}
                                 </td>
 
                                 <td>
-                                    {{ $itemsCount }} items
-                                </td>
-
-                                <td>
-                                    @if($status === 'draft')
-                                        <span class="status-badge draft-badge">
-                                            Draft
-                                        </span>
-                                    @else
-                                        <span class="status-badge active-badge">
-                                            {{ ucfirst($status) }}
-                                        </span>
-                                    @endif
+                                    <span class="status-badge {{ $badgeClass }}">
+                                        {{ $status !== '' ? ucfirst($status) : 'Unknown' }}
+                                    </span>
                                 </td>
 
                                 <td class="text-end">
                                     <a
-                                        href="{{ route('prescriptions.show', $prescription) }}"
+                                        href="{{ $status === 'draft'
+                                            ? route('prescriptions.edit', $prescription)
+                                            : route('prescriptions.show', $prescription) }}"
                                         class="table-action"
                                     >
                                         {{ $status === 'draft' ? 'Continue' : 'View' }}
@@ -298,7 +259,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">
+                                <td colspan="7" class="text-center py-4">
                                     No prescriptions found.
                                 </td>
                             </tr>
@@ -307,6 +268,7 @@
                 </table>
             </div>
 
+            {{-- PRESCRIPTIONS — Pagination --}}
             <div class="patients-pagination">
                 <span>
                     Showing {{ $prescriptions->firstItem() ?? 0 }}
@@ -314,13 +276,14 @@
                     of {{ $prescriptions->total() }} prescriptions
                 </span>
 
-                <div>
-                    {{ $prescriptions->links() }}
-                </div>
+                @if ($prescriptions->hasPages())
+                    <div>
+                        {{ $prescriptions->links('pagination::bootstrap-5') }}
+                    </div>
+                @endif
             </div>
 
         </section>
-
     </main>
 </div>
 @endsection

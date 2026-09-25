@@ -139,7 +139,7 @@ class ExpenseController extends Controller
         $expenses = $query
             ->orderByDesc('expense_date')
             ->orderByDesc('expense_id')
-            ->paginate(10)
+            ->paginate(100)
             ->withQueryString();
 
         // Display legacy Transport records as Travel.
