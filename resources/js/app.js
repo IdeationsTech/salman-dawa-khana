@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initPasswordToggles();
     initAlerts();
     initPrintButtons();
+    initNuskhaPrint();
     initItemRows();
     initPaymentCalculation();
 
@@ -1322,4 +1323,31 @@ if (document.readyState === 'loading') {
     );
 } else {
     initializePrescriptionSidebarSubmenu();
+}
+
+/*
+|--------------------------------------------------------------------------
+| NUSKHA TEMPLATE — Print Ingredient List for Pansar
+|--------------------------------------------------------------------------
+*/
+
+function initNuskhaPrint() {
+    const button = document.querySelector('[data-print-nuskha]');
+    const sheet = document.querySelector('[data-nuskha-print-sheet]');
+
+    if (!button || !sheet) {
+        return;
+    }
+
+    button.addEventListener('click', () => {
+        document.body.classList.add('nuskha-print-mode');
+
+        window.addEventListener(
+            'afterprint',
+            () => document.body.classList.remove('nuskha-print-mode'),
+            { once: true }
+        );
+
+        window.print();
+    });
 }
