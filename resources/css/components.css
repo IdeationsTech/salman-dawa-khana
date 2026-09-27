@@ -7,3 +7,37 @@
 .patients-pagination nav > .d-sm-flex > div:first-child {
     display: none;
 }
+
+/*
+|--------------------------------------------------------------------------
+| Application Icons
+|--------------------------------------------------------------------------
+*/
+
+.app-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    color: currentColor;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.sidebar-link .app-icon {
+    width: 20px;
+    font-size: 17px;
+    text-align: center;
+}
+
+.app-icon--small {
+    font-size: 15px;
+}
+
+.app-icon--accent {
+    color: var(--brand-teal-dark);
+}
+
+.app-icon--muted {
+    color: var(--text-muted);
+}
