@@ -128,3 +128,75 @@
     cursor: not-allowed;
     opacity: 0.55;
 }
+
+/*
+|--------------------------------------------------------------------------
+| Buttons — Consistent Spacing and Hover Motion
+|--------------------------------------------------------------------------
+*/
+
+.btn:not(.btn-sm) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 9px 14px;
+    line-height: 1.2;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.btn.btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 6px 10px;
+    line-height: 1.2;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.btn:not(:disabled):not(.disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(9, 36, 61, 0.12);
+}
+
+.btn:not(:disabled):not(.disabled):active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.btn:focus-visible {
+    outline: 3px solid rgba(8, 182, 178, 0.28);
+    outline-offset: 2px;
+}
+
+.btn:disabled,
+.btn.disabled {
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn:not(.btn-sm),
+    .btn.btn-sm {
+        transition: none;
+    }
+
+    .btn:not(:disabled):not(.disabled):hover,
+    .btn:not(:disabled):not(.disabled):active {
+        transform: none;
+    }
+}
