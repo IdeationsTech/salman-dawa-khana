@@ -13,44 +13,44 @@
 
         <nav class="sidebar-nav">
             <a href="{{ route('dashboard') }}" class="sidebar-link">
-                <span>▦</span>
+                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span>
                 <span>Dashboard</span>
             </a>
 
             <a href="{{ route('patients.index') }}" class="sidebar-link">
-                <span>♙</span>
+                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
                 <span>Patients</span>
             </a>
 
             <a href="{{ route('visits.index') }}" class="sidebar-link">
-                <span>▣</span>
+                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
                 <span>Visits</span>
             </a>
 
             <a href="{{ route('prescriptions.index') }}" class="sidebar-link">
-                <span>✎</span>
+                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
                 <span>Prescriptions</span>
             </a>
 
             <a href="{{ route('payments.index') }}" class="sidebar-link">
-                <span>₨</span>
+                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
                 <span>Payments</span>
             </a>
 
             <a href="{{ route('expenses.index') }}" class="sidebar-link">
-                <span>◈</span>
+                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span>
                 <span>Expenses</span>
             </a>
 
             <div class="sidebar-divider"></div>
 
             <a href="{{ route('reports.index') }}" class="sidebar-link active">
-                <span>◌</span>
+                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span>
                 <span>Reports</span>
             </a>
 
             <a href="{{ route('settings.index') }}" class="sidebar-link">
-                <span>⚙</span>
+                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span>
                 <span>Settings</span>
             </a>
         </nav>
@@ -163,7 +163,7 @@
         <section class="report-summary-grid">
 
             <article class="report-summary-card">
-                <div class="report-card-icon">♙</div>
+                <div class="report-card-icon"><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></div>
 
                 <div>
                     <span>Total patients</span>
@@ -173,7 +173,7 @@
             </article>
 
             <article class="report-summary-card">
-                <div class="report-card-icon">▣</div>
+                <div class="report-card-icon"><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></div>
 
                 <div>
                     <span>Total visits</span>
@@ -183,7 +183,7 @@
             </article>
 
             <article class="report-summary-card">
-                <div class="report-card-icon">₨</div>
+                <div class="report-card-icon"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></div>
 
                 <div>
                     <span>Total income</span>
@@ -195,7 +195,7 @@
             </article>
 
             <article class="report-summary-card">
-                <div class="report-card-icon">◈</div>
+                <div class="report-card-icon"><i class="bi bi-receipt app-icon" aria-hidden="true"></i></div>
 
                 <div>
                     <span>Total expenses</span>
@@ -344,7 +344,7 @@
             <div class="report-activity-list">
                 @forelse($payments->take(5) as $payment)
                     <div class="report-activity-row">
-                        <div class="activity-icon income-activity">₨</div>
+                        <div class="activity-icon income-activity"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></div>
 
                         <div>
                             <strong>Payment received</strong>
@@ -370,7 +370,7 @@
 
                 @foreach($expenses->take(5) as $expense)
                     <div class="report-activity-row">
-                        <div class="activity-icon expense-activity">◈</div>
+                        <div class="activity-icon expense-activity"><i class="bi bi-receipt app-icon" aria-hidden="true"></i></div>
 
                         <div>
                             <strong>{{ $expense->description ?? 'Expense recorded' }}</strong>

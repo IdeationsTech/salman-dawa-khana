@@ -6,21 +6,21 @@
 
     <nav class="sidebar-nav" aria-label="Main navigation">
         @foreach ([
-            ['dashboard', 'dashboard', '▦', 'Dashboard'],
-            ['patients.index', 'patients.*', '♙', 'Patients'],
-            ['visits.index', 'visits.*', '▣', 'Visits'],
-            ['prescriptions.index', 'prescriptions.*', '✎', 'Prescriptions'],
-            ['payments.index', 'payments.*', '₨', 'Payments'],
-            ['expenses.index', 'expenses.*', '◈', 'Expenses'],
-            ['reports.index', 'reports.*', '◌', 'Reports'],
-            ['users.index', 'users.*', '♧', 'Users'],
-            ['settings.index', 'settings.*', '⚙', 'Settings'],
+            ['dashboard', 'dashboard', 'speedometer2', 'Dashboard'],
+            ['patients.index', 'patients.*', 'person-vcard', 'Patients'],
+            ['visits.index', 'visits.*', 'calendar-check', 'Visits'],
+            ['prescriptions.index', 'prescriptions.*', 'prescription', 'Prescriptions'],
+            ['payments.index', 'payments.*', 'cash-coin', 'Payments'],
+            ['expenses.index', 'expenses.*', 'receipt', 'Expenses'],
+            ['reports.index', 'reports.*', 'bar-chart-line', 'Reports'],
+            ['users.index', 'users.*', 'people', 'Users'],
+            ['settings.index', 'settings.*', 'gear', 'Settings'],
         ] as [$routeName, $pattern, $icon, $label])
             <a
                 href="{{ route($routeName) }}"
                 class="sidebar-link {{ request()->routeIs($pattern) ? 'active' : '' }}"
             >
-                <span aria-hidden="true">{{ $icon }}</span>
+                <i class="bi bi-{{ $icon }} app-icon" aria-hidden="true"></i>
                 <span>{{ $label }}</span>
             </a>
         @endforeach

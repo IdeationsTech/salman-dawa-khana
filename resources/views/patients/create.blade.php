@@ -42,7 +42,7 @@
 
         <nav class="sidebar-nav">
             <a href="{{ url('/dashboard') }}" class="sidebar-link">
-                <span>▦</span>
+                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span>
                 <span>Dashboard</span>
             </a>
 
@@ -50,39 +50,39 @@
                 href="{{ route('patients.index') }}"
                 class="sidebar-link active"
             >
-                <span>♙</span>
+                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
                 <span>Patients</span>
             </a>
 
             <a href="{{ url('/visits') }}" class="sidebar-link">
-                <span>▣</span>
+                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
                 <span>Visits</span>
             </a>
 
             <a href="{{ url('/prescriptions') }}" class="sidebar-link">
-                <span>✎</span>
+                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
                 <span>Prescriptions</span>
             </a>
 
             <a href="{{ url('/payments') }}" class="sidebar-link">
-                <span>₨</span>
+                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
                 <span>Payments</span>
             </a>
 
             <a href="{{ url('/expenses') }}" class="sidebar-link">
-                <span>◈</span>
+                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span>
                 <span>Expenses</span>
             </a>
 
             <div class="sidebar-divider"></div>
 
             <a href="{{ url('/reports') }}" class="sidebar-link">
-                <span>◌</span>
+                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span>
                 <span>Reports</span>
             </a>
 
             <a href="{{ url('/settings') }}" class="sidebar-link">
-                <span>⚙</span>
+                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span>
                 <span>Settings</span>
             </a>
         </nav>

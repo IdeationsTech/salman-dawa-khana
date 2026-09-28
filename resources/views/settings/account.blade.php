@@ -14,44 +14,44 @@
 
         <nav class="sidebar-nav">
             <a href="/dashboard" class="sidebar-link">
-                <span>▦</span>
+                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span>
                 <span>Dashboard</span>
             </a>
 
             <a href="/patients" class="sidebar-link">
-                <span>♙</span>
+                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
                 <span>Patients</span>
             </a>
 
             <a href="/visits" class="sidebar-link">
-                <span>▣</span>
+                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
                 <span>Visits</span>
             </a>
 
             <a href="/prescriptions" class="sidebar-link">
-                <span>✎</span>
+                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
                 <span>Prescriptions</span>
             </a>
 
             <a href="/payments" class="sidebar-link">
-                <span>₨</span>
+                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
                 <span>Payments</span>
             </a>
 
             <a href="/expenses" class="sidebar-link">
-                <span>◈</span>
+                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span>
                 <span>Expenses</span>
             </a>
 
             <div class="sidebar-divider"></div>
 
             <a href="/reports" class="sidebar-link">
-                <span>◌</span>
+                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span>
                 <span>Reports</span>
             </a>
 
             <a href="/settings/account" class="sidebar-link active">
-                <span>⚙</span>
+                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span>
                 <span>Settings</span>
             </a>
         </nav>
@@ -80,27 +80,27 @@
             {{-- Settings Navigation --}}
             <aside class="settings-navigation">
                 <a href="/settings" class="settings-nav-item">
-                    <span>▣</span>
+                    <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
                     Clinic profile
                 </a>
 
                 <a href="/settings/payments" class="settings-nav-item">
-                    <span>₨</span>
+                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
                     Payment settings
                 </a>
 
                 <a href="/settings/account" class="settings-nav-item active">
-                    <span>♙</span>
+                    <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
                     User account
                 </a>
 
                 <a href="/settings/notifications" class="settings-nav-item">
-                    <span>◌</span>
+                    <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span>
                     Notifications
                 </a>
 
                 <a href="/settings/security" class="settings-nav-item">
-                    <span>▤</span>
+                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
                     Security
                 </a>
             </aside>

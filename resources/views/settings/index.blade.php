@@ -14,44 +14,44 @@
 
         <nav class="sidebar-nav">
             <a href="/dashboard" class="sidebar-link">
-                <span>▦</span>
+                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span>
                 <span>Dashboard</span>
             </a>
 
             <a href="/patients" class="sidebar-link">
-                <span>♙</span>
+                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
                 <span>Patients</span>
             </a>
 
             <a href="/visits" class="sidebar-link">
-                <span>▣</span>
+                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
                 <span>Visits</span>
             </a>
 
             <a href="/prescriptions" class="sidebar-link">
-                <span>✎</span>
+                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
                 <span>Prescriptions</span>
             </a>
 
             <a href="/payments" class="sidebar-link">
-                <span>₨</span>
+                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
                 <span>Payments</span>
             </a>
 
             <a href="/expenses" class="sidebar-link">
-                <span>◈</span>
+                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span>
                 <span>Expenses</span>
             </a>
 
             <div class="sidebar-divider"></div>
 
             <a href="/reports" class="sidebar-link">
-                <span>◌</span>
+                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span>
                 <span>Reports</span>
             </a>
 
             <a href="/settings" class="sidebar-link active">
-                <span>⚙</span>
+                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span>
                 <span>Settings</span>
             </a>
         </nav>
@@ -79,30 +79,34 @@
 
             {{-- Settings Navigation --}}
             <aside class="settings-navigation">
-                <button class="settings-nav-item active">
-                    <span>▣</span>
+                <a
+                    href="{{ route('settings.index') }}"
+                    class="settings-nav-item active"
+                    aria-current="page"
+                >
+                    <span><i class="bi bi-hospital app-icon" aria-hidden="true"></i></span>
                     Clinic profile
-                </button>
+                </a>
 
-                <button class="settings-nav-item">
-                    <span>₨</span>
+                <a href="{{ route('settings.payments') }}" class="settings-nav-item">
+                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
                     Payment settings
-                </button>
+                </a>
 
-                <button class="settings-nav-item">
-                    <span>♙</span>
+                <a href="{{ route('settings.account') }}" class="settings-nav-item">
+                    <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
                     User account
-                </button>
+                </a>
 
-                <button class="settings-nav-item">
-                    <span>◌</span>
+                <a href="{{ route('settings.notifications') }}" class="settings-nav-item">
+                    <span><i class="bi bi-bell app-icon" aria-hidden="true"></i></span>
                     Notifications
-                </button>
+                </a>
 
-                <button class="settings-nav-item">
-                    <span>▤</span>
+                <a href="{{ route('settings.security') }}" class="settings-nav-item">
+                    <span><i class="bi bi-shield-lock app-icon" aria-hidden="true"></i></span>
                     Security
-                </button>
+                </a>
             </aside>
 
             {{-- Settings Content --}}

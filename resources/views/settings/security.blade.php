@@ -14,37 +14,37 @@
 
         <nav class="sidebar-nav">
             <a href="/dashboard" class="sidebar-link">
-                <span>▦</span><span>Dashboard</span>
+                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span><span>Dashboard</span>
             </a>
 
             <a href="/patients" class="sidebar-link">
-                <span>♙</span><span>Patients</span>
+                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span><span>Patients</span>
             </a>
 
             <a href="/visits" class="sidebar-link">
-                <span>▣</span><span>Visits</span>
+                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span><span>Visits</span>
             </a>
 
             <a href="/prescriptions" class="sidebar-link">
-                <span>✎</span><span>Prescriptions</span>
+                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span><span>Prescriptions</span>
             </a>
 
             <a href="/payments" class="sidebar-link">
-                <span>₨</span><span>Payments</span>
+                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span><span>Payments</span>
             </a>
 
             <a href="/expenses" class="sidebar-link">
-                <span>◈</span><span>Expenses</span>
+                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span><span>Expenses</span>
             </a>
 
             <div class="sidebar-divider"></div>
 
             <a href="/reports" class="sidebar-link">
-                <span>◌</span><span>Reports</span>
+                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span><span>Reports</span>
             </a>
 
             <a href="/settings/security" class="sidebar-link active">
-                <span>⚙</span><span>Settings</span>
+                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span><span>Settings</span>
             </a>
         </nav>
 
@@ -70,23 +70,23 @@
 
             <aside class="settings-navigation">
                 <a href="/settings" class="settings-nav-item">
-                    <span>▣</span> Clinic profile
+                    <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span> Clinic profile
                 </a>
 
                 <a href="/settings/payments" class="settings-nav-item">
-                    <span>₨</span> Payment settings
+                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span> Payment settings
                 </a>
 
                 <a href="/settings/account" class="settings-nav-item">
-                    <span>♙</span> User account
+                    <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span> User account
                 </a>
 
                 <a href="/settings/notifications" class="settings-nav-item">
-                    <span>◌</span> Notifications
+                    <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span> Notifications
                 </a>
 
                 <a href="/settings/security" class="settings-nav-item active">
-                    <span>▤</span> Security
+                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span> Security
                 </a>
             </aside>
 
@@ -100,7 +100,7 @@
                             <p>Use a strong password to protect your account.</p>
                         </div>
 
-                        <div class="security-icon">▤</div>
+                        <div class="security-icon"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></div>
                     </div>
 
                     <div class="settings-form-grid">
@@ -212,7 +212,7 @@
                     </div>
 
                     <div class="active-session-row">
-                        <div class="session-device-icon">▣</div>
+                        <div class="session-device-icon"><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></div>
 
                         <div>
                             <strong>Mobile device</strong>
