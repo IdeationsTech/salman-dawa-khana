@@ -1275,3 +1275,29 @@
         font-size: 12px;
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| PRESCRIPTION FORM — Choice Card Interaction
+|--------------------------------------------------------------------------
+*/
+
+.prescription-choice {
+    transition: border-color 0.18s ease, background-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.prescription-choice:hover {
+    border-color: var(--brand-teal);
+}
+
+.prescription-choice:focus-within {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(8, 182, 178, 0.18);
+}
+
+.prescription-choice input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--brand-teal);
+}

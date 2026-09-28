@@ -734,3 +734,61 @@
         gap: 14px;
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| PATIENT FORM — Has Children Yes/No Selector
+|--------------------------------------------------------------------------
+*/
+
+.form-field[data-children-question] .d-flex.gap-4 {
+    gap: 10px !important;
+}
+
+.form-field[data-children-question] .form-check {
+    position: relative;
+    margin: 0;
+    padding-left: 0;
+}
+
+.form-field[data-children-question] .form-check-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+}
+
+.form-field[data-children-question] .form-check-label {
+    display: inline-flex;
+    min-width: 78px;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.18s ease, background-color 0.18s ease,
+        border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.form-field[data-children-question] .form-check-input:checked + .form-check-label {
+    border-color: var(--brand-teal);
+    background: #e8fbfa;
+    color: var(--brand-navy);
+    font-weight: 600;
+}
+
+.form-field[data-children-question] .form-check-input:focus-visible + .form-check-label {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(8, 182, 178, 0.2);
+}
+
+.form-field[data-children-question] .form-check-input:disabled + .form-check-label {
+    background: var(--surface-soft);
+    color: var(--text-light);
+    cursor: not-allowed;
+}
