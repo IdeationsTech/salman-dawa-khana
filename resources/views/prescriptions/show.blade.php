@@ -17,6 +17,7 @@
             <a href="{{ route('prescriptions.index') }}" class="back-link">
                 ← Back to prescriptions
             </a>
+
             <div class="prescription-toolbar-actions">
                 <a
                     href="{{ route('prescriptions.edit', $prescription) }}"
@@ -24,6 +25,7 @@
                 >
                     Edit prescription
                 </a>
+
                 <button type="button" class="btn btn-primary" data-print-page>
                     Print / Save PDF
                 </button>
@@ -31,15 +33,18 @@
         </div>
 
         <article class="prescription-document">
-            {{-- PRESCRIPTION DETAIL — Header --}}
             <header class="prescription-document-header">
                 <div class="prescription-brand">
                     <div class="prescription-brand-mark">+</div>
+
                     <div>
-                        <h1>{{ $prescription->clinic?->name ?? 'Salman Dawa Khana' }}</h1>
+                        <h1>
+                            {{ $prescription->clinic?->name ?? 'Salman Dawa Khana' }}
+                        </h1>
                         <p>Patient Care &amp; Herbal Wellness</p>
                     </div>
                 </div>
+
                 <div class="prescription-document-meta">
                     <span>PRESCRIPTION</span>
                     <strong>{{ $prescription->prescription_no }}</strong>
@@ -52,20 +57,22 @@
 
             <div class="prescription-document-divider"></div>
 
-            {{-- PRESCRIPTION DETAIL — Patient --}}
             <section class="prescription-patient-info">
                 <div>
                     <span>Patient name</span>
                     <strong>{{ $prescription->patient?->full_name ?? '—' }}</strong>
                 </div>
+
                 <div>
                     <span>Patient ID</span>
                     <strong>{{ $prescription->patient?->patient_code ?? '—' }}</strong>
                 </div>
+
                 <div>
                     <span>Phone</span>
                     <strong>{{ $prescription->patient?->phone ?: '—' }}</strong>
                 </div>
+
                 <div>
                     <span>Visit</span>
                     <strong>
@@ -86,68 +93,25 @@
                 </section>
             @endif
 
-            {{-- PRESCRIPTION DETAIL — Ingredients --}}
             <section class="prescription-document-section">
                 <div class="document-section-heading">
                     <span class="document-section-number">Rx</span>
                     <h2>Prescribed nuskha</h2>
                 </div>
 
-                <div class="prescription-items-table">
-                    <div class="prescription-table-row prescription-table-header">
-                        <span>#</span>
-                        <span>Item / quantity</span>
-                        <span>Dosage</span>
-                        <span>Schedule and instructions</span>
-                    </div>
-
-                    @forelse ($prescription->items as $item)
-                        <div class="prescription-table-row">
-                            <span>{{ $loop->iteration }}</span>
-
-                            <div>
-                                <strong>{{ $item->item_name }}</strong>
-
-                                @if ($item->quantity !== null && $item->unit)
-                                    <div class="small text-muted mt-1">
-                                        Quantity:
-                                        {{ rtrim(rtrim(number_format(
-                                            (float) $item->quantity, 3, '.', ''
-                                        ), '0'), '.') }}
-                                        {{ \App\Models\NuskhaItem::UNITS[$item->unit] ?? $item->unit }}
-                                    </div>
-                                @endif
-                            </div>
-
-                            <span>{{ $item->dosage ?: '—' }}</span>
-
-                            <div>
-                                @if ($item->frequency)
-                                    <div>Frequency: {{ $item->frequency }}</div>
-                                @endif
-                                @if ($item->duration)
-                                    <div>Duration: {{ $item->duration }}</div>
-                                @endif
-                                @if ($item->timing)
-                                    <div>Timing: {{ $item->timing }}</div>
-                                @endif
-                                @if ($item->instructions)
-                                    <div>{{ $item->instructions }}</div>
-                                @endif
-                                @if (!$item->frequency && !$item->duration && !$item->timing && !$item->instructions)
-                                    —
-                                @endif
-                            </div>
-                        </div>
-                    @empty
-                        <p>No prescription items recorded.</p>
-                    @endforelse
+                <div class="prescription-items-table p-3">
+                    <p class="mb-0 fw-semibold fs-5">
+                        {{ $prescription->nuskha_name ?: 'Custom nuskha' }}
+                    </p>
                 </div>
             </section>
 
             <section class="prescription-instructions">
                 <h2>Patient instructions</h2>
-                <p>{!! nl2br(e($prescription->general_instructions ?: 'No additional instructions.')) !!}</p>
+                <p>{!! nl2br(e(
+                    $prescription->general_instructions
+                        ?: 'No additional instructions.'
+                )) !!}</p>
             </section>
 
             <footer class="prescription-document-footer">
@@ -155,6 +119,7 @@
                     <span>Prepared by</span>
                     <strong>{{ $prescription->createdBy?->name ?? '—' }}</strong>
                 </div>
+
                 <div class="signature-area">
                     <span>Signature</span>
                     <div></div>

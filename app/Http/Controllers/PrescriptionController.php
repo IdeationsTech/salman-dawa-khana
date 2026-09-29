@@ -129,31 +129,32 @@ class PrescriptionController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validatePrescription($request);
+    $data = $this->validatePrescription($request);
+    $nuskhaName = $this->resolveNuskhaName($data);
 
-        $prescription = DB::transaction(function () use ($data) {
-            $prescription = Prescription::create([
-                'clinic_id' => Auth::user()->clinic_id,
-                'patient_id' => $data['patient_id'],
-                'visit_id' => $data['visit_id'] ?? null,
-                'created_by_user_id' => Auth::id(),
-                'prescription_no' => 'RX-' . (string) Str::ulid(),
-                'prescribed_at' => $data['prescribed_at'],
-                'general_instructions' =>
-                    $data['general_instructions'] ?? null,
-                'status' => $data['status'],
-            ]);
+    $prescription = DB::transaction(function () use ($data, $nuskhaName) {
+        $prescription = Prescription::create([
+            'clinic_id' => Auth::user()->clinic_id,
+            'patient_id' => $data['patient_id'],
+            'visit_id' => $data['visit_id'] ?? null,
+            'created_by_user_id' => Auth::id(),
+            'prescription_no' => 'RX-' . (string) Str::ulid(),
+            'nuskha_name' => $nuskhaName,
+            'prescribed_at' => $data['prescribed_at'],
+            'general_instructions' =>
+                $data['general_instructions'] ?? null,
+            'status' => $data['status'],
+        ]);
 
-            $this->saveItems($prescription, $data['items']);
+        $this->saveItems($prescription, $data['items']);
 
-            return $prescription;
-        });
+        return $prescription;
+    });
 
-        return redirect()
-            ->route('prescriptions.show', $prescription)
-            ->with('success', 'Prescription created successfully.');
+    return redirect()
+        ->route('prescriptions.show', $prescription)
+        ->with('success', 'Prescription created successfully.');
     }
-
     /*
     |--------------------------------------------------------------------------
     | PRESCRIPTIONS — Show / Edit / Update
@@ -188,8 +189,9 @@ class PrescriptionController extends Controller
         $this->ensureClinicAccess($prescription);
 
         $data = $this->validatePrescription($request, $prescription);
+        $nuskhaName = $this->resolveNuskhaName($data);
 
-        DB::transaction(function () use ($prescription, $data) {
+        DB::transaction(function () use ($prescription, $data, $nuskhaName) {
             $lockedPrescription = Prescription::query()
                 ->where('clinic_id', Auth::user()->clinic_id)
                 ->whereKey($prescription->getKey())
@@ -199,6 +201,7 @@ class PrescriptionController extends Controller
             $lockedPrescription->update([
                 'patient_id' => $data['patient_id'],
                 'visit_id' => $data['visit_id'] ?? null,
+                'nuskha_name' => $nuskhaName,
                 'prescribed_at' => $data['prescribed_at'],
                 'general_instructions' =>
                     $data['general_instructions'] ?? null,
@@ -271,6 +274,18 @@ class PrescriptionController extends Controller
     | PRESCRIPTIONS — Validation
     |--------------------------------------------------------------------------
     */
+    private function resolveNuskhaName(array $data): ?string
+    {
+        if (($data['prescription_type'] ?? null) !== 'template') {
+            return null;
+        }
+
+    return NuskhaTemplate::query()
+        ->where('clinic_id', Auth::user()->clinic_id)
+        ->whereKey($data['template_id'])
+        ->value('name');
+    
+    }
 
     private function validatePrescription(
         Request $request,

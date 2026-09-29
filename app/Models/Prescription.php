@@ -25,6 +25,7 @@ class Prescription extends Model
         'visit_id',
         'created_by_user_id',
         'prescription_no',
+        'nuskha_name',
         'prescribed_at',
         'general_instructions',
         'status',
