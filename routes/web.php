@@ -15,6 +15,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitController;
+use App\Http\Controllers\PlatformAdmin\LoginController as PlatformAdminLoginController;
+use App\Http\Middleware\EnsurePlatformAdmin;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,3 +151,49 @@ Route::resource('payments', PaymentController::class);
         VisitController::class
     );
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Platform Admin Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('platform-admin')
+    ->name('platform-admin.')
+    ->group(function () {
+
+        /*
+        | Login
+        */
+
+        Route::get('/login', [
+            PlatformAdminLoginController::class,
+            'show',
+        ])->name('login');
+
+        Route::post('/login', [
+            PlatformAdminLoginController::class,
+            'login',
+        ])->name('login.submit');
+
+        /*
+        | Protected Platform Admin Pages
+        */
+
+        Route::middleware(EnsurePlatformAdmin::class)
+            ->group(function () {
+
+                Route::view(
+                    '/dashboard',
+                    'platform-admin.dashboard'
+                )->name('dashboard');
+
+                Route::post('/logout', [
+                    PlatformAdminLoginController::class,
+                    'logout',
+                ])->name('logout');
+
+            });
+
+    });
