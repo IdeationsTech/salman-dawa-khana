@@ -19,6 +19,10 @@ use App\Http\Controllers\PlatformAdmin\LoginController as PlatformAdminLoginCont
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Controllers\PlatformAdmin\DashboardController as PlatformAdminDashboardController;
 use App\Http\Controllers\PlatformAdmin\ClinicController as PlatformAdminClinicController;
+use App\Http\Middleware\EnsureClinicAccess;
+use App\Http\Controllers\PlatformAdmin\ClinicEditController;
+use App\Http\Controllers\PlatformAdmin\SubscriptionPlanController;
+use App\Http\Controllers\PlatformAdmin\LicensePaymentController;
 
 
 /*
@@ -62,22 +66,21 @@ Route::post('/register', [
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', EnsureClinicAccess::class])->group(function () {
+        Route::get('/dashboard', [
+            DashboardController::class,
+            'index',
+        ])->name('dashboard');
 
-    Route::get('/dashboard', [
-        DashboardController::class,
-        'index',
-    ])->name('dashboard');
+        Route::resource(
+            'patients',
+            PatientController::class
+        );
 
-    Route::resource(
-        'patients',
-        PatientController::class
-    );
-
-    Route::resource(
-        'expenses',
-        ExpenseController::class
-    );
+        Route::resource(
+            'expenses',
+            ExpenseController::class
+        );
 
     /*
 |--------------------------------------------------------------------------
@@ -184,10 +187,52 @@ Route::prefix('platform-admin')
                     'index',
                 ])->name('dashboard');
 
+                Route::get('/plans', [
+                SubscriptionPlanController::class,
+                    'index',
+                ])->name('plans.index');
+
+                Route::put('/plans/{plan}', [
+                    SubscriptionPlanController::class,
+                    'update',
+                ])->whereNumber('plan')->name('plans.update');
+
+                Route::get('/payments', [
+                    LicensePaymentController::class,
+                    'index',
+                ])->name('payments.index');
+
                 Route::get('/clinics', [
-                PlatformAdminClinicController::class,
+                    PlatformAdminClinicController::class,
                     'index',
                 ])->name('clinics.index');
+
+                Route::get('/clinics', [
+                    PlatformAdminClinicController::class,
+                    'index',
+                ])->name('clinics.index');
+
+                // YAHAN teen naye routes paste karo
+                Route::get('/clinics/{clinic}/edit', [
+                    ClinicEditController::class,
+                    'edit',
+                ])->whereNumber('clinic')->name('clinics.edit');
+
+                Route::post('/clinics/{clinic}/status', [
+                    ClinicEditController::class,
+                    'changeStatus',
+                ])->whereNumber('clinic')->name('clinics.status');
+
+                Route::post('/clinics/{clinic}/subscription', [
+                    ClinicEditController::class,
+                    'changePlan',
+                ])->whereNumber('clinic')->name('clinics.subscription');
+
+                // Iske baad aapka pehle se maujood show route
+                Route::get('/clinics/{clinic}', [
+                    PlatformAdminClinicController::class,
+                    'show',
+                ])->whereNumber('clinic')->name('clinics.show');
 
                 Route::get('/clinics/{clinic}', [
                     PlatformAdminClinicController::class,

@@ -114,16 +114,32 @@
                 </a>
 
                 <a
-                    href="{{ route('platform-admin.dashboard') }}#recent-payments"
-                    class="pa-nav-link"
-                    data-pa-payments-link
+                    href="{{ route('platform-admin.payments.index') }}"
+                    class="pa-nav-link {{ request()->routeIs('platform-admin.payments.*') ? 'is-active' : '' }}"
+                    @if(request()->routeIs('platform-admin.payments.*'))
+                        aria-current="page"
+                    @endif
                 >
                     <svg class="pa-icon" aria-hidden="true">
                         <use href="#pa-icon-payments"></use>
                     </svg>
 
-                    <span>Latest payments</span>
+                    <span>Payments</span>
                 </a>
+
+                <a
+                    href="{{ route('platform-admin.plans.index') }}"
+                    class="pa-nav-link {{ request()->routeIs('platform-admin.plans.*') ? 'is-active' : '' }}"
+                    @if(request()->routeIs('platform-admin.plans.*'))
+                        aria-current="page"
+                    @endif
+                >
+                    <svg class="pa-icon" aria-hidden="true">
+                        <use href="#pa-icon-payments"></use>
+                    </svg>
+
+                <span>Subscription plans</span>
+            </a>
             </nav>
 
             <div class="pa-sidebar-footer">

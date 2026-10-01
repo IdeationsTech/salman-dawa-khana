@@ -40,13 +40,22 @@
             </p>
         </div>
 
-        <span @class([
-            'pa-badge',
-            'pa-badge-attention' =>
-                $clinic->onboarding_status === 'pending_review',
-        ])>
-            {{ \Illuminate\Support\Str::headline($clinic->onboarding_status) }}
-        </span>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <span @class([
+                'pa-badge',
+                'pa-badge-attention' =>
+                    $clinic->onboarding_status === 'pending_review',
+            ])>
+                {{ \Illuminate\Support\Str::headline($clinic->onboarding_status) }}
+            </span>
+
+            <a
+                href="{{ route('platform-admin.clinics.edit', $clinic->clinic_id) }}"
+                class="pa-button"
+            >
+                Edit clinic
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -108,7 +117,6 @@
                 @if($clinic->reviewed_at)
                     <div>
                         <dt>Reviewed on</dt>
-
                         <dd>
                             {{ \Illuminate\Support\Carbon::parse($clinic->reviewed_at)->format('d M Y, h:i A') }}
                         </dd>
@@ -151,10 +159,7 @@
 
                 <div>
                     <dt>Phone</dt>
-
-                    <dd>
-                        {{ $clinic->customer_phone ?? 'Not provided' }}
-                    </dd>
+                    <dd>{{ $clinic->customer_phone ?? 'Not provided' }}</dd>
                 </div>
 
                 <div>
@@ -183,7 +188,6 @@
 
                 <div>
                     <dt>License status</dt>
-
                     <dd>
                         {{ \Illuminate\Support\Str::headline($license->status) }}
                     </dd>
@@ -191,7 +195,6 @@
 
                 <div>
                     <dt>Grant type</dt>
-
                     <dd>
                         {{ \Illuminate\Support\Str::headline($license->grant_type) }}
                     </dd>
@@ -199,7 +202,6 @@
 
                 <div>
                     <dt>Starts</dt>
-
                     <dd>
                         {{ \Illuminate\Support\Carbon::parse($license->starts_at)->format('d M Y, h:i A') }}
                     </dd>
@@ -207,7 +209,6 @@
 
                 <div>
                     <dt>Ends</dt>
-
                     <dd>
                         {{ $license->ends_at
                             ? \Illuminate\Support\Carbon::parse($license->ends_at)->format('d M Y, h:i A')
@@ -229,7 +230,7 @@
                 </p>
 
                 <p class="pa-empty-description">
-                    The clinic does not have a license record yet.
+                    The clinic does not have a current license record yet.
                 </p>
             </div>
         @endif
@@ -312,13 +313,15 @@
                                             Select method
                                         </option>
 
-                                        <option value="bank_transfer"
+                                        <option
+                                            value="bank_transfer"
                                             @selected(old('payment_method') === 'bank_transfer')
                                         >
                                             Bank transfer
                                         </option>
 
-                                        <option value="cash"
+                                        <option
+                                            value="cash"
                                             @selected(old('payment_method') === 'cash')
                                         >
                                             Cash
