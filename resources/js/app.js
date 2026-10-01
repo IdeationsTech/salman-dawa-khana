@@ -1351,3 +1351,48 @@ function initNuskhaPrint() {
         window.print();
     });
 }
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Jump To Payments Section
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener('DOMContentLoaded', () => {
+    const link = document.querySelector('[data-pa-payments-link]');
+    const section = document.getElementById('recent-payments');
+
+    // On other pages, the normal link navigates to the dashboard.
+    if (!link || !section) {
+        return;
+    }
+
+    let highlightTimer;
+
+    link.addEventListener('click', (event) => {
+        event.preventDefault();
+
+        const reducedMotion = window.matchMedia(
+            '(prefers-reduced-motion: reduce)'
+        ).matches;
+
+        section.scrollIntoView({
+            behavior: reducedMotion ? 'instant' : 'smooth',
+            block: 'start',
+        });
+
+        window.history.replaceState(
+            null,
+            '',
+            '#recent-payments'
+        );
+
+        section.classList.add('pa-section-focused');
+
+        window.clearTimeout(highlightTimer);
+
+        highlightTimer = window.setTimeout(() => {
+            section.classList.remove('pa-section-focused');
+        }, 1600);
+    });
+});

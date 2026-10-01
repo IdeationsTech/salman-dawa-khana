@@ -861,3 +861,13 @@
     height: auto;
     margin-bottom: 0;
 }
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Section Jump Feedback
+|--------------------------------------------------------------------------
+*/
+
+.pa-app .pa-panel.pa-section-focused {
+    box-shadow: 0 0 0 2px var(--pa-primary);
+}

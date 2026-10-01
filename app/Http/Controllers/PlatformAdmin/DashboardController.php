@@ -26,18 +26,22 @@ class DashboardController extends Controller
                 ->where('onboarding_status', 'pending_review')
                 ->count(),
 
-            'active_licenses' => DB::table('clinic_licenses as licenses')
+            'active_licenses' => DB::table('clinics')
                 ->join(
-                    'clinics',
-                    'clinics.clinic_id',
+                    'clinic_licenses as licenses',
+                    'licenses.clinic_license_id',
                     '=',
-                    'licenses.clinic_id'
+                    'clinics.current_license_id'
                 )
                 ->join(
                     'subscription_plans as plans',
                     'plans.subscription_plan_id',
                     '=',
                     'licenses.subscription_plan_id'
+                )
+                ->whereColumn(
+                    'licenses.clinic_id',
+                    'clinics.clinic_id'
                 )
                 ->where('clinics.onboarding_status', 'approved')
                 ->where('licenses.status', 'active')
@@ -73,9 +77,19 @@ class DashboardController extends Controller
             )
             ->leftJoin(
                 'clinic_licenses as licenses',
-                'licenses.clinic_id',
-                '=',
-                'clinics.clinic_id'
+                function ($join) {
+                    $join
+                        ->on(
+                            'licenses.clinic_license_id',
+                            '=',
+                            'clinics.current_license_id'
+                        )
+                        ->on(
+                            'licenses.clinic_id',
+                            '=',
+                            'clinics.clinic_id'
+                        );
+                }
             )
             ->leftJoin(
                 'subscription_plans as plans',
@@ -110,6 +124,9 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         | Latest SaaS Payments
         |--------------------------------------------------------------------------
+        |
+        | Payments apni original license se linked rahengi.
+        | Is se purani payments bhi history mein nazar aayengi.
         */
 
         $recentPayments = DB::table('license_payments as payments')
@@ -141,12 +158,6 @@ class DashboardController extends Controller
             ->orderByDesc('payments.license_payment_id')
             ->limit(6)
             ->get();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Render Dashboard
-        |--------------------------------------------------------------------------
-        */
 
         return view('platform-admin.dashboard', [
             'stats' => $stats,

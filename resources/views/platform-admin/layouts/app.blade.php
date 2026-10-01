@@ -116,6 +116,7 @@
                 <a
                     href="{{ route('platform-admin.dashboard') }}#recent-payments"
                     class="pa-nav-link"
+                    data-pa-payments-link
                 >
                     <svg class="pa-icon" aria-hidden="true">
                         <use href="#pa-icon-payments"></use>

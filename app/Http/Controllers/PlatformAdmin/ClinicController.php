@@ -108,6 +108,10 @@ class ClinicController extends Controller
                 'plans.name as plan_name',
                 'plans.term_type',
             ])
+            ->where(
+                'licenses.clinic_license_id',
+                $clinicRecord->current_license_id
+            )
             ->where('licenses.clinic_id', $clinic)
             ->first();
 
@@ -218,6 +222,7 @@ class ClinicController extends Controller
             }
 
             if (
+                $clinicRecord->current_license_id !== null ||
                 DB::table('clinic_licenses')
                     ->where('clinic_id', $clinic)
                     ->exists()
@@ -252,10 +257,7 @@ class ClinicController extends Controller
                 ]);
             }
 
-            if (
-                $isTrial &&
-                (int) $plan->duration_days !== 7
-            ) {
+            if ($isTrial && (int) $plan->duration_days !== 7) {
                 throw ValidationException::withMessages([
                     'plan_code' =>
                         'The seven-day trial plan is not configured correctly.',
@@ -281,11 +283,8 @@ class ClinicController extends Controller
 
             $endsAt = match ($plan->term_type) {
                 'trial' => $now->copy()->addDays(7),
-
                 'monthly' => $now->copy()->addMonthNoOverflow(),
-
                 'yearly' => $now->copy()->addYearNoOverflow(),
-
                 'lifetime' => null,
             };
 
@@ -297,17 +296,9 @@ class ClinicController extends Controller
                 'reviewed_at' => $clinicRecord->reviewed_at,
                 'rejection_reason' =>
                     $clinicRecord->rejection_reason,
+                'current_license_id' =>
+                    $clinicRecord->current_license_id,
             ];
-
-            DB::table('clinics')
-                ->where('clinic_id', $clinic)
-                ->update([
-                    'onboarding_status' => 'approved',
-                    'reviewed_by_platform_admin_id' => $adminId,
-                    'reviewed_at' => $now,
-                    'rejection_reason' => null,
-                    'updated_at' => $now,
-                ]);
 
             $licenseId = DB::table('clinic_licenses')
                 ->insertGetId([
@@ -316,8 +307,7 @@ class ClinicController extends Controller
                         $plan->subscription_plan_id,
                     'issued_by_platform_admin_id' => $adminId,
                     'status' => 'active',
-                    'grant_type' =>
-                        $isTrial ? 'trial' : 'paid',
+                    'grant_type' => $isTrial ? 'trial' : 'paid',
                     'starts_at' => $now,
                     'ends_at' => $endsAt,
                     'grant_reason' => $isTrial
@@ -326,6 +316,17 @@ class ClinicController extends Controller
                     'created_at' => $now,
                     'updated_at' => $now,
                 ], 'clinic_license_id');
+
+            DB::table('clinics')
+                ->where('clinic_id', $clinic)
+                ->update([
+                    'onboarding_status' => 'approved',
+                    'reviewed_by_platform_admin_id' => $adminId,
+                    'reviewed_at' => $now,
+                    'rejection_reason' => null,
+                    'current_license_id' => $licenseId,
+                    'updated_at' => $now,
+                ]);
 
             $this->recordAudit(
                 $request,
@@ -338,41 +339,42 @@ class ClinicController extends Controller
                     'onboarding_status' => 'approved',
                     'reviewed_by_platform_admin_id' => $adminId,
                     'reviewed_at' => $now->toDateTimeString(),
+                    'current_license_id' => $licenseId,
                 ]
             );
 
             $ownerRoleId = DB::table('roles')
-                    ->where('name', 'Owner')
-                    ->value('role_id');
+                ->where('name', 'Owner')
+                ->value('role_id');
 
-                $owner = DB::table('users')
-                    ->where('clinic_id', $clinic)
-                    ->where('role_id', $ownerRoleId)
-                    ->lockForUpdate()
-                    ->first();
+            $owner = DB::table('users')
+                ->where('clinic_id', $clinic)
+                ->where('role_id', $ownerRoleId)
+                ->lockForUpdate()
+                ->first();
 
-                if (! $owner) {
-                    throw ValidationException::withMessages([
-                        'approval' => 'This clinic has no owner account.',
-                    ]);
-                }
+            if (! $owner) {
+                throw ValidationException::withMessages([
+                    'approval' => 'This clinic has no owner account.',
+                ]);
+            }
 
-                DB::table('users')
-                    ->where('user_id', $owner->user_id)
-                    ->update([
-                        'is_active' => true,
-                        'updated_at' => $now,
-                    ]);
+            DB::table('users')
+                ->where('user_id', $owner->user_id)
+                ->update([
+                    'is_active' => true,
+                    'updated_at' => $now,
+                ]);
 
-                $this->recordAudit(
-                    $request,
-                    $clinic,
-                    'user.owner_activated',
-                    'users',
-                    $owner->user_id,
-                    ['is_active' => (bool) $owner->is_active],
-                    ['is_active' => true]
-                );
+            $this->recordAudit(
+                $request,
+                $clinic,
+                'user.owner_activated',
+                'users',
+                $owner->user_id,
+                ['is_active' => (bool) $owner->is_active],
+                ['is_active' => true]
+            );
 
             $this->recordAudit(
                 $request,
@@ -384,11 +386,9 @@ class ClinicController extends Controller
                 [
                     'plan_code' => $plan->plan_code,
                     'status' => 'active',
-                    'grant_type' =>
-                        $isTrial ? 'trial' : 'paid',
+                    'grant_type' => $isTrial ? 'trial' : 'paid',
                     'starts_at' => $now->toDateTimeString(),
-                    'ends_at' =>
-                        $endsAt?->toDateTimeString(),
+                    'ends_at' => $endsAt?->toDateTimeString(),
                 ]
             );
 
@@ -510,8 +510,7 @@ class ClinicController extends Controller
                 ->where('clinic_id', $clinic)
                 ->update([
                     'onboarding_status' => 'rejected',
-                    'reviewed_by_platform_admin_id' =>
-                        $adminId,
+                    'reviewed_by_platform_admin_id' => $adminId,
                     'reviewed_at' => $now,
                     'rejection_reason' =>
                         $validated['rejection_reason'],
@@ -527,8 +526,7 @@ class ClinicController extends Controller
                 $oldValues,
                 [
                     'onboarding_status' => 'rejected',
-                    'reviewed_by_platform_admin_id' =>
-                        $adminId,
+                    'reviewed_by_platform_admin_id' => $adminId,
                     'reviewed_at' => $now->toDateTimeString(),
                     'rejection_reason' =>
                         $validated['rejection_reason'],
