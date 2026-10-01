@@ -18,6 +18,7 @@ use App\Http\Controllers\VisitController;
 use App\Http\Controllers\PlatformAdmin\LoginController as PlatformAdminLoginController;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Controllers\PlatformAdmin\DashboardController as PlatformAdminDashboardController;
+use App\Http\Controllers\PlatformAdmin\ClinicController as PlatformAdminClinicController;
 
 
 /*
@@ -183,6 +184,26 @@ Route::prefix('platform-admin')
                     'index',
                 ])->name('dashboard');
 
+                Route::get('/clinics', [
+                PlatformAdminClinicController::class,
+                    'index',
+                ])->name('clinics.index');
+
+                Route::get('/clinics/{clinic}', [
+                    PlatformAdminClinicController::class,
+                    'show',
+                ])->whereNumber('clinic')->name('clinics.show');
+
+                Route::post('/clinics/{clinic}/approve', [
+                    PlatformAdminClinicController::class,
+                    'approve',
+                ])->whereNumber('clinic')->name('clinics.approve');
+
+                Route::post('/clinics/{clinic}/reject', [
+                    PlatformAdminClinicController::class,
+                    'reject',
+                ])->whereNumber('clinic')->name('clinics.reject');
+
                 Route::post('/logout', [
                     PlatformAdminLoginController::class,
                     'logout',
@@ -191,3 +212,6 @@ Route::prefix('platform-admin')
             });
 
     });
+
+    Route::view('/registration/pending', 'auth.pending')
+    ->name('registration.pending');

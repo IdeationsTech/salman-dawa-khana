@@ -589,3 +589,275 @@
         transform: none;
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Clinics List And Details
+|--------------------------------------------------------------------------
+*/
+
+.pa-app .pa-link,
+.pa-app .pa-back-link {
+    color: #fb923c;
+    font-weight: 600;
+}
+
+.pa-app .pa-link:hover,
+.pa-app .pa-back-link:hover {
+    text-decoration: underline;
+}
+
+.pa-app .pa-back-link {
+    display: inline-block;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.pa-app .pa-filter-form {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 20px 22px;
+    border-bottom: 1px solid var(--pa-border);
+}
+
+.pa-app .pa-filter-search {
+    flex: 1 1 280px;
+}
+
+.pa-app .pa-filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.pa-app .pa-field {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+}
+
+.pa-app .pa-field label {
+    color: var(--pa-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pa-app .pa-input {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 12px;
+    border: 1px solid var(--pa-border);
+    border-radius: 9px;
+    background: var(--pa-background);
+    color: var(--pa-text);
+    font: inherit;
+    font-size: 13px;
+}
+
+.pa-app .pa-input::placeholder {
+    color: var(--pa-muted);
+}
+
+.pa-app .pa-input:focus {
+    border-color: var(--pa-focus);
+    outline: 2px solid rgba(251, 146, 60, 0.25);
+}
+
+.pa-app textarea.pa-input {
+    min-height: 96px;
+    resize: vertical;
+}
+
+.pa-app .pa-list-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 17px 22px;
+    border-top: 1px solid var(--pa-border);
+    color: var(--pa-muted);
+    font-size: 12px;
+}
+
+.pa-app .pa-pagination {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pa-app .pa-pagination a {
+    color: #fb923c;
+    font-weight: 600;
+}
+
+.pa-app .pa-pagination .is-disabled {
+    opacity: 0.5;
+}
+
+.pa-app .pa-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+.pa-app .pa-detail-grid > .pa-panel {
+    height: 100%;
+}
+
+.pa-app .pa-detail-list {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 6px 22px;
+}
+
+.pa-app .pa-detail-list > div {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 18px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--pa-border);
+}
+
+.pa-app .pa-detail-list > div:last-child {
+    border-bottom: 0;
+}
+
+.pa-app .pa-detail-list dt {
+    color: var(--pa-muted);
+    font-size: 12px;
+}
+
+.pa-app .pa-detail-list dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-weight: 500;
+}
+
+.pa-app .pa-detail-list-wide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+}
+
+.pa-app .pa-detail-list-wide > div {
+    grid-template-columns: 110px minmax(0, 1fr);
+}
+
+.pa-app .pa-panel-body {
+    padding: 22px;
+}
+
+.pa-app .pa-form {
+    display: grid;
+    gap: 18px;
+}
+
+.pa-app .pa-form-heading {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pa-app .pa-form-description {
+    margin: 0 0 18px;
+    color: var(--pa-muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.pa-app .pa-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.pa-app .pa-form-divider {
+    height: 1px;
+    margin: 26px 0;
+    background: var(--pa-border);
+}
+
+.pa-app .pa-notice {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--pa-primary);
+    border-radius: 10px;
+    background: var(--pa-surface);
+    color: var(--pa-text);
+}
+
+.pa-app .pa-notice-error {
+    border-color: #e07a5f;
+}
+
+.pa-app .pa-notice ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+}
+
+.pa-app .pa-activity-list {
+    padding: 0 22px;
+}
+
+.pa-app .pa-activity-row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 17px 0;
+    border-bottom: 1px solid var(--pa-border);
+}
+
+.pa-app .pa-activity-row:last-child {
+    border-bottom: 0;
+}
+
+.pa-app .pa-activity-row time {
+    color: var(--pa-muted);
+    font-size: 12px;
+}
+
+@media (max-width: 1000px) {
+    .pa-app .pa-detail-grid,
+    .pa-app .pa-detail-list-wide {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .pa-app .pa-detail-list > div,
+    .pa-app .pa-detail-list-wide > div {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 5px;
+    }
+
+    .pa-app .pa-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pa-app .pa-filter-form {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Clinic Detail Card Spacing
+|--------------------------------------------------------------------------
+*/
+
+.pa-app .pa-detail-grid {
+    align-items: stretch;
+    margin-bottom: 24px;
+}
+
+.pa-app .pa-detail-grid > .pa-panel {
+    height: auto;
+    margin-bottom: 0;
+}

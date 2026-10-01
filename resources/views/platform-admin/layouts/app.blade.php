@@ -100,14 +100,17 @@
                 </a>
 
                 <a
-                    href="{{ route('platform-admin.dashboard') }}#recent-clinics"
-                    class="pa-nav-link"
+                    href="{{ route('platform-admin.clinics.index') }}"
+                    class="pa-nav-link {{ request()->routeIs('platform-admin.clinics.*') ? 'is-active' : '' }}"
+                    @if(request()->routeIs('platform-admin.clinics.*'))
+                        aria-current="page"
+                    @endif
                 >
                     <svg class="pa-icon" aria-hidden="true">
                         <use href="#pa-icon-clinic"></use>
                     </svg>
 
-                    <span>Latest clinics</span>
+                    <span>Clinics</span>
                 </a>
 
                 <a
