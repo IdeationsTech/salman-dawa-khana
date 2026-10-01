@@ -1,0 +1,591 @@
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Global Theme
+|--------------------------------------------------------------------------
+*/
+
+.pa-app {
+    --pa-background: #111318;
+    --pa-surface: #222831;
+    --pa-primary: #c2410c;
+    --pa-primary-hover: #a9380a;
+
+    --pa-text: #f3f4f6;
+    --pa-muted: #b0b8c4;
+    --pa-border: rgba(255, 255, 255, 0.12);
+    --pa-hover: rgba(255, 255, 255, 0.05);
+    --pa-focus: #fb923c;
+
+    margin: 0;
+    min-height: 100vh;
+    background: var(--pa-background);
+    color: var(--pa-text);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color-scheme: dark;
+}
+
+.pa-app *,
+.pa-app *::before,
+.pa-app *::after {
+    box-sizing: border-box;
+}
+
+.pa-app a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.pa-app button {
+    font: inherit;
+}
+
+.pa-app :where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid var(--pa-focus);
+    outline-offset: 4px;
+}
+
+.pa-app .pa-symbols {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.pa-app .pa-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Application Layout
+|--------------------------------------------------------------------------
+*/
+
+.pa-app .pa-shell {
+    display: grid;
+    grid-template-columns: 235px minmax(0, 1fr);
+    min-height: 100vh;
+}
+
+.pa-app .pa-sidebar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 26px 18px;
+    overflow-y: auto;
+    background: var(--pa-background);
+    border-right: 1px solid var(--pa-border);
+}
+
+.pa-app .pa-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+    padding: 0 8px;
+}
+
+.pa-app .pa-brand-mark {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: var(--pa-primary);
+    color: #ffffff;
+}
+
+.pa-app .pa-brand-name {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.pa-app .pa-brand-caption {
+    display: block;
+    margin-top: 2px;
+    color: var(--pa-muted);
+    font-size: 12px;
+}
+
+.pa-app .pa-nav-label {
+    margin: 0 12px 12px;
+    color: var(--pa-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.pa-app .pa-nav {
+    display: grid;
+    gap: 7px;
+}
+
+.pa-app .pa-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 46px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    color: var(--pa-muted);
+    font-weight: 500;
+    transition: background-color 160ms ease, color 160ms ease;
+}
+
+.pa-app .pa-nav-link:hover {
+    background: var(--pa-hover);
+    color: var(--pa-text);
+}
+
+.pa-app .pa-nav-link.is-active {
+    background: var(--pa-primary);
+    color: #ffffff;
+}
+
+.pa-app .pa-sidebar-footer {
+    margin-top: auto;
+    padding: 28px 12px 0;
+    color: var(--pa-muted);
+    font-size: 12px;
+}
+
+.pa-app .pa-workspace {
+    min-width: 0;
+}
+
+.pa-app .pa-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 86px;
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--pa-border);
+}
+
+.pa-app .pa-topbar-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.pa-app .pa-topbar-caption {
+    margin: 3px 0 0;
+    color: var(--pa-muted);
+    font-size: 12px;
+}
+
+.pa-app .pa-account {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
+}
+
+.pa-app .pa-account-details {
+    min-width: 0;
+    text-align: right;
+}
+
+.pa-app .pa-account-name {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.pa-app .pa-account-role {
+    display: block;
+    color: var(--pa-muted);
+    font-size: 12px;
+}
+
+.pa-app .pa-content {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+.pa-app .pa-page-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 26px;
+}
+
+.pa-app .pa-page-title {
+    margin: 0;
+    color: var(--pa-text);
+    font-size: clamp(24px, 3vw, 30px);
+    font-weight: 650;
+    line-height: 1.25;
+}
+
+.pa-app .pa-page-description {
+    margin: 8px 0 0;
+    color: var(--pa-muted);
+    font-size: 14px;
+}
+
+.pa-app .pa-page-date {
+    padding-top: 6px;
+    color: var(--pa-muted);
+    font-size: 13px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Buttons
+|--------------------------------------------------------------------------
+*/
+
+.pa-app .pa-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 10px 16px;
+    border: 1px solid var(--pa-border);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--pa-text);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 20px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
+        transform 160ms ease;
+}
+
+.pa-app .pa-button .pa-icon {
+    width: 17px;
+    height: 17px;
+}
+
+.pa-app .pa-button:hover {
+    background: var(--pa-hover);
+    transform: translateY(-1px);
+}
+
+.pa-app .pa-button:active {
+    transform: translateY(0);
+}
+
+.pa-app .pa-button-primary {
+    border-color: var(--pa-primary);
+    background: var(--pa-primary);
+    color: #ffffff;
+}
+
+.pa-app .pa-button-primary:hover {
+    border-color: var(--pa-primary-hover);
+    background: var(--pa-primary-hover);
+}
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Dashboard Statistics
+|--------------------------------------------------------------------------
+*/
+
+.pa-app .pa-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 26px;
+}
+
+.pa-app .pa-stat {
+    min-width: 0;
+    padding: 22px;
+    border: 1px solid var(--pa-border);
+    border-radius: 14px;
+    background: var(--pa-surface);
+}
+
+.pa-app .pa-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pa-app .pa-stat-label {
+    margin: 0;
+    color: var(--pa-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.pa-app .pa-stat-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 1px solid var(--pa-border);
+    border-radius: 10px;
+    color: var(--pa-text);
+}
+
+.pa-app .pa-stat-value {
+    margin: 20px 0 4px;
+    font-size: 32px;
+    font-weight: 650;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+.pa-app .pa-stat-note {
+    margin: 0;
+    color: var(--pa-muted);
+    font-size: 12px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Tables And Panels
+|--------------------------------------------------------------------------
+*/
+
+.pa-app .pa-panel {
+    margin-bottom: 24px;
+    overflow: hidden;
+    border: 1px solid var(--pa-border);
+    border-radius: 14px;
+    background: var(--pa-surface);
+    scroll-margin-top: 24px;
+}
+
+.pa-app .pa-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 22px;
+    border-bottom: 1px solid var(--pa-border);
+}
+
+.pa-app .pa-panel-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.pa-app .pa-panel-description {
+    margin: 5px 0 0;
+    color: var(--pa-muted);
+    font-size: 12px;
+}
+
+.pa-app .pa-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.pa-app .pa-table {
+    width: 100%;
+    min-width: 760px;
+    margin: 0;
+    border-collapse: collapse;
+    color: var(--pa-text);
+    font-size: 13px;
+}
+
+.pa-app .pa-table th {
+    padding: 14px 22px;
+    background: var(--pa-background);
+    color: var(--pa-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.pa-app .pa-table td {
+    padding: 17px 22px;
+    border-bottom: 1px solid var(--pa-border);
+    vertical-align: middle;
+}
+
+.pa-app .pa-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.pa-app .pa-table tbody tr:hover {
+    background: var(--pa-hover);
+}
+
+.pa-app .pa-cell-title {
+    display: block;
+    max-width: 260px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.pa-app .pa-cell-subtitle {
+    display: block;
+    max-width: 260px;
+    margin-top: 4px;
+    color: var(--pa-muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.pa-app .pa-table .pa-amount {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.pa-app .pa-nowrap {
+    white-space: nowrap;
+}
+
+.pa-app .pa-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 9px;
+    border: 1px solid var(--pa-border);
+    border-radius: 7px;
+    color: var(--pa-text);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.pa-app .pa-badge-attention {
+    border-color: var(--pa-primary);
+    background: var(--pa-primary);
+    color: #ffffff;
+}
+
+.pa-app .pa-empty {
+    padding: 42px 22px;
+    text-align: center;
+}
+
+.pa-app .pa-empty-title {
+    margin: 0 0 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pa-app .pa-empty-description {
+    margin: 0;
+    color: var(--pa-muted);
+    font-size: 13px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Responsive Layout
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 1150px) {
+    .pa-app .pa-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 850px) {
+    .pa-app .pa-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pa-app .pa-sidebar {
+        position: static;
+        height: auto;
+        padding: 18px 20px;
+        border-right: 0;
+        border-bottom: 1px solid var(--pa-border);
+    }
+
+    .pa-app .pa-brand {
+        margin-bottom: 18px;
+        padding: 0;
+    }
+
+    .pa-app .pa-nav {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .pa-app .pa-nav-label,
+    .pa-app .pa-sidebar-footer {
+        display: none;
+    }
+
+    .pa-app .pa-topbar,
+    .pa-app .pa-content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 520px) {
+    .pa-app .pa-stats {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pa-app .pa-topbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pa-app .pa-account {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .pa-app .pa-account-details {
+        text-align: left;
+    }
+
+    .pa-app .pa-content {
+        padding: 22px 16px;
+    }
+
+    .pa-app .pa-nav-link {
+        gap: 8px;
+        padding: 10px;
+        font-size: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pa-app .pa-button,
+    .pa-app .pa-nav-link {
+        transition: none;
+    }
+
+    .pa-app .pa-button:hover {
+        transform: none;
+    }
+}

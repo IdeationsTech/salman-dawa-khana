@@ -17,6 +17,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitController;
 use App\Http\Controllers\PlatformAdmin\LoginController as PlatformAdminLoginController;
 use App\Http\Middleware\EnsurePlatformAdmin;
+use App\Http\Controllers\PlatformAdmin\DashboardController as PlatformAdminDashboardController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -163,10 +165,6 @@ Route::prefix('platform-admin')
     ->name('platform-admin.')
     ->group(function () {
 
-        /*
-        | Login
-        */
-
         Route::get('/login', [
             PlatformAdminLoginController::class,
             'show',
@@ -177,17 +175,13 @@ Route::prefix('platform-admin')
             'login',
         ])->name('login.submit');
 
-        /*
-        | Protected Platform Admin Pages
-        */
-
         Route::middleware(EnsurePlatformAdmin::class)
             ->group(function () {
 
-                Route::view(
-                    '/dashboard',
-                    'platform-admin.dashboard'
-                )->name('dashboard');
+                Route::get('/dashboard', [
+                    PlatformAdminDashboardController::class,
+                    'index',
+                ])->name('dashboard');
 
                 Route::post('/logout', [
                     PlatformAdminLoginController::class,
