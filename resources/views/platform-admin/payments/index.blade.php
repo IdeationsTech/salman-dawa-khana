@@ -81,6 +81,13 @@
                             >
                                 Pending verification
                             </option>
+                            
+                            <option
+                                value="complimentary"
+                                @selected($filters['status'] === 'complimentary')
+                            >
+                                Complimentary
+                            </option>
                         </select>
                     </div>
 
@@ -114,7 +121,14 @@
                             >
                                 Bank transfer
                             </option>
-                        </select>
+
+                            <option
+                                value="complimentary"
+                                @selected($filters['method'] === 'complimentary')
+                            >
+                                Complimentary
+                            </option>
+                                                    </select>
                     </div>
 
                     <div class="pa-field">

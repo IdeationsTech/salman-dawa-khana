@@ -23,7 +23,7 @@ use App\Http\Middleware\EnsureClinicAccess;
 use App\Http\Controllers\PlatformAdmin\ClinicEditController;
 use App\Http\Controllers\PlatformAdmin\SubscriptionPlanController;
 use App\Http\Controllers\PlatformAdmin\LicensePaymentController;
-
+use App\Http\Controllers\PlatformAdmin\ComplimentaryLicenseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -227,6 +227,16 @@ Route::prefix('platform-admin')
                     ClinicEditController::class,
                     'changePlan',
                 ])->whereNumber('clinic')->name('clinics.subscription');
+
+                Route::get('/clinics/{clinic}/complimentary', [
+                    ComplimentaryLicenseController::class,
+                    'create',
+                ])->whereNumber('clinic')->name('clinics.complimentary.create');
+
+                Route::post('/clinics/{clinic}/complimentary', [
+                    ComplimentaryLicenseController::class,
+                    'store',
+                ])->whereNumber('clinic')->name('clinics.complimentary.store');
 
                 // Iske baad aapka pehle se maujood show route
                 Route::get('/clinics/{clinic}', [

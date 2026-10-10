@@ -13,6 +13,13 @@
                 ← Back to clinic details
             </a>
 
+            <a
+                href="{{ route('platform-admin.clinics.complimentary.create', $clinic->clinic_id) }}"
+                class="pa-button"
+            >
+                Grant complimentary Lifetime
+            </a>
+
             <h1 class="pa-page-title">
                 {{ $clinic->name }}
             </h1>

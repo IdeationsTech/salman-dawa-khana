@@ -13,26 +13,52 @@ class LicensePaymentController extends Controller
 {
     public function index(Request $request): View
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Payment Filters
+        |--------------------------------------------------------------------------
+        */
+
         $validated = $request->validate([
-            'search' => ['nullable', 'string', 'max:160'],
+            'search' => [
+                'nullable',
+                'string',
+                'max:160',
+            ],
+
             'status' => [
                 'nullable',
                 Rule::in([
                     'all',
                     'verified',
                     'pending_verification',
+                    'complimentary',
                 ]),
             ],
+
             'method' => [
                 'nullable',
                 Rule::in([
                     'all',
                     'cash',
                     'bank_transfer',
+                    'complimentary',
                 ]),
             ],
-            'from' => ['nullable', 'date'],
-            'to' => ['nullable', 'date', 'after_or_equal:from'],
+
+            'from' => [
+                'nullable',
+                'date_format:Y-m-d',
+            ],
+
+            'to' => [
+                'nullable',
+                'date_format:Y-m-d',
+                Rule::when(
+                    $request->filled('from'),
+                    ['after_or_equal:from']
+                ),
+            ],
         ]);
 
         $filters = [
@@ -42,6 +68,12 @@ class LicensePaymentController extends Controller
             'from' => $validated['from'] ?? '',
             'to' => $validated['to'] ?? '',
         ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Payment History Query
+        |--------------------------------------------------------------------------
+        */
 
         $query = DB::table('license_payments as payments')
             ->join(
@@ -78,12 +110,21 @@ class LicensePaymentController extends Controller
                 'payments.paid_at',
                 'payments.status',
                 'payments.verified_at',
+
                 'clinics.clinic_id',
                 'clinics.name as clinic_name',
+
                 'customers.contact_name',
                 'customers.email as customer_email',
+
                 'plans.name as plan_name',
             ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search
+        |--------------------------------------------------------------------------
+        */
 
         if ($filters['search'] !== '') {
             $search = '%' . $filters['search'] . '%';
@@ -113,11 +154,17 @@ class LicensePaymentController extends Controller
                 if (ctype_digit($filters['search'])) {
                     $query->orWhere(
                         'payments.license_payment_id',
-                        (int) $filters['search']
+                        $filters['search']
                     );
                 }
             });
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Status and Method Filters
+        |--------------------------------------------------------------------------
+        */
 
         if ($filters['status'] !== 'all') {
             $query->where(
@@ -132,6 +179,12 @@ class LicensePaymentController extends Controller
                 $filters['method']
             );
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Payment Date Filters
+        |--------------------------------------------------------------------------
+        */
 
         if ($filters['from'] !== '') {
             $query->whereDate(
@@ -148,6 +201,12 @@ class LicensePaymentController extends Controller
                 $filters['to']
             );
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pagination and View
+        |--------------------------------------------------------------------------
+        */
 
         $payments = $query
             ->orderByDesc('payments.paid_at')
