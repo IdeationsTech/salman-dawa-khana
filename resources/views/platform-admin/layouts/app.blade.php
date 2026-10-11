@@ -45,6 +45,18 @@
                 'icon' => 'pa-icon-plans',
                 'label' => 'Subscription plans',
             ],
+            [
+                'route' => 'platform-admin.audit.index',
+                'match' => 'platform-admin.audit.*',
+                'icon' => 'pa-icon-clock',
+                'label' => 'Audit log',
+            ],
+            [
+                'route' => 'platform-admin.account.index',
+                'match' => 'platform-admin.account.*',
+                'icon' => 'pa-icon-shield',
+                'label' => 'Admin account',
+            ],
         ];
     @endphp
 

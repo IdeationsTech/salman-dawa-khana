@@ -28,6 +28,9 @@ use App\Http\Controllers\PlatformAdmin\ComplimentaryLicenseController;
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureClinicAccess;
 use App\Http\Controllers\PlatformAdmin\LicenseController;
+use App\Http\Controllers\PlatformAdmin\AuditLogController;
+use App\Http\Controllers\PlatformAdmin\AccountController as PlatformAdminAccountController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -67,6 +70,27 @@ Route::middleware(['auth', EnsureClinicAccess::class])
     ->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
+
+                    /*
+        |--------------------------------------------------------------------------
+        | Platform Admin — Account Settings
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('/account', [
+            PlatformAdminAccountController::class,
+            'index',
+        ])->name('account.index');
+
+        Route::put('/account/profile', [
+            PlatformAdminAccountController::class,
+            'updateProfile',
+        ])->name('account.profile.update');
+
+        Route::put('/account/password', [
+            PlatformAdminAccountController::class,
+            'updatePassword',
+        ])->name('account.password.update');
 
         Route::resource('patients', PatientController::class);
 
@@ -146,6 +170,16 @@ Route::prefix('platform-admin')
                     PlatformAdminDashboardController::class,
                     'index',
                 ])->name('dashboard');
+
+                Route::get('/audit-logs', [
+                    AuditLogController::class,
+                    'index',
+                ])->name('audit.index');
+
+                Route::get('/audit-logs/{log}', [
+                    AuditLogController::class,
+                    'show',
+                ])->whereNumber('log')->name('audit.show');
 
                 Route::get('/licenses', [
                     LicenseController::class,

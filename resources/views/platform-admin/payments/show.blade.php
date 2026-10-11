@@ -27,7 +27,7 @@
                 target="_blank"
                 rel="noopener"
             >
-                Open printable receipt
+                Print Receipt
             </a>
         @endif
     </div>

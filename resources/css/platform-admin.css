@@ -1220,3 +1220,21 @@ body.pa-license-receipt-page {
         break-inside: avoid;
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| PLATFORM ADMIN — Audit Log
+|--------------------------------------------------------------------------
+*/
+
+.pa-app .pa-audit-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pa-app .pa-audit-value {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
