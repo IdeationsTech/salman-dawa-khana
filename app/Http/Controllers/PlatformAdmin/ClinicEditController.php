@@ -79,6 +79,12 @@ class ClinicEditController extends Controller
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Clinic Suspension and Reactivation
+    |--------------------------------------------------------------------------
+    */
+
     public function changeStatus(
         Request $request,
         int $clinic
@@ -88,11 +94,7 @@ class ClinicEditController extends Controller
                 'required',
                 Rule::in(['suspend', 'reactivate']),
             ],
-            'reason' => [
-                'required',
-                'string',
-                'max:2000',
-            ],
+            'reason' => ['required', 'string', 'max:2000'],
         ]);
 
         DB::transaction(function () use (
@@ -142,13 +144,15 @@ class ClinicEditController extends Controller
                     ->lockForUpdate()
                     ->first();
 
+                $now = now();
+
                 if (
                     ! $license ||
                     $license->status !== 'active' ||
-                    $license->starts_at > now() ||
+                    Carbon::parse($license->starts_at)->gt($now) ||
                     (
                         $license->ends_at !== null &&
-                        $license->ends_at <= now()
+                        Carbon::parse($license->ends_at)->lte($now)
                     )
                 ) {
                     throw ValidationException::withMessages([
@@ -177,11 +181,9 @@ class ClinicEditController extends Controller
             $this->recordAudit(
                 $request,
                 $clinic,
-                'clinic.' . (
-                    $action === 'suspend'
-                        ? 'suspended'
-                        : 'reactivated'
-                ),
+                $action === 'suspend'
+                    ? 'clinic.suspended'
+                    : 'clinic.reactivated',
                 'clinics',
                 $clinic,
                 [
@@ -205,6 +207,12 @@ class ClinicEditController extends Controller
             );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Paid Subscription Change and Renewal
+    |--------------------------------------------------------------------------
+    */
+
     public function changePlan(
         Request $request,
         int $clinic
@@ -221,12 +229,13 @@ class ClinicEditController extends Controller
             'amount' => [
                 'required',
                 'numeric',
+                'decimal:0,2',
                 'gt:0',
                 'max:9999999999.99',
             ],
             'paid_at' => [
                 'required',
-                'date',
+                'date_format:Y-m-d',
                 'before_or_equal:today',
             ],
             'reference_no' => [
@@ -234,18 +243,14 @@ class ClinicEditController extends Controller
                 'string',
                 'max:100',
             ],
-            'reason' => [
-                'required',
-                'string',
-                'max:2000',
-            ],
+            'reason' => ['required', 'string', 'max:2000'],
         ]);
 
-        DB::transaction(function () use (
+        $message = DB::transaction(function () use (
             $request,
             $clinic,
             $validated
-        ) {
+        ): string {
             $clinicRecord = DB::table('clinics')
                 ->where('clinic_id', $clinic)
                 ->lockForUpdate()
@@ -325,9 +330,57 @@ class ClinicEditController extends Controller
             $adminId = Auth::guard('platform_admin')->id();
             $now = now();
 
+            $samePlan = $oldLicense !== null &&
+                (string) $oldLicense->subscription_plan_id ===
+                (string) $plan->subscription_plan_id;
+
+            if (
+                $samePlan &&
+                $plan->term_type === 'lifetime' &&
+                $oldLicense->status === 'active' &&
+                $oldLicense->ends_at === null
+            ) {
+                throw ValidationException::withMessages([
+                    'plan_code' =>
+                        'This clinic already has an active Lifetime license. Renewal is not required.',
+                ]);
+            }
+
+            $isRenewal = $samePlan &&
+                in_array(
+                    $plan->term_type,
+                    ['monthly', 'yearly'],
+                    true
+                );
+
+            /*
+             * Early renewal extends the existing expiry.
+             * Expired licenses and different plans start from now.
+             */
+            $renewalBase = $now->copy();
+
+            if (
+                $isRenewal &&
+                $oldLicense->status === 'active' &&
+                Carbon::parse($oldLicense->starts_at)->lte($now) &&
+                $oldLicense->ends_at !== null
+            ) {
+                $existingExpiry = Carbon::parse(
+                    $oldLicense->ends_at
+                );
+
+                if ($existingExpiry->gt($now)) {
+                    $renewalBase = $existingExpiry->copy();
+                }
+            }
+
             $endsAt = match ($plan->term_type) {
-                'monthly' => $now->copy()->addMonthNoOverflow(),
-                'yearly' => $now->copy()->addYearNoOverflow(),
+                'monthly' => $renewalBase->copy()
+                    ->addMonthNoOverflow(),
+
+                'yearly' => $renewalBase->copy()
+                    ->addYearNoOverflow(),
+
                 'lifetime' => null,
             };
 
@@ -348,7 +401,10 @@ class ClinicEditController extends Controller
                     'license.replaced',
                     'clinic_licenses',
                     $oldLicense->clinic_license_id,
-                    ['status' => $oldLicense->status],
+                    [
+                        'status' => $oldLicense->status,
+                        'ends_at' => $oldLicense->ends_at,
+                    ],
                     [
                         'status' => 'replaced',
                         'reason' => $validated['reason'],
@@ -356,6 +412,10 @@ class ClinicEditController extends Controller
                 );
             }
 
+            /*
+             * The replacement license becomes usable immediately.
+             * Its expiry includes any preserved remaining time.
+             */
             $licenseId = DB::table('clinic_licenses')
                 ->insertGetId([
                     'clinic_id' => $clinic,
@@ -405,7 +465,7 @@ class ClinicEditController extends Controller
             $this->recordAudit(
                 $request,
                 $clinic,
-                'license.issued',
+                $isRenewal ? 'license.renewed' : 'license.issued',
                 'clinic_licenses',
                 $licenseId,
                 null,
@@ -414,6 +474,12 @@ class ClinicEditController extends Controller
                     'status' => 'active',
                     'previous_license_id' =>
                         $oldLicense?->clinic_license_id,
+                    'previous_ends_at' =>
+                        $oldLicense?->ends_at,
+                    'renewal_base' =>
+                        $renewalBase->toDateTimeString(),
+                    'starts_at' => $now->toDateTimeString(),
+                    'ends_at' => $endsAt?->toDateTimeString(),
                     'reason' => $validated['reason'],
                 ]
             );
@@ -431,18 +497,34 @@ class ClinicEditController extends Controller
                     'currency' => $plan->currency,
                     'payment_method' =>
                         $validated['payment_method'],
+                    'reference_no' =>
+                        $validated['reference_no'] ?? null,
+                    'paid_at' => $paidAt->toDateTimeString(),
                     'status' => 'verified',
                 ]
             );
+
+            $message = $isRenewal
+                ? 'Subscription renewed and payment recorded.'
+                : 'Subscription updated and payment recorded.';
+
+            if ($clinicRecord->onboarding_status === 'suspended') {
+                $message .= ' The clinic remains suspended.';
+            }
+
+            return $message;
         }, 3);
 
         return redirect()
             ->route('platform-admin.clinics.edit', $clinic)
-            ->with(
-                'success',
-                'Subscription updated and payment recorded.'
-            );
+            ->with('success', $message);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Platform Audit Log
+    |--------------------------------------------------------------------------
+    */
 
     private function recordAudit(
         Request $request,

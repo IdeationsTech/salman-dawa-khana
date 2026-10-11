@@ -13,13 +13,6 @@
                 ← Back to clinic details
             </a>
 
-            <a
-                href="{{ route('platform-admin.clinics.complimentary.create', $clinic->clinic_id) }}"
-                class="pa-button"
-            >
-                Grant complimentary Lifetime
-            </a>
-
             <h1 class="pa-page-title">
                 {{ $clinic->name }}
             </h1>
@@ -29,6 +22,13 @@
                 · {{ \Illuminate\Support\Str::headline($clinic->onboarding_status) }}
             </p>
         </div>
+
+        <a
+            href="{{ route('platform-admin.clinics.complimentary.create', $clinic->clinic_id) }}"
+            class="pa-button"
+        >
+            Grant complimentary Lifetime
+        </a>
     </div>
 
     @if(session('success'))
@@ -49,6 +49,128 @@
         </div>
     @endif
 
+    {{-- Clinic information --}}
+    <section class="pa-panel">
+        <header class="pa-panel-header">
+            <div>
+                <h2 class="pa-panel-title">
+                    Clinic information
+                </h2>
+
+                <p class="pa-panel-description">
+                    Update the clinic name, contact details and logo.
+                </p>
+            </div>
+        </header>
+
+        <div class="pa-panel-body">
+            <form
+                method="POST"
+                action="{{ route('platform-admin.clinics.details.update', $clinic->clinic_id) }}"
+                enctype="multipart/form-data"
+                class="pa-form"
+            >
+                @csrf
+                @method('PUT')
+
+                <div class="pa-form-grid">
+                    <div class="pa-field">
+                        <label for="clinic-name">
+                            Clinic name *
+                        </label>
+
+                        <input
+                            id="clinic-name"
+                            type="text"
+                            name="name"
+                            class="pa-input"
+                            maxlength="160"
+                            value="{{ old('name', $clinic->name) }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="pa-field">
+                        <label for="clinic-phone">
+                            Phone number *
+                        </label>
+
+                        <input
+                            id="clinic-phone"
+                            type="tel"
+                            name="phone"
+                            class="pa-input"
+                            maxlength="30"
+                            value="{{ old('phone', $clinic->phone) }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="pa-field">
+                        <label for="clinic-address">
+                            Address
+                        </label>
+
+                        <textarea
+                            id="clinic-address"
+                            name="address"
+                            class="pa-input"
+                            rows="3"
+                            maxlength="255"
+                        >{{ old('address', $clinic->address) }}</textarea>
+                    </div>
+
+                    <div class="pa-field">
+                        <label for="clinic-logo">
+                            Clinic logo
+                        </label>
+
+                        @if($clinic->logo_path)
+                            <img
+                                src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($clinic->logo_path) }}"
+                                alt="{{ $clinic->name }} logo"
+                                class="pa-clinic-logo-preview"
+                            >
+                        @endif
+
+                        <input
+                            id="clinic-logo"
+                            type="file"
+                            name="logo"
+                            class="pa-input"
+                            accept=".jpg,.jpeg,.png,.webp"
+                        >
+
+                        <p class="pa-form-description">
+                            JPG, PNG or WebP. Maximum 2 MB.
+                        </p>
+
+                        @if($clinic->logo_path)
+                            <label class="pa-logo-remove">
+                                <input
+                                    type="checkbox"
+                                    name="remove_logo"
+                                    value="1"
+                                    @checked(old('remove_logo'))
+                                >
+
+                                <span>Remove current logo</span>
+                            </label>
+                        @endif
+                    </div>
+                </div>
+
+                <button
+                    type="submit"
+                    class="pa-button pa-button-primary"
+                >
+                    Save clinic details
+                </button>
+            </form>
+        </div>
+    </section>
+
+    {{-- Clinic access and subscription --}}
     <div class="pa-detail-grid">
         <section class="pa-panel">
             <header class="pa-panel-header">
@@ -72,7 +194,9 @@
 
                     <div>
                         <dt>Current plan</dt>
-                        <dd>{{ $license->plan_name ?? 'No current license' }}</dd>
+                        <dd>
+                            {{ $license->plan_name ?? 'No current license' }}
+                        </dd>
                     </div>
 
                     <div>
@@ -102,9 +226,7 @@
                         >
 
                         <div class="pa-field">
-                            <label for="status-reason">
-                                Reason *
-                            </label>
+                            <label for="status-reason">Reason *</label>
 
                             <textarea
                                 id="status-reason"
@@ -124,8 +246,8 @@
                     </form>
                 @else
                     <p class="pa-form-description">
-                        This clinic must be approved through its details page
-                        before its access can be edited.
+                        Approve this clinic through its details page
+                        before editing its access.
                     </p>
                 @endif
             </div>
@@ -290,6 +412,7 @@
         </section>
     </div>
 
+    {{-- License history --}}
     <section class="pa-panel">
         <header class="pa-panel-header">
             <div>
@@ -310,9 +433,10 @@
                         <div>
                             <dt>
                                 License #{{ $pastLicense->clinic_license_id }}
+
                                 @if(
-                                    $clinic->current_license_id
-                                    === $pastLicense->clinic_license_id
+                                    (string) $clinic->current_license_id
+                                    === (string) $pastLicense->clinic_license_id
                                 )
                                     · Current
                                 @endif
@@ -322,6 +446,7 @@
                                 {{ $pastLicense->plan_name }}
                                 · {{ \Illuminate\Support\Str::headline($pastLicense->status) }}
                                 · {{ \Illuminate\Support\Carbon::parse($pastLicense->starts_at)->format('d M Y') }}
+
                                 @if($pastLicense->ends_at)
                                     – {{ \Illuminate\Support\Carbon::parse($pastLicense->ends_at)->format('d M Y') }}
                                 @endif

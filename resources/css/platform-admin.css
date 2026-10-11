@@ -871,3 +871,28 @@
 .pa-app .pa-panel.pa-section-focused {
     box-shadow: 0 0 0 2px var(--pa-primary);
 }
+
+/*
+|--------------------------------------------------------------------------
+| CLINIC EDIT — Logo Preview
+|--------------------------------------------------------------------------
+*/
+
+.pa-app .pa-clinic-logo-preview {
+    display: block;
+    width: 96px;
+    height: 96px;
+    margin-bottom: 14px;
+    padding: 8px;
+    object-fit: contain;
+    background: #ffffff;
+    border-radius: 12px;
+}
+
+.pa-app .pa-logo-remove {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    cursor: pointer;
+}
