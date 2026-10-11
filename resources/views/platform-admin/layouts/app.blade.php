@@ -2,9 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', 'Platform Admin') | Platform Console</title>
@@ -15,9 +13,41 @@
 <body class="pa-app">
     @php
         $platformAdmin = auth('platform_admin')->user();
+
+        $navigation = [
+            [
+                'route' => 'platform-admin.dashboard',
+                'match' => 'platform-admin.dashboard',
+                'icon' => 'pa-icon-dashboard',
+                'label' => 'Dashboard',
+            ],
+            [
+                'route' => 'platform-admin.clinics.index',
+                'match' => 'platform-admin.clinics.*',
+                'icon' => 'pa-icon-clinic',
+                'label' => 'Clinics',
+            ],
+            [
+                'route' => 'platform-admin.licenses.index',
+                'match' => 'platform-admin.licenses.*',
+                'icon' => 'pa-icon-shield',
+                'label' => 'Licenses',
+            ],
+            [
+                'route' => 'platform-admin.payments.index',
+                'match' => 'platform-admin.payments.*',
+                'icon' => 'pa-icon-payments',
+                'label' => 'Payments',
+            ],
+            [
+                'route' => 'platform-admin.plans.index',
+                'match' => 'platform-admin.plans.*',
+                'icon' => 'pa-icon-plans',
+                'label' => 'Subscription plans',
+            ],
+        ];
     @endphp
 
-    {{-- Shared SVG icons --}}
     <svg
         class="pa-symbols"
         xmlns="http://www.w3.org/2000/svg"
@@ -51,6 +81,11 @@
             <path d="M3 10h18M7 15h4"/>
         </symbol>
 
+        <symbol id="pa-icon-plans" viewBox="0 0 24 24">
+            <rect x="5" y="3" width="14" height="18" rx="2"/>
+            <path d="M9 7h6M9 12h6M9 17h4"/>
+        </symbol>
+
         <symbol id="pa-icon-logout" viewBox="0 0 24 24">
             <path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/>
             <path d="M9 12h12m-4-4 4 4-4 4"/>
@@ -80,66 +115,24 @@
                 </span>
             </a>
 
-            <p class="pa-nav-label">
-                Overview
-            </p>
+            <p class="pa-nav-label">Overview</p>
 
             <nav class="pa-nav" aria-label="Platform navigation">
-                <a
-                    href="{{ route('platform-admin.dashboard') }}"
-                    class="pa-nav-link {{ request()->routeIs('platform-admin.dashboard') ? 'is-active' : '' }}"
-                    @if(request()->routeIs('platform-admin.dashboard'))
-                        aria-current="page"
-                    @endif
-                >
-                    <svg class="pa-icon" aria-hidden="true">
-                        <use href="#pa-icon-dashboard"></use>
-                    </svg>
+                @foreach($navigation as $item)
+                    <a
+                        href="{{ route($item['route']) }}"
+                        class="pa-nav-link {{ request()->routeIs($item['match']) ? 'is-active' : '' }}"
+                        @if(request()->routeIs($item['match']))
+                            aria-current="page"
+                        @endif
+                    >
+                        <svg class="pa-icon" aria-hidden="true">
+                            <use href="#{{ $item['icon'] }}"></use>
+                        </svg>
 
-                    <span>Dashboard</span>
-                </a>
-
-                <a
-                    href="{{ route('platform-admin.clinics.index') }}"
-                    class="pa-nav-link {{ request()->routeIs('platform-admin.clinics.*') ? 'is-active' : '' }}"
-                    @if(request()->routeIs('platform-admin.clinics.*'))
-                        aria-current="page"
-                    @endif
-                >
-                    <svg class="pa-icon" aria-hidden="true">
-                        <use href="#pa-icon-clinic"></use>
-                    </svg>
-
-                    <span>Clinics</span>
-                </a>
-
-                <a
-                    href="{{ route('platform-admin.payments.index') }}"
-                    class="pa-nav-link {{ request()->routeIs('platform-admin.payments.*') ? 'is-active' : '' }}"
-                    @if(request()->routeIs('platform-admin.payments.*'))
-                        aria-current="page"
-                    @endif
-                >
-                    <svg class="pa-icon" aria-hidden="true">
-                        <use href="#pa-icon-payments"></use>
-                    </svg>
-
-                    <span>Payments</span>
-                </a>
-
-                <a
-                    href="{{ route('platform-admin.plans.index') }}"
-                    class="pa-nav-link {{ request()->routeIs('platform-admin.plans.*') ? 'is-active' : '' }}"
-                    @if(request()->routeIs('platform-admin.plans.*'))
-                        aria-current="page"
-                    @endif
-                >
-                    <svg class="pa-icon" aria-hidden="true">
-                        <use href="#pa-icon-payments"></use>
-                    </svg>
-
-                <span>Subscription plans</span>
-            </a>
+                        <span>{{ $item['label'] }}</span>
+                    </a>
+                @endforeach
             </nav>
 
             <div class="pa-sidebar-footer">

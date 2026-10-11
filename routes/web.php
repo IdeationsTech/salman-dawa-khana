@@ -27,6 +27,7 @@ use App\Http\Controllers\PlatformAdmin\ComplimentaryLicenseController;
 
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureClinicAccess;
+use App\Http\Controllers\PlatformAdmin\LicenseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -146,6 +147,11 @@ Route::prefix('platform-admin')
                     'index',
                 ])->name('dashboard');
 
+                Route::get('/licenses', [
+                    LicenseController::class,
+                    'index',
+                ])->name('licenses.index');
+
                 Route::get('/plans', [
                     SubscriptionPlanController::class,
                     'index',
@@ -160,6 +166,16 @@ Route::prefix('platform-admin')
                     LicensePaymentController::class,
                     'index',
                 ])->name('payments.index');
+
+                Route::get('/payments/{payment}', [
+                    LicensePaymentController::class,
+                    'show',
+                ])->whereNumber('payment')->name('payments.show');
+
+                Route::get('/payments/{payment}/receipt', [
+                    LicensePaymentController::class,
+                    'receipt',
+                ])->whereNumber('payment')->name('payments.receipt');
 
                 Route::get('/clinics', [
                     PlatformAdminClinicController::class,

@@ -13,19 +13,8 @@ class LicensePaymentController extends Controller
 {
     public function index(Request $request): View
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Validate Payment Filters
-        |--------------------------------------------------------------------------
-        */
-
         $validated = $request->validate([
-            'search' => [
-                'nullable',
-                'string',
-                'max:160',
-            ],
-
+            'search' => ['nullable', 'string', 'max:160'],
             'status' => [
                 'nullable',
                 Rule::in([
@@ -35,7 +24,6 @@ class LicensePaymentController extends Controller
                     'complimentary',
                 ]),
             ],
-
             'method' => [
                 'nullable',
                 Rule::in([
@@ -45,12 +33,7 @@ class LicensePaymentController extends Controller
                     'complimentary',
                 ]),
             ],
-
-            'from' => [
-                'nullable',
-                'date_format:Y-m-d',
-            ],
-
+            'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => [
                 'nullable',
                 'date_format:Y-m-d',
@@ -69,13 +52,109 @@ class LicensePaymentController extends Controller
             'to' => $validated['to'] ?? '',
         ];
 
-        /*
-        |--------------------------------------------------------------------------
-        | Payment History Query
-        |--------------------------------------------------------------------------
-        */
+        $query = $this->paymentQuery();
 
-        $query = DB::table('license_payments as payments')
+        if ($filters['search'] !== '') {
+            $search = '%' . $filters['search'] . '%';
+
+            $query->where(function (Builder $query) use (
+                $search,
+                $filters
+            ) {
+                $query
+                    ->where('clinics.name', 'like', $search)
+                    ->orWhere('customers.contact_name', 'like', $search)
+                    ->orWhere('customers.email', 'like', $search)
+                    ->orWhere('payments.reference_no', 'like', $search);
+
+                if (ctype_digit($filters['search'])) {
+                    $query->orWhere(
+                        'payments.license_payment_id',
+                        $filters['search']
+                    );
+                }
+            });
+        }
+
+        if ($filters['status'] !== 'all') {
+            $query->where('payments.status', $filters['status']);
+        }
+
+        if ($filters['method'] !== 'all') {
+            $query->where(
+                'payments.payment_method',
+                $filters['method']
+            );
+        }
+
+        if ($filters['from'] !== '') {
+            $query->whereDate(
+                'payments.paid_at',
+                '>=',
+                $filters['from']
+            );
+        }
+
+        if ($filters['to'] !== '') {
+            $query->whereDate(
+                'payments.paid_at',
+                '<=',
+                $filters['to']
+            );
+        }
+
+        $payments = $query
+            ->orderByDesc('payments.paid_at')
+            ->orderByDesc('payments.license_payment_id')
+            ->paginate(50)
+            ->withQueryString();
+
+        return view('platform-admin.payments.index', [
+            'payments' => $payments,
+            'filters' => $filters,
+        ]);
+    }
+
+    public function show(int $payment): View
+    {
+        return view('platform-admin.payments.show', [
+            'payment' => $this->findPayment($payment),
+        ]);
+    }
+
+    public function receipt(int $payment): View
+    {
+        $record = $this->findPayment($payment);
+
+        abort_unless(
+            in_array(
+                $record->status,
+                ['verified', 'complimentary'],
+                true
+            ),
+            403,
+            'A receipt is available after payment verification.'
+        );
+
+        return view('platform-admin.payments.receipt', [
+            'payment' => $record,
+        ]);
+    }
+
+    private function findPayment(int $payment): object
+    {
+        $record = $this->paymentQuery()
+            ->where('payments.license_payment_id', $payment)
+            ->first();
+
+        abort_if(! $record, 404);
+
+        return $record;
+    }
+
+    private function paymentQuery(): Builder
+    {
+        return DB::table('license_payments as payments')
             ->join(
                 'clinic_licenses as licenses',
                 'licenses.clinic_license_id',
@@ -100,123 +179,39 @@ class LicensePaymentController extends Controller
                 '=',
                 'clinics.saas_customer_id'
             )
+            ->leftJoin(
+                'platform_admins as recorder',
+                'recorder.platform_admin_id',
+                '=',
+                'payments.recorded_by_platform_admin_id'
+            )
+            ->leftJoin(
+                'platform_admins as verifier',
+                'verifier.platform_admin_id',
+                '=',
+                'payments.verified_by_platform_admin_id'
+            )
             ->select([
-                'payments.license_payment_id',
-                'payments.clinic_license_id',
-                'payments.amount',
-                'payments.currency',
-                'payments.payment_method',
-                'payments.reference_no',
-                'payments.paid_at',
-                'payments.status',
-                'payments.verified_at',
+                'payments.*',
+
+                'licenses.starts_at as license_starts_at',
+                'licenses.ends_at as license_ends_at',
+                'licenses.grant_type',
 
                 'clinics.clinic_id',
                 'clinics.name as clinic_name',
+                'clinics.phone as clinic_phone',
+                'clinics.address as clinic_address',
 
                 'customers.contact_name',
+                'customers.company_name',
                 'customers.email as customer_email',
 
                 'plans.name as plan_name',
+                'plans.term_type',
+
+                'recorder.name as recorded_by_name',
+                'verifier.name as verified_by_name',
             ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Search
-        |--------------------------------------------------------------------------
-        */
-
-        if ($filters['search'] !== '') {
-            $search = '%' . $filters['search'] . '%';
-
-            $query->where(function (Builder $query) use (
-                $search,
-                $filters
-            ) {
-                $query
-                    ->where('clinics.name', 'like', $search)
-                    ->orWhere(
-                        'customers.contact_name',
-                        'like',
-                        $search
-                    )
-                    ->orWhere(
-                        'customers.email',
-                        'like',
-                        $search
-                    )
-                    ->orWhere(
-                        'payments.reference_no',
-                        'like',
-                        $search
-                    );
-
-                if (ctype_digit($filters['search'])) {
-                    $query->orWhere(
-                        'payments.license_payment_id',
-                        $filters['search']
-                    );
-                }
-            });
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Status and Method Filters
-        |--------------------------------------------------------------------------
-        */
-
-        if ($filters['status'] !== 'all') {
-            $query->where(
-                'payments.status',
-                $filters['status']
-            );
-        }
-
-        if ($filters['method'] !== 'all') {
-            $query->where(
-                'payments.payment_method',
-                $filters['method']
-            );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Payment Date Filters
-        |--------------------------------------------------------------------------
-        */
-
-        if ($filters['from'] !== '') {
-            $query->whereDate(
-                'payments.paid_at',
-                '>=',
-                $filters['from']
-            );
-        }
-
-        if ($filters['to'] !== '') {
-            $query->whereDate(
-                'payments.paid_at',
-                '<=',
-                $filters['to']
-            );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Pagination and View
-        |--------------------------------------------------------------------------
-        */
-
-        $payments = $query
-            ->orderByDesc('payments.paid_at')
-            ->orderByDesc('payments.license_payment_id')
-            ->paginate(50)
-            ->withQueryString();
-
-        return view('platform-admin.payments.index', [
-            'payments' => $payments,
-            'filters' => $filters,
-        ]);
     }
 }
