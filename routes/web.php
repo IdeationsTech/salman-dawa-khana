@@ -14,6 +14,7 @@ use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ClinicAccountController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\PaymentSettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitController;
 
@@ -111,6 +112,11 @@ Route::middleware(['auth', EnsureClinicAccess::class])
             SettingController::class,
             'payments',
         ])->name('settings.payments');
+
+        Route::put('/settings/payments', [
+            PaymentSettingsController::class,
+            'update',
+        ])->name('settings.payments.update');
 
         Route::get('/settings/notifications', [
             SettingController::class,

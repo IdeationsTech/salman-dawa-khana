@@ -1,51 +1,110 @@
 @extends('layouts.app')
 
-@section('title', 'Payment Settings — Salman Dawa Khana')
+@section('title', 'Payment Settings — ' . $clinic->name)
 
 @section('content')
+@php
+    $sidebarLinks = [
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+    ];
+
+    $settingsLinks = [
+        ['route' => 'settings.index', 'icon' => 'bi-hospital', 'label' => 'Clinic profile'],
+        ['route' => 'settings.payments', 'icon' => 'bi-cash-coin', 'label' => 'Payment settings'],
+        ['route' => 'settings.account', 'icon' => 'bi-person-vcard', 'label' => 'User account'],
+        ['route' => 'settings.notifications', 'icon' => 'bi-bell', 'label' => 'Notifications'],
+        ['route' => 'settings.security', 'icon' => 'bi-shield-lock', 'label' => 'Security'],
+    ];
+
+    $preference = function ($key, $default = '1') use ($settings) {
+        return old(
+            $key,
+            $settings->get($key)?->setting_value ?? $default
+        );
+    };
+
+    $methodOptions = [
+        [
+            'key' => 'cash_enabled',
+            'label' => 'Cash payments',
+            'description' => 'Accept cash payments from patients.',
+        ],
+        [
+            'key' => 'bank_enabled',
+            'label' => 'Bank transfers',
+            'description' => 'Record payments received by bank transfer.',
+        ],
+        [
+            'key' => 'card_enabled',
+            'label' => 'Card payments',
+            'description' => 'Record payments received through card or POS.',
+        ],
+    ];
+
+    $billingOptions = [
+        [
+            'key' => 'show_previous_due',
+            'label' => 'Show previous due',
+            'description' => 'Show the patient’s previous outstanding balance on receipts.',
+        ],
+        [
+            'key' => 'allow_partial_payments',
+            'label' => 'Allow partial payments',
+            'description' => 'Accept less than the remaining bill balance.',
+        ],
+    ];
+@endphp
+
 <div class="app-shell">
 
-    {{-- Payment Settings Sidebar --}}
+    {{-- Payment Settings — Application Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
+            <div class="sidebar-logo">
+                @if($clinic->logo_path)
+                    <img
+                        src="{{ asset('storage/' . $clinic->logo_path) }}"
+                        alt="{{ $clinic->name }} logo"
+                        class="settings-logo-image"
+                    >
+                @else
+                    <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+                @endif
+            </div>
+
+            <span>{{ $clinic->name }}</span>
         </div>
 
         <nav class="sidebar-nav">
-            <a href="/dashboard" class="sidebar-link">
-                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span><span>Dashboard</span>
-            </a>
+            @foreach($sidebarLinks as $link)
+                @if($link['route'] === 'reports.index')
+                    <div class="sidebar-divider"></div>
+                @endif
 
-            <a href="/patients" class="sidebar-link">
-                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span><span>Patients</span>
-            </a>
+                <a
+                    href="{{ route($link['route']) }}"
+                    class="sidebar-link {{ $link['route'] === 'settings.index' ? 'active' : '' }}"
+                    @if($link['route'] === 'settings.index')
+                        aria-current="page"
+                    @endif
+                >
+                    <span>
+                        <i
+                            class="bi {{ $link['icon'] }} app-icon"
+                            aria-hidden="true"
+                        ></i>
+                    </span>
 
-            <a href="/visits" class="sidebar-link">
-                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span><span>Visits</span>
-            </a>
-
-            <a href="/prescriptions" class="sidebar-link">
-                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span><span>Prescriptions</span>
-            </a>
-
-            <a href="/payments" class="sidebar-link">
-                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span><span>Payments</span>
-            </a>
-
-            <a href="/expenses" class="sidebar-link">
-                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span><span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="/reports" class="sidebar-link">
-                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span><span>Reports</span>
-            </a>
-
-            <a href="/settings/payments" class="sidebar-link active">
-                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span><span>Settings</span>
-            </a>
+                    <span>{{ $link['label'] }}</span>
+                </a>
+            @endforeach
         </nav>
 
         <div class="sidebar-footer">
@@ -54,154 +113,231 @@
         </div>
     </aside>
 
+    {{-- Payment Settings — Main Content --}}
     <main class="dashboard-main">
-
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Settings</p>
                 <h1>Payment settings</h1>
+
                 <p class="page-subtitle">
-                    Configure currency and payment preferences.
+                    Configure currency and patient payment preferences.
                 </p>
             </div>
         </header>
 
+        @if(session('success'))
+            <div class="alert alert-success" role="status">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <strong>Please correct the following:</strong>
+
+                <ul class="mb-0 mt-2">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <section class="settings-layout">
 
+            {{-- Payment Settings — Navigation --}}
             <aside class="settings-navigation">
-                <a href="/settings" class="settings-nav-item">
-                    <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span> Clinic profile
-                </a>
+                @foreach($settingsLinks as $link)
+                    <a
+                        href="{{ route($link['route']) }}"
+                        class="settings-nav-item {{ request()->routeIs($link['route']) ? 'active' : '' }}"
+                        @if(request()->routeIs($link['route']))
+                            aria-current="page"
+                        @endif
+                    >
+                        <span>
+                            <i
+                                class="bi {{ $link['icon'] }} app-icon"
+                                aria-hidden="true"
+                            ></i>
+                        </span>
 
-                <a href="/settings/payments" class="settings-nav-item active">
-                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span> Payment settings
-                </a>
-
-                <a href="/settings/account" class="settings-nav-item">
-                    <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span> User account
-                </a>
-
-                <a href="/settings/notifications" class="settings-nav-item">
-                    <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span> Notifications
-                </a>
-
-                <a href="/settings/security" class="settings-nav-item">
-                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span> Security
-                </a>
+                        {{ $link['label'] }}
+                    </a>
+                @endforeach
             </aside>
 
             <div class="settings-content">
+                <form
+                    method="POST"
+                    action="{{ route('settings.payments.update') }}"
+                >
+                    @csrf
+                    @method('PUT')
 
-                <section class="settings-panel">
-                    <div class="settings-panel-heading">
-                        <div>
-                            <h2>Currency and format</h2>
-                            <p>Choose how amounts appear throughout the system.</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-form-grid">
-                        <div class="form-field">
-                            <label for="currency" class="form-label">
-                                Default currency
-                            </label>
-
-                            <select id="currency" class="form-select">
-                                <option selected>PKR — Pakistani Rupee</option>
-                                <option>AED — UAE Dirham</option>
-                                <option>USD — US Dollar</option>
-                            </select>
-                        </div>
-
-                        <div class="form-field">
-                            <label for="decimal_places" class="form-label">
-                                Decimal places
-                            </label>
-
-                            <select id="decimal_places" class="form-select">
-                                <option selected>2 decimal places</option>
-                                <option>0 decimal places</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-panel-actions">
-                        <button class="btn btn-primary">
-                            Save currency settings
-                        </button>
-                    </div>
-                </section>
-
-                <section class="settings-panel">
-                    <div class="settings-panel-heading">
-                        <div>
-                            <h2>Payment methods</h2>
-                            <p>Enable or disable methods accepted by the clinic.</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-toggle-list">
-                        <div class="settings-toggle-row">
+                    {{-- Payment Settings — Currency and Format --}}
+                    <section class="settings-panel">
+                        <div class="settings-panel-heading">
                             <div>
-                                <strong>Cash payments</strong>
-                                <small>Accept cash payments from patients.</small>
+                                <h2>Currency and format</h2>
+                                <p>Choose your clinic currency and amount display.</p>
+                            </div>
+                        </div>
+
+                        <div class="settings-form-grid">
+                            <div class="form-field">
+                                <label for="currency" class="form-label">
+                                    Clinic currency *
+                                </label>
+
+                                <select
+                                    id="currency"
+                                    name="currency"
+                                    class="form-select"
+                                    required
+                                >
+                                    @foreach([
+                                        'AED' => 'AED — UAE Dirham',
+                                        'PKR' => 'PKR — Pakistani Rupee',
+                                        'USD' => 'USD — US Dollar',
+                                    ] as $code => $label)
+                                        <option
+                                            value="{{ $code }}"
+                                            @selected(old('currency', $clinic->currency) === $code)
+                                        >
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
 
-                            <input class="form-check-input" type="checkbox" checked>
-                        </div>
+                            <div class="form-field">
+                                <label for="decimal_places" class="form-label">
+                                    Decimal places *
+                                </label>
 
-                        <div class="settings-toggle-row">
-                            <div>
-                                <strong>Bank transfers</strong>
-                                <small>Record bank transfer references.</small>
+                                <select
+                                    id="decimal_places"
+                                    name="decimal_places"
+                                    class="form-select"
+                                    required
+                                >
+                                    <option
+                                        value="2"
+                                        @selected((string) $preference('decimal_places', '2') === '2')
+                                    >
+                                        2 decimal places
+                                    </option>
+
+                                    <option
+                                        value="0"
+                                        @selected((string) $preference('decimal_places', '2') === '0')
+                                    >
+                                        0 decimal places
+                                    </option>
+                                </select>
                             </div>
 
-                            <input class="form-check-input" type="checkbox" checked>
-                        </div>
-
-                        <div class="settings-toggle-row">
-                            <div>
-                                <strong>Card payments</strong>
-                                <small>Record card or POS payments.</small>
+                            <div class="form-field settings-field-wide">
+                                <small class="text-muted">
+                                    Changing currency does not convert existing amounts.
+                                    Decimal places affect display only.
+                                </small>
                             </div>
-
-                            <input class="form-check-input" type="checkbox" checked>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                <section class="settings-panel">
-                    <div class="settings-panel-heading">
-                        <div>
-                            <h2>Billing preferences</h2>
-                            <p>Control how patient balances are displayed.</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-toggle-list">
-                        <div class="settings-toggle-row">
+                    {{-- Payment Settings — Accepted Methods --}}
+                    <section class="settings-panel">
+                        <div class="settings-panel-heading">
                             <div>
-                                <strong>Show previous due</strong>
-                                <small>Include previous outstanding balance on bills.</small>
+                                <h2>Payment methods</h2>
+                                <p>Keep at least one payment method enabled.</p>
                             </div>
-
-                            <input class="form-check-input" type="checkbox" checked>
                         </div>
 
-                        <div class="settings-toggle-row">
+                        <div class="settings-toggle-list">
+                            @foreach($methodOptions as $option)
+                                <div class="settings-toggle-row">
+                                    <div>
+                                        <label for="{{ $option['key'] }}">
+                                            <strong>{{ $option['label'] }}</strong>
+                                        </label>
+
+                                        <small>{{ $option['description'] }}</small>
+                                    </div>
+
+                                    <input
+                                        type="hidden"
+                                        name="{{ $option['key'] }}"
+                                        value="0"
+                                    >
+
+                                    <input
+                                        type="checkbox"
+                                        id="{{ $option['key'] }}"
+                                        name="{{ $option['key'] }}"
+                                        class="form-check-input"
+                                        value="1"
+                                        @checked((string) $preference($option['key']) === '1')
+                                    >
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
+
+                    {{-- Payment Settings — Billing Preferences --}}
+                    <section class="settings-panel">
+                        <div class="settings-panel-heading">
                             <div>
-                                <strong>Allow partial payments</strong>
-                                <small>Allow patients to pay less than the total due.</small>
+                                <h2>Billing preferences</h2>
+                                <p>Configure balance display and payment entry.</p>
                             </div>
-
-                            <input class="form-check-input" type="checkbox" checked>
                         </div>
-                    </div>
-                </section>
 
+                        <div class="settings-toggle-list">
+                            @foreach($billingOptions as $option)
+                                <div class="settings-toggle-row">
+                                    <div>
+                                        <label for="{{ $option['key'] }}">
+                                            <strong>{{ $option['label'] }}</strong>
+                                        </label>
+
+                                        <small>{{ $option['description'] }}</small>
+                                    </div>
+
+                                    <input
+                                        type="hidden"
+                                        name="{{ $option['key'] }}"
+                                        value="0"
+                                    >
+
+                                    <input
+                                        type="checkbox"
+                                        id="{{ $option['key'] }}"
+                                        name="{{ $option['key'] }}"
+                                        class="form-check-input"
+                                        value="1"
+                                        @checked((string) $preference($option['key']) === '1')
+                                    >
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="settings-panel-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i
+                                    class="bi bi-check2-circle app-icon"
+                                    aria-hidden="true"
+                                ></i>
+                                Save payment settings
+                            </button>
+                        </div>
+                    </section>
+                </form>
             </div>
         </section>
-
     </main>
 </div>
 @endsection

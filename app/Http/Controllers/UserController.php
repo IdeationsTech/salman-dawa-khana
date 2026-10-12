@@ -2,251 +2,299 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Clinic;
-use App\Models\Setting;
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Throwable;
 
-class SettingController extends Controller
+class UserController extends Controller
 {
-    public function index()
-    {
-        $clinic = $this->clinic();
-        $settings = $this->settings();
+    /*
+    |--------------------------------------------------------------------------
+    | Users — List and Filters
+    |--------------------------------------------------------------------------
+    */
 
-        return view(
-            'settings.index',
-            compact('clinic', 'settings')
-        );
+    public function index(Request $request)
+    {
+        $clinicId = Auth::user()->clinic_id;
+
+        $query = User::where('clinic_id', $clinicId)
+            ->with('role');
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+
+            $query->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if (in_array(
+            $request->input('status'),
+            ['active', 'inactive'],
+            true
+        )) {
+            $query->where(
+                'is_active',
+                $request->input('status') === 'active'
+            );
+        }
+
+        $users = $query
+            ->orderByDesc('created_at')
+            ->orderByDesc('user_id')
+            ->paginate(50)
+            ->withQueryString();
+
+        $totalUsers = User::where('clinic_id', $clinicId)
+            ->count();
+
+        $activeUsers = User::where('clinic_id', $clinicId)
+            ->where('is_active', true)
+            ->count();
+
+        $doctorUsers = User::where('clinic_id', $clinicId)
+            ->whereHas('role', function ($query) {
+                $query->where('name', 'Doctor');
+            })
+            ->count();
+
+        $roleCount = Role::count();
+
+        return view('users.index', compact(
+            'users',
+            'totalUsers',
+            'activeUsers',
+            'doctorUsers',
+            'roleCount'
+        ));
     }
 
-    public function account()
-    {
-        $clinic = $this->clinic();
-        $user = Auth::user();
+    /*
+    |--------------------------------------------------------------------------
+    | Users — Create Form
+    |--------------------------------------------------------------------------
+    */
 
-        return view(
-            'settings.account',
-            compact('clinic', 'user')
-        );
+    public function create()
+    {
+        $roles = Role::orderBy('name')->get();
+
+        return view('users.create', compact('roles'));
     }
 
-    public function payments()
-    {
-        $clinic = $this->clinic();
-        $settings = $this->settings();
+    /*
+    |--------------------------------------------------------------------------
+    | Users — Save New User
+    |--------------------------------------------------------------------------
+    */
 
-        return view(
-            'settings.payments',
-            compact('clinic', 'settings')
-        );
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:120',
+            ],
+
+            'email' => [
+                'required',
+                'email',
+                'max:160',
+                Rule::unique('users', 'email'),
+            ],
+
+            'role_id' => [
+                'required',
+                'integer',
+                Rule::exists('roles', 'role_id'),
+            ],
+
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                function ($attribute, $value, $fail) {
+                    if (strlen($value) > 72) {
+                        $fail('The password must not exceed 72 bytes.');
+                    }
+                },
+            ],
+
+            'is_active' => [
+                'nullable',
+                'boolean',
+            ],
+        ]);
+
+        User::create([
+            'clinic_id' => Auth::user()->clinic_id,
+            'role_id' => $validated['role_id'],
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'User created successfully.');
     }
 
-    public function notifications()
-    {
-        $clinic = $this->clinic();
-        $settings = $this->settings();
+    /*
+    |--------------------------------------------------------------------------
+    | Users — View
+    |--------------------------------------------------------------------------
+    */
 
-        return view(
-            'settings.notifications',
-            compact('clinic', 'settings')
-        );
+    public function show(User $user)
+    {
+        $this->ensureClinicAccess($user);
+
+        $user->load('role');
+
+        return view('users.show', compact('user'));
     }
 
-    public function security()
+    /*
+    |--------------------------------------------------------------------------
+    | Users — Edit Form
+    |--------------------------------------------------------------------------
+    */
+
+    public function edit(User $user)
     {
-        $clinic = $this->clinic();
-        $user = Auth::user();
+        $this->ensureClinicAccess($user);
+
+        $roles = Role::orderBy('name')->get();
 
         return view(
-            'settings.security',
-            compact('clinic', 'user')
+            'users.create',
+            compact('user', 'roles')
         );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Settings — Clinic Profile and Logo
+    | Users — Update
     |--------------------------------------------------------------------------
     */
 
-    public function update(Request $request)
+    public function update(Request $request, User $user)
     {
+        $this->ensureClinicAccess($user);
+
         $validated = $request->validate([
-            'clinic_name' => [
-                'sometimes',
+            'name' => [
                 'required',
                 'string',
+                'max:120',
+            ],
+
+            'email' => [
+                'required',
+                'email',
                 'max:160',
+                Rule::unique('users', 'email')
+                    ->ignore($user->user_id, 'user_id'),
             ],
 
-            'clinic_phone' => [
+            'role_id' => [
+                'required',
+                'integer',
+                Rule::exists('roles', 'role_id'),
+            ],
+
+            'password' => [
                 'nullable',
                 'string',
-                'max:30',
+                'min:8',
+                'confirmed',
+                function ($attribute, $value, $fail) {
+                    if ($value !== null && strlen($value) > 72) {
+                        $fail('The password must not exceed 72 bytes.');
+                    }
+                },
             ],
 
-            'clinic_address' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'clinic_logo' => [
-                'nullable',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:2048',
-                'dimensions:max_width=3000,max_height=3000',
-                'prohibited_if:remove_logo,1',
-            ],
-
-            'remove_logo' => [
+            'is_active' => [
                 'nullable',
                 'boolean',
             ],
-
-            'currency' => [
-                'sometimes',
-                'required',
-                Rule::in(['AED', 'PKR', 'USD']),
-            ],
-
-            'settings' => [
-                'nullable',
-                'array',
-            ],
-
-            'settings.*' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-        ], [
-            'clinic_logo.prohibited_if' =>
-                'Choose either a new logo or Remove current logo.',
         ]);
 
-        $clinicId = Auth::user()->clinic_id;
-        $newLogoPath = null;
-        $oldLogoPath = null;
-
-        try {
-            if ($request->hasFile('clinic_logo')) {
-                $newLogoPath = $request
-                    ->file('clinic_logo')
-                    ->store("clinics/{$clinicId}/logos", 'public');
-
-                if (! $newLogoPath) {
-                    throw new \RuntimeException(
-                        'The clinic logo could not be stored.'
-                    );
-                }
-            }
-
-            DB::transaction(function () use (
-                $request,
-                $validated,
-                $clinicId,
-                $newLogoPath,
-                &$oldLogoPath
-            ) {
-                $clinic = DB::table('clinics')
-                    ->where('clinic_id', $clinicId)
-                    ->lockForUpdate()
-                    ->first();
-
-                abort_unless($clinic, 404);
-
-                $clinicData = [];
-
-                foreach ([
-                    'clinic_name' => 'name',
-                    'clinic_phone' => 'phone',
-                    'clinic_address' => 'address',
-                    'currency' => 'currency',
-                ] as $input => $column) {
-                    if (array_key_exists($input, $validated)) {
-                        $clinicData[$column] = $validated[$input];
-                    }
-                }
-
-                if (
-                    $newLogoPath !== null ||
-                    $request->boolean('remove_logo')
-                ) {
-                    $oldLogoPath = $clinic->logo_path;
-                    $clinicData['logo_path'] = $newLogoPath;
-                }
-
-                if ($clinicData !== []) {
-                    $clinicData['updated_at'] = now();
-
-                    DB::table('clinics')
-                        ->where('clinic_id', $clinicId)
-                        ->update($clinicData);
-                }
-
-                foreach (
-                    ($validated['settings'] ?? [])
-                    as $key => $value
-                ) {
-                    Setting::updateOrCreate(
-                        [
-                            'clinic_id' => $clinicId,
-                            'setting_key' => $key,
-                        ],
-                        [
-                            'setting_value' => $value,
-                        ]
-                    );
-                }
-            });
-        } catch (Throwable $exception) {
-            if ($newLogoPath) {
-                Storage::disk('public')->delete($newLogoPath);
-            }
-
-            throw $exception;
-        }
-
-        // Delete the previous file only after the database update succeeds.
         if (
-            $oldLogoPath &&
-            $oldLogoPath !== $newLogoPath
+            (int) $user->user_id === (int) Auth::id() &&
+            ! $request->boolean('is_active')
         ) {
-            try {
-                Storage::disk('public')->delete($oldLogoPath);
-            } catch (Throwable $exception) {
-                report($exception);
-            }
+            return back()
+                ->withErrors([
+                    'is_active' =>
+                        'You cannot deactivate your own account.',
+                ])
+                ->withInput($request->except([
+                    'password',
+                    'password_confirmation',
+                ]));
         }
 
-        return back()->with(
-            'success',
-            'Settings updated successfully.'
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->role_id = $validated['role_id'];
+        $user->is_active = $request->boolean('is_active');
+
+        if (! empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        return redirect()
+            ->route('users.show', $user)
+            ->with('success', 'User updated successfully.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Users — Delete
+    |--------------------------------------------------------------------------
+    */
+
+    public function destroy(User $user)
+    {
+        $this->ensureClinicAccess($user);
+
+        abort_if(
+            (int) $user->user_id === (int) Auth::id(),
+            403,
+            'You cannot delete your own account.'
         );
+
+        $user->delete();
+
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'User deleted successfully.');
     }
 
-    private function clinic()
-    {
-        return Clinic::where(
-            'clinic_id',
-            Auth::user()->clinic_id
-        )->firstOrFail();
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | Users — Clinic Isolation
+    |--------------------------------------------------------------------------
+    */
 
-    private function settings()
+    private function ensureClinicAccess(User $user): void
     {
-        return Setting::where(
-            'clinic_id',
-            Auth::user()->clinic_id
-        )
-            ->get()
-            ->keyBy('setting_key');
+        abort_unless(
+            (int) $user->clinic_id ===
+                (int) Auth::user()->clinic_id,
+            404
+        );
     }
 }

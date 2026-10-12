@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Models\Setting;
 
 class PaymentController extends Controller
 {
@@ -532,8 +533,9 @@ class PaymentController extends Controller
 
             'method' => [
                 Rule::requiredIf($receiving),
+                Rule::excludeIf(! $receiving),
                 'nullable',
-                Rule::in(['cash', 'bank', 'card']),
+                Rule::in($this->enabledPaymentMethods()),
             ],
 
             'reference_no' => [
@@ -577,6 +579,7 @@ class PaymentController extends Controller
             'bill_id.exists' => 'Select a bill belonging to this patient.',
             'amount.regex' => 'Use no more than two decimal places.',
             'reference_no.required' => 'Enter the bank or card transaction reference.',
+            'method.in' => 'This payment method is disabled in your clinic settings.',
         ]);
 
         $data['bill_id'] = $newBill || $mode === 'unallocated'
@@ -637,6 +640,12 @@ class PaymentController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    /*
+|--------------------------------------------------------------------------
+| PAYMENTS — Form Data
+|--------------------------------------------------------------------------
+*/
+
     private function formData(?Payment $payment = null): array
     {
         $clinic = $this->clinic();
@@ -644,6 +653,8 @@ class PaymentController extends Controller
         return [
             'clinic' => $clinic,
             'currency' => strtoupper($clinic->currency ?: 'AED'),
+
+            'enabledMethods' => $this->enabledPaymentMethods(),
 
             'patients' => Patient::query()
                 ->where('clinic_id', $this->clinicId())
@@ -746,22 +757,60 @@ class PaymentController extends Controller
         return $this->cents($query->sum('amount'));
     }
 
+    /*
+|--------------------------------------------------------------------------
+| PAYMENTS — Balance and Partial Payment Validation
+|--------------------------------------------------------------------------
+*/
+
     private function checkAmount(
         ?Bill $bill,
         string $amount,
         ?int $excludePaymentId = null
     ): void {
-        if (!$bill) {
+        if (! $bill) {
             return;
         }
 
-        $available = $this->cents($bill->total_amount)
-            - $this->paidCents($bill, $excludePaymentId);
+        $available = max(
+            0,
+            $this->cents($bill->total_amount)
+                - $this->paidCents($bill, $excludePaymentId)
+        );
 
-        if ($this->cents($amount) > $available) {
+        $received = $this->cents($amount);
+
+        if ($received > $available) {
             throw ValidationException::withMessages([
-                'amount' => 'Amount exceeds the remaining bill balance: '
-                    . $this->decimal(max(0, $available)) . '.',
+                'amount' =>
+                    'Amount exceeds the remaining bill balance: '
+                    . $this->decimal($available) . '.',
+            ]);
+        }
+
+        $partialSetting = Setting::query()
+            ->where('clinic_id', $this->clinicId())
+            ->where('setting_key', 'allow_partial_payments')
+            ->value('setting_value');
+
+        // Existing clinics default to allowing partial payments.
+        $allowPartial = $partialSetting === null
+            || (string) $partialSetting === '1';
+
+        /*
+        * Zero received creates an unpaid bill without a payment.
+        * Positive payments must cover the full remaining balance
+        * when partial payments are disabled.
+        */
+        if (
+            ! $allowPartial &&
+            $received > 0 &&
+            $received < $available
+        ) {
+            throw ValidationException::withMessages([
+                'amount' =>
+                    'Partial payments are disabled. Enter the full remaining balance: '
+                    . $this->decimal($available) . '.',
             ]);
         }
     }
@@ -885,5 +934,38 @@ class PaymentController extends Controller
             . intdiv($cents, 100)
             . '.'
             . str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| PAYMENTS — Enabled Clinic Payment Methods
+|--------------------------------------------------------------------------
+*/
+
+    private function enabledPaymentMethods(): array
+    {
+        $settings = Setting::query()
+            ->where('clinic_id', $this->clinicId())
+            ->whereIn('setting_key', [
+                'cash_enabled',
+                'bank_enabled',
+                'card_enabled',
+            ])
+            ->pluck('setting_value', 'setting_key');
+
+        $methods = [];
+
+        foreach ([
+            'cash' => 'cash_enabled',
+            'bank' => 'bank_enabled',
+            'card' => 'card_enabled',
+        ] as $method => $key) {
+            // Existing clinics default to enabled until preferences are saved.
+            if ((string) $settings->get($key, '1') === '1') {
+                $methods[] = $method;
+            }
+        }
+
+        return $methods;
     }
 }

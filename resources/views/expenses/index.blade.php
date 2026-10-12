@@ -4,6 +4,12 @@
 
 @section('content')
 @php
+    $currency = strtoupper(
+        \App\Models\Clinic::findOrFail(auth()->user()->clinic_id)->currency
+        ?: 'AED'
+    );
+@endphp
+@php
     $selectedCategory = request('category') ?: 'all';
     $selectedDateRange = request('date_range') ?: 'all time';
 @endphp
@@ -100,7 +106,7 @@
                 <span>Today's expenses</span>
 
                 <strong>
-                    PKR {{ number_format($todayExpenses ?? 0, 2) }}
+                    {{ $currency }} {{ number_format($todayExpenses ?? 0, 2) }}
                 </strong>
 
                 <small>{{ $todayExpenseCount ?? 0 }} transactions</small>
@@ -110,7 +116,7 @@
                 <span>This month's expenses</span>
 
                 <strong>
-                    PKR {{ number_format($monthExpenses ?? 0, 2) }}
+                    {{ $currency }} {{ number_format($monthExpenses ?? 0, 2) }}
                 </strong>
 
                 <small>{{ now('Asia/Dubai')->format('F Y') }}</small>
@@ -122,7 +128,7 @@
                 <strong>{{ $highestExpenseCategory ?? '—' }}</strong>
 
                 <small>
-                    PKR {{ number_format($highestCategoryAmount ?? 0, 2) }}
+                    {{ $currency }} {{ number_format($highestCategoryAmount ?? 0, 2) }}
                 </small>
             </article>
 
@@ -130,7 +136,7 @@
                 <span>Net income</span>
 
                 <strong>
-                    PKR {{ number_format($netIncome ?? 0, 2) }}
+                    {{ $currency }} {{ number_format($netIncome ?? 0, 2) }}
                 </strong>
 
                 <small>Payments received minus expenses this month</small>
@@ -299,7 +305,7 @@
                                 <td>{{ $methodLabel }}</td>
 
                                 <td class="expense-amount">
-                                    PKR {{ number_format($expense->amount, 2) }}
+                                    {{ $currency }} {{ number_format($expense->amount, 2) }}
                                 </td>
 
                                 <td class="text-end">

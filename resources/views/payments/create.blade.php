@@ -459,23 +459,32 @@
                         </label>
 
                         <select
-                            id="payment_method"
+                            id="method"
                             name="method"
-                            class="form-select"
+                            class="form-select @error('method') is-invalid @enderror"
                             data-payment-method
                         >
-                            <option value="cash" @selected($selectedMethod === 'cash')>
-                                Cash
-                            </option>
+                            <option value="">Select payment method</option>
 
-                            <option value="bank" @selected($selectedMethod === 'bank')>
-                                Bank transfer
-                            </option>
-
-                            <option value="card" @selected($selectedMethod === 'card')>
-                                Card
-                            </option>
+                            @foreach([
+                                'cash' => 'Cash',
+                                'bank' => 'Bank transfer',
+                                'card' => 'Card',
+                            ] as $methodValue => $methodLabel)
+                                @if(in_array($methodValue, $enabledMethods, true))
+                                    <option
+                                        value="{{ $methodValue }}"
+                                        @selected($selectedMethod === $methodValue)
+                                    >
+                                        {{ $methodLabel }}
+                                    </option>
+                                @endif
+                            @endforeach
                         </select>
+
+                        @error('method')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="form-field">
