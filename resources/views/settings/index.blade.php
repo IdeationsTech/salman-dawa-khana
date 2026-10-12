@@ -1,59 +1,58 @@
 @extends('layouts.app')
 
-@section('title', 'Settings — Salman Dawa Khana')
+@section('title', 'Settings — ' . $clinic->name)
 
 @section('content')
+@php
+    $currentUser = auth()->user();
+
+    $sidebarLinks = [
+        ['url' => '/dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
+        ['url' => '/patients', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
+        ['url' => '/visits', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
+        ['url' => '/prescriptions', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
+        ['url' => '/payments', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
+        ['url' => '/expenses', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
+        ['url' => '/reports', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
+        ['url' => '/settings', 'icon' => 'bi-gear', 'label' => 'Settings'],
+    ];
+@endphp
+
 <div class="app-shell">
 
-    {{-- Settings Sidebar --}}
+    {{-- Settings — Application Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
+            <div class="sidebar-logo">
+                <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+            </div>
+
+            <span>{{ $clinic->name }}</span>
         </div>
 
         <nav class="sidebar-nav">
-            <a href="/dashboard" class="sidebar-link">
-                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span>
-                <span>Dashboard</span>
-            </a>
+            @foreach($sidebarLinks as $link)
+                @if($link['url'] === '/reports')
+                    <div class="sidebar-divider"></div>
+                @endif
 
-            <a href="/patients" class="sidebar-link">
-                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
-                <span>Patients</span>
-            </a>
+                <a
+                    href="{{ url($link['url']) }}"
+                    class="sidebar-link {{ $link['url'] === '/settings' ? 'active' : '' }}"
+                    @if($link['url'] === '/settings')
+                        aria-current="page"
+                    @endif
+                >
+                    <span>
+                        <i
+                            class="bi {{ $link['icon'] }} app-icon"
+                            aria-hidden="true"
+                        ></i>
+                    </span>
 
-            <a href="/visits" class="sidebar-link">
-                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
-                <span>Visits</span>
-            </a>
-
-            <a href="/prescriptions" class="sidebar-link">
-                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
-                <span>Prescriptions</span>
-            </a>
-
-            <a href="/payments" class="sidebar-link">
-                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
-                <span>Payments</span>
-            </a>
-
-            <a href="/expenses" class="sidebar-link">
-                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span>
-                <span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="/reports" class="sidebar-link">
-                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span>
-                <span>Reports</span>
-            </a>
-
-            <a href="/settings" class="sidebar-link active">
-                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span>
-                <span>Settings</span>
-            </a>
+                    <span>{{ $link['label'] }}</span>
+                </a>
+            @endforeach
         </nav>
 
         <div class="sidebar-footer">
@@ -62,176 +61,242 @@
         </div>
     </aside>
 
-    {{-- Settings Main Content --}}
+    {{-- Settings — Main Content --}}
     <main class="dashboard-main">
-
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Application configuration</p>
                 <h1>Settings</h1>
+
                 <p class="page-subtitle">
                     Manage your clinic profile and system preferences.
                 </p>
             </div>
         </header>
 
+        @if(session('success'))
+            <div class="alert alert-success" role="status">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <strong>Please correct the following:</strong>
+
+                <ul class="mb-0 mt-2">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <section class="settings-layout">
 
-            {{-- Settings Navigation --}}
+            {{-- Settings — Navigation --}}
             <aside class="settings-navigation">
                 <a
                     href="{{ route('settings.index') }}"
                     class="settings-nav-item active"
                     aria-current="page"
                 >
-                    <span><i class="bi bi-hospital app-icon" aria-hidden="true"></i></span>
+                    <span>
+                        <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+                    </span>
                     Clinic profile
                 </a>
 
-                <a href="{{ route('settings.payments') }}" class="settings-nav-item">
-                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
+                <a
+                    href="{{ route('settings.payments') }}"
+                    class="settings-nav-item"
+                >
+                    <span>
+                        <i class="bi bi-cash-coin app-icon" aria-hidden="true"></i>
+                    </span>
                     Payment settings
                 </a>
 
-                <a href="{{ route('settings.account') }}" class="settings-nav-item">
-                    <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
+                <a
+                    href="{{ route('settings.account') }}"
+                    class="settings-nav-item"
+                >
+                    <span>
+                        <i class="bi bi-person-vcard app-icon" aria-hidden="true"></i>
+                    </span>
                     User account
                 </a>
 
-                <a href="{{ route('settings.notifications') }}" class="settings-nav-item">
-                    <span><i class="bi bi-bell app-icon" aria-hidden="true"></i></span>
+                <a
+                    href="{{ route('settings.notifications') }}"
+                    class="settings-nav-item"
+                >
+                    <span>
+                        <i class="bi bi-bell app-icon" aria-hidden="true"></i>
+                    </span>
                     Notifications
                 </a>
 
-                <a href="{{ route('settings.security') }}" class="settings-nav-item">
-                    <span><i class="bi bi-shield-lock app-icon" aria-hidden="true"></i></span>
+                <a
+                    href="{{ route('settings.security') }}"
+                    class="settings-nav-item"
+                >
+                    <span>
+                        <i class="bi bi-shield-lock app-icon" aria-hidden="true"></i>
+                    </span>
                     Security
                 </a>
             </aside>
 
-            {{-- Settings Content --}}
             <div class="settings-content">
 
-                {{-- Clinic Profile --}}
+                {{-- Settings — Clinic Profile Form --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
                             <h2>Clinic profile</h2>
-                            <p>Update the information shown across your clinic system.</p>
+
+                            <p>
+                                Update the information shown across your clinic system.
+                            </p>
                         </div>
 
-                        <div class="clinic-settings-logo">+</div>
-                    </div>
-
-                    <div class="settings-form-grid">
-                        <div class="form-field settings-field-wide">
-                            <label for="clinic_name" class="form-label">
-                                Clinic name
-                            </label>
-
-                            <input
-                                type="text"
-                                id="clinic_name"
-                                class="form-control"
-                                value="Salman Dawa Khana"
-                            >
-                        </div>
-
-                        <div class="form-field">
-                            <label for="clinic_phone" class="form-label">
-                                Phone number
-                            </label>
-
-                            <input
-                                type="tel"
-                                id="clinic_phone"
-                                class="form-control"
-                                value="+971 50 123 4567"
-                            >
-                        </div>
-
-                        <div class="form-field">
-                            <label for="clinic_email" class="form-label">
-                                Email address
-                            </label>
-
-                            <input
-                                type="email"
-                                id="clinic_email"
-                                class="form-control"
-                                value="info@salmadawakhan.com"
-                            >
-                        </div>
-
-                        <div class="form-field settings-field-wide">
-                            <label for="clinic_address" class="form-label">
-                                Clinic address
-                            </label>
-
-                            <textarea
-                                id="clinic_address"
-                                class="form-control"
-                                rows="3"
-                            >Al Nahda, Dubai, United Arab Emirates</textarea>
+                        <div class="clinic-settings-logo">
+                            @if($clinic->logo_path)
+                                <img
+                                    src="{{ asset('storage/' . $clinic->logo_path) }}"
+                                    alt="{{ $clinic->name }} logo"
+                                    style="width: 100%; height: 100%; object-fit: contain;"
+                                >
+                            @else
+                                <i
+                                    class="bi bi-hospital app-icon"
+                                    aria-hidden="true"
+                                ></i>
+                            @endif
                         </div>
                     </div>
 
-                    <div class="settings-panel-actions">
-                        <button class="btn btn-primary">
-                            Save clinic profile
-                        </button>
-                    </div>
+                    <form
+                        method="POST"
+                        action="{{ route('settings.update') }}"
+                    >
+                        @csrf
+                        @method('PUT')
+
+                        <div class="settings-form-grid">
+                            <div class="form-field settings-field-wide">
+                                <label for="clinic_name" class="form-label">
+                                    Clinic name *
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="clinic_name"
+                                    name="clinic_name"
+                                    class="form-control @error('clinic_name') is-invalid @enderror"
+                                    value="{{ old('clinic_name', $clinic->name) }}"
+                                    maxlength="160"
+                                    required
+                                >
+
+                                @error('clinic_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-field">
+                                <label for="clinic_phone" class="form-label">
+                                    Phone number
+                                </label>
+
+                                <input
+                                    type="tel"
+                                    id="clinic_phone"
+                                    name="clinic_phone"
+                                    class="form-control @error('clinic_phone') is-invalid @enderror"
+                                    value="{{ old('clinic_phone', $clinic->phone) }}"
+                                    maxlength="30"
+                                    autocomplete="tel"
+                                >
+
+                                @error('clinic_phone')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-field">
+                                <label for="account_email" class="form-label">
+                                    Your account email
+                                </label>
+
+                                <input
+                                    type="email"
+                                    id="account_email"
+                                    class="form-control"
+                                    value="{{ $currentUser->email }}"
+                                    readonly
+                                >
+
+                                <small class="text-muted">
+                                    Manage your email in User account.
+                                </small>
+                            </div>
+
+                            <div class="form-field settings-field-wide">
+                                <label for="clinic_address" class="form-label">
+                                    Clinic address
+                                </label>
+
+                                <textarea
+                                    id="clinic_address"
+                                    name="clinic_address"
+                                    class="form-control @error('clinic_address') is-invalid @enderror"
+                                    rows="3"
+                                    maxlength="255"
+                                    autocomplete="street-address"
+                                >{{ old('clinic_address', $clinic->address) }}</textarea>
+
+                                @error('clinic_address')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="settings-panel-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
+                                Save clinic profile
+                            </button>
+                        </div>
+                    </form>
                 </section>
 
-                {{-- Payment Settings --}}
+                {{-- Settings — Payment Preferences Link --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
                             <h2>Payment settings</h2>
-                            <p>Configure currency and default payment options.</p>
+
+                            <p>
+                                Current clinic currency:
+                                <strong>{{ $clinic->currency }}</strong>
+                            </p>
                         </div>
                     </div>
 
-                    <div class="settings-form-grid">
-                        <div class="form-field">
-                            <label for="currency" class="form-label">
-                                Currency
-                            </label>
-
-                            <select id="currency" class="form-select">
-                                <option selected>PKR — Pakistani Rupee</option>
-                                <option>AED — UAE Dirham</option>
-                            </select>
-                        </div>
-
-                        <div class="form-field">
-                            <label for="default_method" class="form-label">
-                                Default payment method
-                            </label>
-
-                            <select id="default_method" class="form-select">
-                                <option selected>Cash</option>
-                                <option>Bank transfer</option>
-                                <option>Card</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-toggle-row">
-                        <div>
-                            <strong>Show previous due on patient bills</strong>
-                            <small>Display outstanding balances during payment entry.</small>
-                        </div>
-
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            checked
+                    <div class="settings-panel-actions">
+                        <a
+                            href="{{ route('settings.payments') }}"
+                            class="btn btn-outline-secondary"
                         >
+                            <i class="bi bi-cash-coin app-icon" aria-hidden="true"></i>
+                            Open payment settings
+                        </a>
                     </div>
                 </section>
 
-                {{-- Account Information --}}
+                {{-- Settings — Signed-In User --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
@@ -241,22 +306,26 @@
                     </div>
 
                     <div class="settings-account-row">
-                        <div class="settings-account-avatar">AK</div>
-
-                        <div>
-                            <strong>Dr. Ahmed Khan</strong>
-                            <small>Clinic Owner · ahmed@example.com</small>
+                        <div class="settings-account-avatar">
+                            {{ mb_strtoupper(mb_substr($currentUser->name, 0, 1)) }}
                         </div>
 
-                        <button class="btn btn-outline-secondary ms-auto">
+                        <div>
+                            <strong>{{ $currentUser->name }}</strong>
+                            <small>{{ $currentUser->email }}</small>
+                        </div>
+
+                        <a
+                            href="{{ route('settings.account') }}"
+                            class="btn btn-outline-secondary ms-auto"
+                        >
                             Edit profile
-                        </button>
+                        </a>
                     </div>
                 </section>
 
             </div>
         </section>
-
     </main>
 </div>
 @endsection
