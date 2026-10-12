@@ -363,9 +363,7 @@ class ClinicController extends Controller
                 ->where('user_id', $owner->user_id)
                 ->update([
                     'is_active' => true,
-                    'updated_at' => $now,
                 ]);
-
             $this->recordAudit(
                 $request,
                 $clinic,

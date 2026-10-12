@@ -71,27 +71,6 @@ Route::middleware(['auth', EnsureClinicAccess::class])
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
 
-                    /*
-        |--------------------------------------------------------------------------
-        | Platform Admin — Account Settings
-        |--------------------------------------------------------------------------
-        */
-
-        Route::get('/account', [
-            PlatformAdminAccountController::class,
-            'index',
-        ])->name('account.index');
-
-        Route::put('/account/profile', [
-            PlatformAdminAccountController::class,
-            'updateProfile',
-        ])->name('account.profile.update');
-
-        Route::put('/account/password', [
-            PlatformAdminAccountController::class,
-            'updatePassword',
-        ])->name('account.password.update');
-
         Route::resource('patients', PatientController::class);
 
         Route::resource('expenses', ExpenseController::class);
@@ -170,6 +149,21 @@ Route::prefix('platform-admin')
                     PlatformAdminDashboardController::class,
                     'index',
                 ])->name('dashboard');
+
+                Route::get('/account', [
+                    PlatformAdminAccountController::class,
+                    'index',
+                ])->name('account.index');
+
+                Route::put('/account/profile', [
+                    PlatformAdminAccountController::class,
+                    'updateProfile',
+                ])->name('account.profile.update');
+
+                Route::put('/account/password', [
+                    PlatformAdminAccountController::class,
+                    'updatePassword',
+                ])->name('account.password.update');
 
                 Route::get('/audit-logs', [
                     AuditLogController::class,
