@@ -189,7 +189,7 @@
 
                             <div class="form-field">
                                 <label for="clinic_phone" class="form-label">
-                                    Phone number
+                                    Phone number *
                                 </label>
 
                                 <input
@@ -200,6 +200,7 @@
                                     value="{{ old('clinic_phone', $clinic->phone) }}"
                                     maxlength="30"
                                     autocomplete="tel"
+                                    required
                                 >
 
                                 @error('clinic_phone')
