@@ -12,6 +12,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ClinicAccountController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitController;
@@ -100,6 +101,11 @@ Route::middleware(['auth', EnsureClinicAccess::class])
             SettingController::class,
             'account',
         ])->name('settings.account');
+
+        Route::put('/settings/account', [
+            ClinicAccountController::class,
+            'update',
+        ])->name('settings.account.update');
 
         Route::get('/settings/payments', [
             SettingController::class,

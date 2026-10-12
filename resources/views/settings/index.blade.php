@@ -7,24 +7,40 @@
     $currentUser = auth()->user();
 
     $sidebarLinks = [
-        ['url' => '/dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
-        ['url' => '/patients', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
-        ['url' => '/visits', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
-        ['url' => '/prescriptions', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
-        ['url' => '/payments', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
-        ['url' => '/expenses', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
-        ['url' => '/reports', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
-        ['url' => '/settings', 'icon' => 'bi-gear', 'label' => 'Settings'],
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+    ];
+
+    $settingsLinks = [
+        ['route' => 'settings.index', 'icon' => 'bi-hospital', 'label' => 'Clinic profile'],
+        ['route' => 'settings.payments', 'icon' => 'bi-cash-coin', 'label' => 'Payment settings'],
+        ['route' => 'settings.account', 'icon' => 'bi-person-vcard', 'label' => 'User account'],
+        ['route' => 'settings.notifications', 'icon' => 'bi-bell', 'label' => 'Notifications'],
+        ['route' => 'settings.security', 'icon' => 'bi-shield-lock', 'label' => 'Security'],
     ];
 @endphp
 
 <div class="app-shell">
 
-    {{-- Settings — Application Sidebar --}}
+    {{-- Clinic Settings — Application Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-logo">
-                <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+                @if($clinic->logo_path)
+                    <img
+                        src="{{ asset('storage/' . $clinic->logo_path) }}"
+                        alt="{{ $clinic->name }} logo"
+                        class="settings-logo-image"
+                    >
+                @else
+                    <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+                @endif
             </div>
 
             <span>{{ $clinic->name }}</span>
@@ -32,14 +48,14 @@
 
         <nav class="sidebar-nav">
             @foreach($sidebarLinks as $link)
-                @if($link['url'] === '/reports')
+                @if($link['route'] === 'reports.index')
                     <div class="sidebar-divider"></div>
                 @endif
 
                 <a
-                    href="{{ url($link['url']) }}"
-                    class="sidebar-link {{ $link['url'] === '/settings' ? 'active' : '' }}"
-                    @if($link['url'] === '/settings')
+                    href="{{ route($link['route']) }}"
+                    class="sidebar-link {{ $link['route'] === 'settings.index' ? 'active' : '' }}"
+                    @if($link['route'] === 'settings.index')
                         aria-current="page"
                     @endif
                 >
@@ -61,7 +77,7 @@
         </div>
     </aside>
 
-    {{-- Settings — Main Content --}}
+    {{-- Clinic Settings — Main Content --}}
     <main class="dashboard-main">
         <header class="page-header">
             <div>
@@ -94,71 +110,36 @@
 
         <section class="settings-layout">
 
-            {{-- Settings — Navigation --}}
+            {{-- Clinic Settings — Navigation --}}
             <aside class="settings-navigation">
-                <a
-                    href="{{ route('settings.index') }}"
-                    class="settings-nav-item active"
-                    aria-current="page"
-                >
-                    <span>
-                        <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
-                    </span>
-                    Clinic profile
-                </a>
+                @foreach($settingsLinks as $link)
+                    <a
+                        href="{{ route($link['route']) }}"
+                        class="settings-nav-item {{ request()->routeIs($link['route']) ? 'active' : '' }}"
+                        @if(request()->routeIs($link['route']))
+                            aria-current="page"
+                        @endif
+                    >
+                        <span>
+                            <i
+                                class="bi {{ $link['icon'] }} app-icon"
+                                aria-hidden="true"
+                            ></i>
+                        </span>
 
-                <a
-                    href="{{ route('settings.payments') }}"
-                    class="settings-nav-item"
-                >
-                    <span>
-                        <i class="bi bi-cash-coin app-icon" aria-hidden="true"></i>
-                    </span>
-                    Payment settings
-                </a>
-
-                <a
-                    href="{{ route('settings.account') }}"
-                    class="settings-nav-item"
-                >
-                    <span>
-                        <i class="bi bi-person-vcard app-icon" aria-hidden="true"></i>
-                    </span>
-                    User account
-                </a>
-
-                <a
-                    href="{{ route('settings.notifications') }}"
-                    class="settings-nav-item"
-                >
-                    <span>
-                        <i class="bi bi-bell app-icon" aria-hidden="true"></i>
-                    </span>
-                    Notifications
-                </a>
-
-                <a
-                    href="{{ route('settings.security') }}"
-                    class="settings-nav-item"
-                >
-                    <span>
-                        <i class="bi bi-shield-lock app-icon" aria-hidden="true"></i>
-                    </span>
-                    Security
-                </a>
+                        {{ $link['label'] }}
+                    </a>
+                @endforeach
             </aside>
 
             <div class="settings-content">
 
-                {{-- Settings — Clinic Profile Form --}}
+                {{-- Clinic Settings — Profile and Logo Form --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
                             <h2>Clinic profile</h2>
-
-                            <p>
-                                Update the information shown across your clinic system.
-                            </p>
+                            <p>Update your clinic details and logo.</p>
                         </div>
 
                         <div class="clinic-settings-logo">
@@ -166,7 +147,7 @@
                                 <img
                                     src="{{ asset('storage/' . $clinic->logo_path) }}"
                                     alt="{{ $clinic->name }} logo"
-                                    style="width: 100%; height: 100%; object-fit: contain;"
+                                    class="settings-logo-image"
                                 >
                             @else
                                 <i
@@ -180,6 +161,7 @@
                     <form
                         method="POST"
                         action="{{ route('settings.update') }}"
+                        enctype="multipart/form-data"
                     >
                         @csrf
                         @method('PUT')
@@ -254,13 +236,59 @@
                                     class="form-control @error('clinic_address') is-invalid @enderror"
                                     rows="3"
                                     maxlength="255"
-                                    autocomplete="street-address"
                                 >{{ old('clinic_address', $clinic->address) }}</textarea>
 
                                 @error('clinic_address')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                            <div class="form-field settings-field-wide">
+                                <label for="clinic_logo" class="form-label">
+                                    {{ $clinic->logo_path ? 'Change clinic logo' : 'Upload clinic logo' }}
+                                </label>
+
+                                <input
+                                    type="file"
+                                    id="clinic_logo"
+                                    name="clinic_logo"
+                                    class="form-control @error('clinic_logo') is-invalid @enderror"
+                                    accept="image/png,image/jpeg,image/webp"
+                                >
+
+                                <small class="text-muted">
+                                    PNG, JPG or WebP. Maximum 2 MB and 3000 × 3000 pixels.
+                                </small>
+
+                                @error('clinic_logo')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            @if($clinic->logo_path)
+                                <div class="form-field settings-field-wide">
+                                    <div class="settings-toggle-row">
+                                        <div>
+                                            <label for="remove_logo">
+                                                <strong>Remove current logo</strong>
+                                            </label>
+
+                                            <small>
+                                                Select this without choosing a new file.
+                                            </small>
+                                        </div>
+
+                                        <input
+                                            type="checkbox"
+                                            id="remove_logo"
+                                            name="remove_logo"
+                                            class="form-check-input"
+                                            value="1"
+                                            @checked(old('remove_logo'))
+                                        >
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
                         <div class="settings-panel-actions">
@@ -272,7 +300,7 @@
                     </form>
                 </section>
 
-                {{-- Settings — Payment Preferences Link --}}
+                {{-- Clinic Settings — Payment Preferences --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
@@ -296,7 +324,7 @@
                     </div>
                 </section>
 
-                {{-- Settings — Signed-In User --}}
+                {{-- Clinic Settings — Current User --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
