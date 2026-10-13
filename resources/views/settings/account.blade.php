@@ -32,7 +32,15 @@
     <aside class="app-sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-logo">
-                <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+                @if($clinic->logo_path)
+                    <img
+                        src="{{ asset('storage/' . $clinic->logo_path) }}"
+                        alt="{{ $clinic->name }} logo"
+                        class="settings-logo-image"
+                    >
+                @else
+                    <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+                @endif
             </div>
 
             <span>{{ $clinic->name }}</span>
@@ -77,7 +85,7 @@
                 <h1>User account</h1>
 
                 <p class="page-subtitle">
-                    Manage your personal account information.
+                    Manage your personal information and profile photo.
                 </p>
             </div>
         </header>
@@ -129,7 +137,15 @@
                 {{-- User Account — Profile Summary --}}
                 <section class="settings-panel account-profile-card">
                     <div class="account-profile-avatar">
-                        {{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}
+                        @if($user->profile_photo_path)
+                            <img
+                                src="{{ asset('storage/' . $user->profile_photo_path) }}"
+                                alt="{{ $user->name }} profile photo"
+                                class="account-profile-photo"
+                            >
+                        @else
+                            {{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}
+                        @endif
                     </div>
 
                     <div class="account-profile-info">
@@ -144,18 +160,19 @@
                     </div>
                 </section>
 
-                {{-- User Account — Personal Information Form --}}
+                {{-- User Account — Profile Form --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
                             <h2>Personal information</h2>
-                            <p>Update your name and login email address.</p>
+                            <p>Update your details and confirm with your current password.</p>
                         </div>
                     </div>
 
                     <form
                         method="POST"
                         action="{{ route('settings.account.update') }}"
+                        enctype="multipart/form-data"
                     >
                         @csrf
                         @method('PUT')
@@ -170,16 +187,12 @@
                                     type="text"
                                     id="account_name"
                                     name="name"
-                                    class="form-control @error('name') is-invalid @enderror"
+                                    class="form-control"
                                     value="{{ old('name', $user->name) }}"
                                     maxlength="120"
                                     autocomplete="name"
                                     required
                                 >
-
-                                @error('name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
 
                             <div class="form-field">
@@ -191,17 +204,74 @@
                                     type="email"
                                     id="account_email"
                                     name="email"
-                                    class="form-control @error('email') is-invalid @enderror"
+                                    class="form-control"
                                     value="{{ old('email', $user->email) }}"
                                     maxlength="160"
                                     autocomplete="email"
                                     required
                                 >
-
-                                @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
+
+                            <div class="form-field settings-field-wide">
+                                <label for="account_phone" class="form-label">
+                                    Personal phone number
+                                </label>
+
+                                <input
+                                    type="tel"
+                                    id="account_phone"
+                                    name="phone"
+                                    class="form-control"
+                                    value="{{ old('phone', $user->phone) }}"
+                                    maxlength="30"
+                                    autocomplete="tel"
+                                >
+                            </div>
+
+                            <div class="form-field settings-field-wide">
+                                <label for="profile_photo" class="form-label">
+                                    {{ $user->profile_photo_path
+                                        ? 'Change profile photo'
+                                        : 'Upload profile photo' }}
+                                </label>
+
+                                <input
+                                    type="file"
+                                    id="profile_photo"
+                                    name="profile_photo"
+                                    class="form-control"
+                                    accept="image/png,image/jpeg,image/webp"
+                                >
+
+                                <small class="text-muted">
+                                    PNG, JPG or WebP. Maximum 2 MB and 3000 × 3000 pixels.
+                                </small>
+                            </div>
+
+                            @if($user->profile_photo_path)
+                                <div class="form-field settings-field-wide">
+                                    <div class="settings-toggle-row">
+                                        <div>
+                                            <label for="remove_photo">
+                                                <strong>Remove current photo</strong>
+                                            </label>
+
+                                            <small>
+                                                Select this without choosing a new photo.
+                                            </small>
+                                        </div>
+
+                                        <input
+                                            type="checkbox"
+                                            id="remove_photo"
+                                            name="remove_photo"
+                                            class="form-check-input"
+                                            value="1"
+                                            @checked(old('remove_photo'))
+                                        >
+                                    </div>
+                                </div>
+                            @endif
 
                             <div class="form-field settings-field-wide">
                                 <label for="account_current_password" class="form-label">
@@ -212,14 +282,10 @@
                                     type="password"
                                     id="account_current_password"
                                     name="current_password"
-                                    class="form-control @error('current_password') is-invalid @enderror"
+                                    class="form-control"
                                     autocomplete="current-password"
                                     required
                                 >
-
-                                @error('current_password')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
                         </div>
 
@@ -235,7 +301,7 @@
                     </form>
                 </section>
 
-                {{-- User Account — Role Information --}}
+                {{-- User Account — Role and Status --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>

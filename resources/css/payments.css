@@ -696,22 +696,397 @@
     }
 }
 
-/* RECEIPT — Check stylesheet loading */
+/*
+|--------------------------------------------------------------------------
+| PAYMENT RECEIPT — Refined Design
+|--------------------------------------------------------------------------
+*/
 
-.receipt-v2 .r2-logo {
-    width: 62px;
-    height: 62px;
-    flex: 0 0 62px;
-}
-
-.receipt-v2 .r2-logo img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+.payment-receipt.receipt-v2 {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px 34px 24px;
+    border: 0;
+    border-top: 7px solid #0b7774;
+    border-radius: 3px;
+    background: #fff;
+    color: #203b41;
+    box-shadow: 0 12px 40px rgb(23 60 62 / 12%);
+    font: 12px/1.45 Arial, sans-serif;
 }
 
 .receipt-v2 .r2-header {
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #dcebe6;
+}
+
+.receipt-v2 .r2-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.receipt-v2 .r2-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 62px;
+    width: 62px;
+    height: 62px;
+    padding: 7px;
+    overflow: hidden;
+    border: 1px solid #cae6df;
+    border-radius: 50%;
+    background: #f0f8f5;
+    color: #0b7774;
+    font-size: 26px;
+}
+
+.receipt-v2 .r2-logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.receipt-v2 .r2-brand h1 {
+    margin: 0 0 6px;
+    color: #173c3c;
+    font: 500 26px/1.15 Georgia, serif;
+    overflow-wrap: anywhere;
+}
+
+.receipt-v2 .r2-brand p,
+.receipt-v2 .r2-document p {
+    margin: 3px 0;
+    color: #617773;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+.receipt-v2 .r2-document {
+    flex: 0 1 180px;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.receipt-v2 .r2-eyebrow {
+    color: #0b7774;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.receipt-v2 .r2-document > strong {
+    display: block;
+    margin: 6px 0;
+    font-size: 19px;
+    font-weight: 500;
+}
+
+.receipt-v2 .r2-patient {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 22px;
+    margin: 20px 0;
+    padding: 18px;
+    border: 1px solid #dcebe6;
+    border-radius: 10px;
+    background: #f7faf8;
+}
+
+.receipt-v2 .r2-patient span,
+.receipt-v2 .r2-details span,
+.receipt-v2 .r2-notes > span {
+    display: block;
+    margin-bottom: 4px;
+    color: #617773;
+    font-size: 10px;
+}
+
+.receipt-v2 .r2-patient strong,
+.receipt-v2 .r2-details strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.receipt-v2 .r2-patient > div:first-child strong {
+    font-size: 17px;
+}
+
+.receipt-v2 .r2-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.receipt-v2 .r2-table th {
+    padding: 11px 12px;
+    background: #173f40;
+    color: #fff;
+    font-weight: 500;
+    text-align: left;
+}
+
+.receipt-v2 .r2-table td {
+    padding: 12px;
+    border-bottom: 1px solid #dcebe6;
+    overflow-wrap: anywhere;
+}
+
+.receipt-v2 .r2-table .r2-number {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.receipt-v2 .r2-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+    align-items: start;
+    gap: 24px;
+    margin-top: 20px;
+}
+
+.receipt-v2 .r2-details {
+    padding-left: 14px;
+    border-left: 2px solid #a6d1c4;
+}
+
+.receipt-v2 .r2-details > div + div {
+    margin-top: 12px;
+}
+
+.receipt-v2 .r2-summary {
+    padding: 9px 15px;
+    border: 1px solid #dcebe6;
+    border-radius: 9px;
+    background: #f7faf8;
+}
+
+.receipt-v2 .r2-summary > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 11px;
+}
+
+.receipt-v2 .r2-summary strong {
+    flex-shrink: 0;
+    font-weight: 500;
+}
+
+.receipt-v2 .r2-summary .r2-total {
+    border-top: 1px solid #cbd9df;
+}
+
+.receipt-v2 .r2-summary .r2-due {
+    margin: 5px -5px;
+    padding: 12px 10px;
+    border-radius: 6px;
+    background: #0b7774;
+    color: #fff;
+    font-size: 12px;
+}
+
+.receipt-v2 .r2-notes {
+    margin-top: 16px;
+    padding: 10px 12px;
+    border-left: 2px solid #a6d1c4;
+    background: #f7faf8;
+}
+
+.receipt-v2 .r2-notes p {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.receipt-v2 .r2-balance-note {
+    margin: 16px 0 0;
+    color: #617773;
+    font-size: 10px;
+}
+
+.receipt-v2 .r2-signature {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 26px;
+    color: #617773;
+    font-size: 10px;
+}
+
+.receipt-v2 .r2-signature span {
+    width: 130px;
+    border-bottom: 1px solid #8ba6a0;
+}
+
+.receipt-v2 .r2-footer {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid #cfe2dc;
+    text-align: center;
+}
+
+.receipt-v2 .r2-footer p {
+    margin: 0 0 5px;
+    color: #0b7774;
+    font: 15px Georgia, serif;
+}
+
+.receipt-v2 .r2-footer small {
+    color: #617773;
+    font-size: 10px;
+}
+
+.receipt-v2 .r2-history {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid #dcebe6;
+}
+
+.receipt-v2 .r2-history h2 {
+    margin: 0 0 12px;
+    font-size: 16px;
+}
+
+@media screen and (max-width: 600px) {
+    .payment-receipt.receipt-v2 {
+        padding: 22px 18px;
+    }
+
+    .receipt-v2 .r2-header {
+        flex-direction: column;
+    }
+
+    .receipt-v2 .r2-document {
+        flex-basis: auto;
+        text-align: left;
+    }
+
+    .receipt-v2 .r2-bottom {
+        grid-template-columns: 1fr;
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENT RECEIPT — Compact A4 Print
+|--------------------------------------------------------------------------
+*/
+
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm;
+    }
+
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        background: #fff !important;
+    }
+
+    .no-print,
+    .app-sidebar {
+        display: none !important;
+    }
+
+    .app-shell,
+    .dashboard-main {
+        display: block !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    .payment-receipt.receipt-v2 {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 5mm 3mm 0 !important;
+        border: 0 !important;
+        border-top: 2mm solid #0b7774 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .receipt-v2 .r2-header {
+        flex-direction: row !important;
+        gap: 5mm;
+        padding-bottom: 4mm;
+        break-inside: avoid;
+    }
+
+    .receipt-v2 .r2-document {
+        flex: 0 1 45mm !important;
+        text-align: right !important;
+    }
+
+    .receipt-v2 .r2-logo {
+        flex-basis: 15mm;
+        width: 15mm;
+        height: 15mm;
+    }
+
+    .receipt-v2 .r2-patient {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 3mm 5mm;
+        margin: 4mm 0;
+        padding: 4mm;
+        break-inside: avoid;
+    }
+
+    .receipt-v2 .r2-table th,
+    .receipt-v2 .r2-table td {
+        padding: 3mm;
+    }
+
+    .receipt-v2 .r2-table thead {
+        display: table-header-group;
+    }
+
+    .receipt-v2 .r2-table tr {
+        break-inside: avoid;
+    }
+
+    .receipt-v2 .r2-bottom {
+        grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+        gap: 6mm;
+        margin-top: 4mm;
+        break-inside: avoid;
+    }
+
+    .receipt-v2 .r2-summary > div {
+        padding: 2mm 0;
+    }
+
+    .receipt-v2 .r2-signature {
+        margin-top: 6mm;
+        break-inside: avoid;
+    }
+
+    .receipt-v2 .r2-footer {
+        margin-top: 4mm;
+        padding-top: 3mm;
+        break-inside: avoid;
+    }
 }

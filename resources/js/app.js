@@ -1396,3 +1396,85 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1600);
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| CLINIC SIDEBAR — Notifications Link
+|--------------------------------------------------------------------------
+*/
+
+function initializeClinicNotificationLink() {
+    // Platform admin has its own navigation.
+    if (document.body.classList.contains('pa-app')) {
+        return;
+    }
+
+    const notificationPath = '/notifications';
+
+    document.querySelectorAll('.sidebar-nav').forEach((navigation) => {
+        const links = Array.from(
+            navigation.querySelectorAll('a.sidebar-link')
+        );
+
+        const existingLink = links.find((link) => {
+            const url = new URL(link.href, window.location.origin);
+
+            return url.pathname.replace(/\/+$/, '') === notificationPath;
+        });
+
+        if (existingLink) {
+            return;
+        }
+
+        const link = document.createElement('a');
+
+        link.href = notificationPath;
+        link.className = 'sidebar-link';
+
+        const iconWrapper = document.createElement('span');
+        const icon = document.createElement('i');
+
+        icon.className = 'bi bi-bell app-icon';
+        icon.setAttribute('aria-hidden', 'true');
+
+        iconWrapper.appendChild(icon);
+
+        const label = document.createElement('span');
+        label.textContent = 'Notifications';
+
+        link.append(iconWrapper, label);
+
+        if (
+            window.location.pathname.replace(/\/+$/, '') ===
+            notificationPath
+        ) {
+            link.classList.add('active');
+            link.setAttribute('aria-current', 'page');
+        }
+
+        const settingsLink = links.find((item) => {
+            const path = new URL(
+                item.href,
+                window.location.origin
+            ).pathname;
+
+            return path === '/settings' ||
+                path.startsWith('/settings/');
+        });
+
+        if (settingsLink) {
+            settingsLink.before(link);
+        } else {
+            navigation.appendChild(link);
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeClinicNotificationLink
+    );
+} else {
+    initializeClinicNotificationLink();
+}

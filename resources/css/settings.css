@@ -523,3 +523,160 @@
     height: 100%;
     object-fit: contain;
 }
+
+/*
+|--------------------------------------------------------------------------
+| USER ACCOUNT — Profile Photo
+|--------------------------------------------------------------------------
+*/
+
+.account-profile-avatar {
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.account-profile-avatar .account-profile-photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+/*
+|--------------------------------------------------------------------------
+| NOTIFICATIONS LIST — Toolbar and Alert Cards
+|--------------------------------------------------------------------------
+*/
+
+.clinic-alert-toolbar,
+.clinic-alert-filter,
+.clinic-alert-heading,
+.clinic-alert-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.clinic-alert-toolbar {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.clinic-alert-filter .form-select {
+    width: 190px;
+}
+
+.clinic-alert-toolbar form,
+.clinic-alert-actions form {
+    margin: 0;
+}
+
+.clinic-alert-list {
+    display: grid;
+    gap: 12px;
+}
+
+.clinic-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.clinic-alert.is-unread {
+    border-left: 3px solid var(--brand-teal);
+    background: var(--surface-soft);
+}
+
+.clinic-alert-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #e2f6f4;
+    color: var(--brand-teal-dark);
+    font-size: 19px;
+}
+
+.clinic-alert-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.clinic-alert-heading {
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.clinic-alert-heading h2 {
+    margin: 0;
+    font-size: 15px;
+    color: var(--text-main);
+}
+
+.clinic-alert-status,
+.clinic-alert-content time {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.clinic-alert-content p {
+    margin: 7px 0;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.clinic-alert-content time {
+    display: block;
+}
+
+.clinic-alert-actions {
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.clinic-alert-empty {
+    padding: 40px 16px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.clinic-alert-empty > i {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 28px;
+}
+
+.clinic-alert-empty h2 {
+    font-size: 17px;
+}
+
+.clinic-alert-empty p {
+    margin-bottom: 0;
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+    .clinic-alert-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .clinic-alert-filter .form-select {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+    }
+
+    .clinic-alert {
+        padding: 14px;
+        gap: 10px;
+    }
+}

@@ -110,33 +110,44 @@ class PatientController extends Controller
 | PATIENTS — Save with Short Patient Code
 |--------------------------------------------------------------------------
 */
+/*
+|--------------------------------------------------------------------------
+| PATIENTS — Save Patient and Registration Alert
+|--------------------------------------------------------------------------
+*/
 
     public function store(Request $request)
     {
         $validated = $this->validatePatient($request);
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
-            $patient = Patient::create([
-                ...$validated,
-                'clinic_id' => Auth::user()->clinic_id,
-                'patient_code' => 'TMP-' . (string) Str::ulid(),
-                'status' => 'active',
-            ]);
+        \Illuminate\Support\Facades\DB::transaction(
+            function () use ($validated) {
+                $patient = Patient::create([
+                    ...$validated,
+                    'clinic_id' => Auth::user()->clinic_id,
+                    'patient_code' => 'TMP-' . (string) Str::ulid(),
+                    'status' => 'active',
+                ]);
 
-            $patient->update([
-                'patient_code' => 'P-' . str_pad(
-                    (string) $patient->patient_id,
-                    4,
-                    '0',
-                    STR_PAD_LEFT
-                ),
-            ]);
-        });
+                $patient->update([
+                    'patient_code' => 'P-' . str_pad(
+                        (string) $patient->patient_id,
+                        4,
+                        '0',
+                        STR_PAD_LEFT
+                    ),
+                ]);
+
+                app(\App\Services\ClinicNotificationService::class)
+                    ->patientAdded($patient);
+            }
+        );
 
         return redirect()
             ->route('patients.index')
             ->with('success', 'Patient created successfully.');
     }
+
 
     /*
 |--------------------------------------------------------------------------

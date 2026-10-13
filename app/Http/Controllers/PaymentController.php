@@ -178,6 +178,12 @@ class PaymentController extends Controller
         return view('payments.create', $this->formData());
     }
 
+    /*
+|--------------------------------------------------------------------------
+| PAYMENTS — Save Bill, Payment and Alert
+|--------------------------------------------------------------------------
+*/
+
     public function store(Request $request)
     {
         $data = $this->validateForm($request);
@@ -213,7 +219,6 @@ class PaymentController extends Controller
                     'line_total' => $this->decimal($subtotal),
                 ]);
 
-                // The bill creates the patient's debit.
                 LedgerEntry::create([
                     'clinic_id' => $this->clinicId(),
                     'patient_id' => $bill->patient_id,
@@ -238,7 +243,7 @@ class PaymentController extends Controller
 
             $payment = null;
 
-            // Zero received means: save the bill without a payment row.
+            // Zero received saves an unpaid bill without a payment alert.
             if ($this->cents($data['amount']) > 0) {
                 $payment = Payment::create([
                     'clinic_id' => $this->clinicId(),
@@ -253,18 +258,29 @@ class PaymentController extends Controller
 
             $this->refreshBill($bill);
 
+            if ($payment) {
+                app(\App\Services\ClinicNotificationService::class)
+                    ->paymentReceived($payment);
+            }
+
             return [$bill, $payment];
         }, 3);
 
         if ($payment) {
             return redirect()
                 ->route('payments.show', $payment)
-                ->with('success', 'Bill balance and payment saved successfully.');
+                ->with(
+                    'success',
+                    'Bill balance and payment saved successfully.'
+                );
         }
 
         return redirect()
             ->route('payments.bills.show', $bill)
-            ->with('success', 'Bill saved. The full amount remains outstanding.');
+            ->with(
+                'success',
+                'Bill saved. The full amount remains outstanding.'
+            );
     }
 
     /*

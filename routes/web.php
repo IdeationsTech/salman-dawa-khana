@@ -17,6 +17,8 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\PaymentSettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitController;
+use App\Http\Controllers\NotificationSettingsController;
+use App\Http\Controllers\ClinicNotificationController;
 
 use App\Http\Controllers\PlatformAdmin\LoginController as PlatformAdminLoginController;
 use App\Http\Controllers\PlatformAdmin\DashboardController as PlatformAdminDashboardController;
@@ -73,6 +75,27 @@ Route::middleware(['auth', EnsureClinicAccess::class])
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
 
+            /*
+|--------------------------------------------------------------------------
+| Clinic In-App Notifications
+|--------------------------------------------------------------------------
+*/
+
+        Route::get('/notifications', [
+            ClinicNotificationController::class,
+            'index',
+        ])->name('notifications.index');
+
+        Route::post('/notifications/read-all', [
+            ClinicNotificationController::class,
+            'markAllRead',
+        ])->name('notifications.read-all');
+
+        Route::post('/notifications/{notification}/read', [
+            ClinicNotificationController::class,
+            'markRead',
+        ])->whereNumber('notification')->name('notifications.read');
+
         Route::resource('patients', PatientController::class);
 
         Route::resource('expenses', ExpenseController::class);
@@ -122,6 +145,11 @@ Route::middleware(['auth', EnsureClinicAccess::class])
             SettingController::class,
             'notifications',
         ])->name('settings.notifications');
+
+        Route::put('/settings/notifications', [
+            NotificationSettingsController::class,
+            'update',
+        ])->name('settings.notifications.update');
 
         Route::get('/settings/security', [
             SettingController::class,
