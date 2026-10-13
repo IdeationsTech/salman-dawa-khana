@@ -3,6 +3,18 @@
 @section('title', 'Dashboard — Salman Dawa Khana')
 
 @section('content')
+@php
+    $currency = strtoupper(
+        auth()->user()->clinic->currency ?: 'AED'
+    );
+
+    $decimalSetting = \App\Models\Setting::query()
+        ->where('clinic_id', auth()->user()->clinic_id)
+        ->where('setting_key', 'decimal_places')
+        ->value('setting_value');
+
+    $moneyDecimals = (string) $decimalSetting === '0' ? 0 : 2;
+@endphp
 <div class="app-shell">
 
     {{-- Dashboard Sidebar --}}
@@ -156,7 +168,7 @@
                         <p>Today's Income</p>
 
                         <h3>
-                            PKR {{ number_format($todaysIncome ?? 0) }}
+                            {{ $currency }} {{ number_format($todaysIncome ?? 0, $moneyDecimals) }}
                         </h3>
 
                         <span class="summary-positive">
@@ -172,8 +184,8 @@
                         <p>Outstanding</p>
 
                         <h3>
-                            PKR
-                            {{ number_format($outstandingBalance ?? 0) }}
+                            {{ $currency }}
+                            {{ number_format($outstandingBalance ?? 0, $moneyDecimals) }}
                         </h3>
 
                         <span class="summary-warning">

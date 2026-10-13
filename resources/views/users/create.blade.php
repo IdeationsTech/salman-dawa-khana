@@ -1,50 +1,68 @@
 @extends('layouts.app')
 
-@section('title', 'Add User — Salman Dawa Khana')
+@section('title', isset($user) ? 'Edit User' : 'Add User')
 
 @section('content')
+@php
+    $editing = isset($user);
+    $clinic = auth()->user()->clinic;
+
+    $navigation = [
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
+        ['route' => 'users.index', 'icon' => 'bi-people', 'label' => 'Users'],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+    ];
+@endphp
+
 <div class="app-shell">
 
+    {{-- User Form — Application Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
+            <div class="sidebar-logo">
+                @if($clinic->logo_path)
+                    <img
+                        src="{{ asset('storage/' . $clinic->logo_path) }}"
+                        alt="{{ $clinic->name }} logo"
+                        class="settings-logo-image"
+                    >
+                @else
+                    <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+                @endif
+            </div>
+
+            <span>{{ $clinic->name }}</span>
         </div>
 
         <nav class="sidebar-nav">
-            <a href="{{ route('dashboard') }}" class="sidebar-link">
-                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span><span>Dashboard</span>
-            </a>
+            @foreach($navigation as $item)
+                @if($item['route'] === 'reports.index')
+                    <div class="sidebar-divider"></div>
+                @endif
 
-            <a href="{{ route('patients.index') }}" class="sidebar-link">
-                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span><span>Patients</span>
-            </a>
+                <a
+                    href="{{ route($item['route']) }}"
+                    class="sidebar-link {{ $item['route'] === 'users.index' ? 'active' : '' }}"
+                    @if($item['route'] === 'users.index')
+                        aria-current="page"
+                    @endif
+                >
+                    <span>
+                        <i
+                            class="bi {{ $item['icon'] }} app-icon"
+                            aria-hidden="true"
+                        ></i>
+                    </span>
 
-            <a href="{{ route('visits.index') }}" class="sidebar-link">
-                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span><span>Visits</span>
-            </a>
-
-            <a href="{{ route('prescriptions.index') }}" class="sidebar-link">
-                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span><span>Prescriptions</span>
-            </a>
-
-            <a href="{{ route('payments.index') }}" class="sidebar-link">
-                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span><span>Payments</span>
-            </a>
-
-            <a href="{{ route('expenses.index') }}" class="sidebar-link">
-                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span><span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="{{ route('reports.index') }}" class="sidebar-link">
-                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span><span>Reports</span>
-            </a>
-
-            <a href="{{ route('users.index') }}" class="sidebar-link active">
-                <span>♟</span><span>Users &amp; Roles</span>
-            </a>
+                    <span>{{ $item['label'] }}</span>
+                </a>
+            @endforeach
         </nav>
 
         <div class="sidebar-footer">
@@ -53,45 +71,59 @@
         </div>
     </aside>
 
+    {{-- User Form — Main Content --}}
     <main class="dashboard-main">
-
         <div class="form-page-header">
             <a href="{{ route('users.index') }}" class="back-link">
-                ← Back to users
+                <i class="bi bi-arrow-left app-icon" aria-hidden="true"></i>
+                Back to users
             </a>
 
-            <h1>Add new user</h1>
-            <p>Create a staff account and assign a system role.</p>
+            <h1>{{ $editing ? 'Edit user' : 'Add new user' }}</h1>
+
+            <p>
+                {{ $editing
+                    ? 'Update account details, role and access.'
+                    : 'Create a clinic account and assign its role.' }}
+            </p>
         </div>
 
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <strong>Please correct the following errors:</strong>
+        @if($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <strong>Please correct the following:</strong>
 
                 <ul class="mb-0 mt-2">
-                    @foreach ($errors->all() as $error)
+                    @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
             </div>
         @endif
 
-        <form action="{{ route('users.store') }}" method="POST">
+        <form
+            method="POST"
+            action="{{ $editing
+                ? route('users.update', $user)
+                : route('users.store') }}"
+        >
             @csrf
 
-            {{-- Personal Details --}}
+            @if($editing)
+                @method('PUT')
+            @endif
+
+            {{-- User Form — Personal Details --}}
             <section class="user-form-panel">
                 <div class="user-form-heading">
                     <div class="form-section-number">01</div>
 
                     <div>
                         <h2>Personal details</h2>
-                        <p>Enter the new user's account information.</p>
+                        <p>Enter the user’s name and login email.</p>
                     </div>
                 </div>
 
                 <div class="user-form-grid">
-
                     <div class="form-field">
                         <label for="name" class="form-label">
                             Full name <span>*</span>
@@ -102,8 +134,9 @@
                             id="name"
                             name="name"
                             class="form-control @error('name') is-invalid @enderror"
-                            value="{{ old('name') }}"
-                            placeholder="e.g. Sara Ahmed"
+                            value="{{ old('name', $editing ? $user->name : '') }}"
+                            maxlength="120"
+                            autocomplete="name"
                             required
                         >
 
@@ -122,8 +155,9 @@
                             id="email"
                             name="email"
                             class="form-control @error('email') is-invalid @enderror"
-                            value="{{ old('email') }}"
-                            placeholder="staff@example.com"
+                            value="{{ old('email', $editing ? $user->email : '') }}"
+                            maxlength="160"
+                            autocomplete="off"
                             required
                         >
 
@@ -131,18 +165,17 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
                 </div>
             </section>
 
-            {{-- Role and Access --}}
+            {{-- User Form — Role Assignment --}}
             <section class="user-form-panel">
                 <div class="user-form-heading">
                     <div class="form-section-number">02</div>
 
                     <div>
                         <h2>Role and access</h2>
-                        <p>Choose what this user can access.</p>
+                        <p>Select the responsibilities of this account.</p>
                     </div>
                 </div>
 
@@ -159,12 +192,19 @@
                     >
                         <option value="">Select a role</option>
 
-                        @foreach ($roles as $role)
+                        @foreach($roles as $role)
                             <option
                                 value="{{ $role->role_id }}"
-                                @selected(old('role_id') == $role->role_id)
+                                @selected(
+                                    (string) old(
+                                        'role_id',
+                                        $editing ? $user->role_id : ''
+                                    ) === (string) $role->role_id
+                                )
                             >
-                                {{ $role->name }}
+                                {{ $role->name === 'Doctor'
+                                    ? 'Doctor / Hakeem'
+                                    : $role->name }}
                             </option>
                         @endforeach
                     </select>
@@ -175,35 +215,45 @@
                 </div>
 
                 <div class="role-info-box">
-                    <div class="role-info-icon">i</div>
+                    <div class="role-info-icon">
+                        <i class="bi bi-info-circle app-icon" aria-hidden="true"></i>
+                    </div>
 
                     <div>
-                        <strong>Role permissions</strong>
+                        <strong>Role access</strong>
+
                         <p>
-                            The selected role will automatically determine the
-                            user's access to patients, prescriptions, payments,
-                            expenses and reports.
+                            Owner manages users and clinic administration.
+                            Doctor/Hakeem can access expenses.
+                            Receptionist cannot access users or expenses.
                         </p>
                     </div>
                 </div>
             </section>
 
-            {{-- Login Credentials --}}
+            {{-- User Form — Password and Account Status --}}
             <section class="user-form-panel">
                 <div class="user-form-heading">
                     <div class="form-section-number">03</div>
 
                     <div>
                         <h2>Login credentials</h2>
-                        <p>Set the password for the new account.</p>
+
+                        <p>
+                            {{ $editing
+                                ? 'Leave both password fields empty to keep the current password.'
+                                : 'Set a password with at least 8 characters.' }}
+                        </p>
                     </div>
                 </div>
 
                 <div class="user-form-grid">
-
                     <div class="form-field">
                         <label for="password" class="form-label">
-                            Password <span>*</span>
+                            {{ $editing ? 'New password' : 'Password' }}
+                            @if(!$editing)
+                                <span>*</span>
+                            @endif
                         </label>
 
                         <input
@@ -211,8 +261,9 @@
                             id="password"
                             name="password"
                             class="form-control @error('password') is-invalid @enderror"
-                            placeholder="Create a password"
-                            required
+                            minlength="8"
+                            autocomplete="new-password"
+                            @required(!$editing)
                         >
 
                         @error('password')
@@ -222,7 +273,10 @@
 
                     <div class="form-field">
                         <label for="password_confirmation" class="form-label">
-                            Confirm password <span>*</span>
+                            Confirm password
+                            @if(!$editing)
+                                <span>*</span>
+                            @endif
                         </label>
 
                         <input
@@ -230,26 +284,40 @@
                             id="password_confirmation"
                             name="password_confirmation"
                             class="form-control"
-                            placeholder="Repeat the password"
-                            required
+                            minlength="8"
+                            autocomplete="new-password"
+                            @required(!$editing)
                         >
                     </div>
-
                 </div>
 
                 <div class="user-status-row">
                     <div>
-                        <strong>Activate account immediately</strong>
-                        <small>The user can sign in after creation.</small>
+                        <label for="is_active">
+                            <strong>Active account</strong>
+                        </label>
+
+                        <small>Inactive accounts cannot sign in.</small>
                     </div>
 
                     <input
-                        class="form-check-input"
+                        type="hidden"
+                        name="is_active"
+                        value="0"
+                    >
+
+                    <input
                         type="checkbox"
                         id="is_active"
                         name="is_active"
+                        class="form-check-input"
                         value="1"
-                        @checked(old('is_active', true))
+                        @checked(
+                            (string) old(
+                                'is_active',
+                                $editing ? (int) $user->is_active : 1
+                            ) === '1'
+                        )
                     >
                 </div>
             </section>
@@ -260,11 +328,15 @@
                 </a>
 
                 <button type="submit" class="btn btn-primary">
-                    Create user
+                    <i
+                        class="bi {{ $editing ? 'bi-check2-circle' : 'bi-person-plus' }} app-icon"
+                        aria-hidden="true"
+                    ></i>
+
+                    {{ $editing ? 'Save changes' : 'Create user' }}
                 </button>
             </div>
         </form>
-
     </main>
 </div>
 @endsection

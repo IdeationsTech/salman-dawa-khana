@@ -82,7 +82,13 @@ class UserController extends Controller
 
     public function create()
     {
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::whereIn('name', [
+            'Owner',
+            'Doctor',
+            'Receptionist',
+        ])
+            ->orderBy('name')
+            ->get();
 
         return view('users.create', compact('roles'));
     }
@@ -112,7 +118,11 @@ class UserController extends Controller
             'role_id' => [
                 'required',
                 'integer',
-                Rule::exists('roles', 'role_id'),
+                Rule::exists('roles', 'role_id')->whereIn('name', [
+                    'Owner',
+                    'Doctor',
+                    'Receptionist',
+                ]),
             ],
 
             'password' => [
@@ -172,7 +182,13 @@ class UserController extends Controller
     {
         $this->ensureClinicAccess($user);
 
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::whereIn('name', [
+            'Owner',
+            'Doctor',
+            'Receptionist',
+        ])
+            ->orderBy('name')
+            ->get();
 
         return view(
             'users.create',
@@ -208,7 +224,11 @@ class UserController extends Controller
             'role_id' => [
                 'required',
                 'integer',
-                Rule::exists('roles', 'role_id'),
+                Rule::exists('roles', 'role_id')->whereIn('name', [
+                    'Owner',
+                    'Doctor',
+                    'Receptionist',
+                ]),
             ],
 
             'password' => [
@@ -237,6 +257,27 @@ class UserController extends Controller
                 ->withErrors([
                     'is_active' =>
                         'You cannot deactivate your own account.',
+                ])
+                ->withInput($request->except([
+                    'password',
+                    'password_confirmation',
+                ]));
+        }
+
+        /*
+|--------------------------------------------------------------------------
+| Keep the Signed-In Owner's Role
+|--------------------------------------------------------------------------
+*/
+
+        if (
+            (int) $user->user_id === (int) Auth::id() &&
+            (int) $validated['role_id'] !== (int) $user->role_id
+        ) {
+            return back()
+                ->withErrors([
+                    'role_id' =>
+                        'You cannot change your own role.',
                 ])
                 ->withInput($request->except([
                     'password',

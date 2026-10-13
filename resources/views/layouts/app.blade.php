@@ -10,20 +10,41 @@
 
     @stack('styles')
 </head>
-<body>
+
+@php
+    $clinicRole = auth('web')->user()?->role?->name;
+
+    $canManageUsers = $clinicRole === 'Owner';
+
+    $canAccessExpenses = in_array(
+        $clinicRole,
+        ['Owner', 'Doctor'],
+        true
+    );
+@endphp
+
+<body
+    class="{{ $canManageUsers ? 'clinic-can-manage-users' : '' }} {{ $canAccessExpenses ? 'clinic-can-access-expenses' : '' }}"
+    data-can-manage-users="{{ $canManageUsers ? '1' : '0' }}"
+    data-can-access-expenses="{{ $canAccessExpenses ? '1' : '0' }}"
+    data-users-url="{{ $canManageUsers ? route('users.index') : '' }}"
+>
     @yield('content')
 
-    {{-- PRESCRIPTIONS — Shared Sidebar Submenu --}}
-    @if (request()->routeIs('prescriptions.*'))
+    {{-- Prescriptions — Shared Sidebar Submenu --}}
+    @if(request()->routeIs('prescriptions.*'))
         <template
             data-prescription-submenu
             data-parent-url="{{ route('prescriptions.index') }}"
         >
-            <div class="sidebar-subnav" aria-label="Prescription navigation">
+            <div
+                class="sidebar-subnav"
+                aria-label="Prescription navigation"
+            >
                 <a
                     href="{{ route('prescriptions.index') }}"
                     class="sidebar-subnav-link {{ !request()->routeIs('prescriptions.templates.*') ? 'active' : '' }}"
-                    @if (!request()->routeIs('prescriptions.templates.*'))
+                    @if(!request()->routeIs('prescriptions.templates.*'))
                         aria-current="page"
                     @endif
                 >
@@ -33,7 +54,7 @@
                 <a
                     href="{{ route('prescriptions.templates.index') }}"
                     class="sidebar-subnav-link {{ request()->routeIs('prescriptions.templates.*') ? 'active' : '' }}"
-                    @if (request()->routeIs('prescriptions.templates.*'))
+                    @if(request()->routeIs('prescriptions.templates.*'))
                         aria-current="page"
                     @endif
                 >

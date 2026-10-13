@@ -1,0 +1,15 @@
+/*
+|--------------------------------------------------------------------------
+| CLINIC SIDEBAR — Role Visibility
+|--------------------------------------------------------------------------
+*/
+
+body:not(.clinic-can-manage-users) .sidebar-nav a[href$="/users"],
+body:not(.clinic-can-manage-users) .sidebar-nav a[href*="/users/"] {
+    display: none !important;
+}
+
+body:not(.clinic-can-access-expenses) .sidebar-nav a[href$="/expenses"],
+body:not(.clinic-can-access-expenses) .sidebar-nav a[href*="/expenses/"] {
+    display: none !important;
+}

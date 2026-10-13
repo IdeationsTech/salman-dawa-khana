@@ -32,6 +32,7 @@ use App\Http\Controllers\PlatformAdmin\ComplimentaryLicenseController;
 
 use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureClinicAccess;
+use App\Http\Middleware\EnsureClinicRole;
 use App\Http\Controllers\PlatformAdmin\LicenseController;
 use App\Http\Controllers\PlatformAdmin\AuditLogController;
 use App\Http\Controllers\PlatformAdmin\AccountController as PlatformAdminAccountController;
@@ -99,7 +100,16 @@ Route::middleware(['auth', EnsureClinicAccess::class])
 
         Route::resource('patients', PatientController::class);
 
-        Route::resource('expenses', ExpenseController::class);
+        /*
+|--------------------------------------------------------------------------
+| Expenses — Owner and Doctor Only
+|--------------------------------------------------------------------------
+*/
+
+        Route::middleware(EnsureClinicRole::class . ':Owner,Doctor')
+            ->group(function () {
+                Route::resource('expenses', ExpenseController::class);
+            });
 
         Route::get('/payments/bills/{bill}', [
             PaymentController::class,
@@ -165,7 +175,16 @@ Route::middleware(['auth', EnsureClinicAccess::class])
         Route::put('/settings', [SettingController::class, 'update'])
             ->name('settings.update');
 
-        Route::resource('users', UserController::class);
+        /*
+|--------------------------------------------------------------------------
+| User Management — Owner Only
+|--------------------------------------------------------------------------
+*/
+
+        Route::middleware(EnsureClinicRole::class . ':Owner')
+            ->group(function () {
+                Route::resource('users', UserController::class);
+            });
 
         Route::resource('visits', VisitController::class);
     });

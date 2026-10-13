@@ -1478,3 +1478,114 @@ if (document.readyState === 'loading') {
 } else {
     initializeClinicNotificationLink();
 }
+
+/*
+|--------------------------------------------------------------------------
+| CLINIC SIDEBAR — Users and Expense Access
+|--------------------------------------------------------------------------
+*/
+
+function initializeClinicRoleNavigation() {
+    if (document.body.classList.contains('pa-app')) {
+        return;
+    }
+
+    const canManageUsers =
+        document.body.dataset.canManageUsers === '1';
+
+    const canAccessExpenses =
+        document.body.dataset.canAccessExpenses === '1';
+
+    const usersUrl = document.body.dataset.usersUrl;
+
+    const getPath = (url) =>
+        new URL(url, window.location.origin)
+            .pathname
+            .replace(/\/+$/, '');
+
+    document.querySelectorAll('.sidebar-nav').forEach((navigation) => {
+        let usersLink = null;
+
+        navigation.querySelectorAll('a.sidebar-link').forEach((link) => {
+            const path = getPath(link.href);
+
+            if (path === '/users' || path.startsWith('/users/')) {
+                if (!canManageUsers) {
+                    link.remove();
+                } else if (!usersLink) {
+                    usersLink = link;
+                } else {
+                    link.remove();
+                }
+            }
+
+            if (
+                !canAccessExpenses &&
+                (path === '/expenses' || path.startsWith('/expenses/'))
+            ) {
+                link.remove();
+            }
+        });
+
+        if (!canManageUsers || !usersUrl) {
+            return;
+        }
+
+        if (!usersLink) {
+            usersLink = document.createElement('a');
+            usersLink.className = 'sidebar-link';
+
+            const iconWrapper = document.createElement('span');
+            const icon = document.createElement('i');
+
+            icon.className = 'bi bi-people app-icon';
+            icon.setAttribute('aria-hidden', 'true');
+
+            iconWrapper.appendChild(icon);
+
+            const label = document.createElement('span');
+            label.textContent = 'Users';
+
+            usersLink.append(iconWrapper, label);
+        }
+
+        usersLink.href = usersUrl;
+
+        const currentPath = getPath(window.location.href);
+        const isUsersPage =
+            currentPath === '/users' ||
+            currentPath.startsWith('/users/');
+
+        usersLink.classList.toggle('active', isUsersPage);
+
+        if (isUsersPage) {
+            usersLink.setAttribute('aria-current', 'page');
+        } else {
+            usersLink.removeAttribute('aria-current');
+        }
+
+        const settingsLink = Array.from(
+            navigation.querySelectorAll('a.sidebar-link')
+        ).find((link) => {
+            const path = getPath(link.href);
+
+            return path === '/settings' ||
+                path.startsWith('/settings/');
+        });
+
+        if (settingsLink) {
+            settingsLink.before(usersLink);
+        } else {
+            navigation.appendChild(usersLink);
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeClinicRoleNavigation
+    );
+} else {
+    initializeClinicRoleNavigation();
+}

@@ -3,6 +3,18 @@
 @section('title', 'Patients — Salman Dawa Khana')
 
 @section('content')
+@php
+    $currency = strtoupper(
+        auth()->user()->clinic->currency ?: 'AED'
+    );
+
+    $decimalSetting = \App\Models\Setting::query()
+        ->where('clinic_id', auth()->user()->clinic_id)
+        ->where('setting_key', 'decimal_places')
+        ->value('setting_value');
+
+    $moneyDecimals = (string) $decimalSetting === '0' ? 0 : 2;
+@endphp
 <div class="app-shell">
 
     <aside class="app-sidebar">
@@ -107,7 +119,7 @@
             <article class="patient-stat-card">
                 <span class="patient-stat-label">Outstanding Balance</span>
                 <strong>
-                    PKR {{ number_format($outstandingBalance ?? 0, 2) }}
+                    {{ $currency }} {{ number_format($outstandingBalance ?? 0, $moneyDecimals) }}
                 </strong>
                 <small class="stat-warning">Patient account balance</small>
             </article>
@@ -226,7 +238,7 @@
                                 </td>
 
                                 <td class="{{ $balance > 0 ? 'balance-due' : '' }}">
-                                    PKR {{ number_format($balance, 2) }}
+                                    {{ $currency }} {{ number_format($balance, $moneyDecimals) }}
                                 </td>
 
                                 <td>
