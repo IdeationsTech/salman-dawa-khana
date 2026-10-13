@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Throwable;
 
 class SendDailyClinicSummaries extends Command
@@ -14,31 +15,30 @@ class SendDailyClinicSummaries extends Command
     protected $signature = 'clinics:daily-summary
         {--clinic= : Process one clinic ID}
         {--date= : Summary date in YYYY-MM-DD}
-        {--send : Send email instead of only previewing totals}';
+        {--send : Send instead of previewing}
+        {--retry-failed : Retry previously failed deliveries}';
 
     protected $description =
-        'Preview or send daily summaries for enabled clinics.';
+        'Preview or send clinic summaries with delivery tracking.';
 
     public function handle(): int
     {
         /*
         |--------------------------------------------------------------------------
-        | Summary Date — Yesterday by Default
+        | Date and Clinic Validation
         |--------------------------------------------------------------------------
         */
 
         $dateInput = $this->option('date');
 
-        if (
-            $dateInput &&
-            ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateInput)
-        ) {
-            $this->error('Use --date=YYYY-MM-DD.');
-
-            return self::FAILURE;
-        }
-
         try {
+            if (
+                $dateInput &&
+                ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateInput)
+            ) {
+                throw new \InvalidArgumentException();
+            }
+
             $day = $dateInput
                 ? CarbonImmutable::createFromFormat(
                     '!Y-m-d',
@@ -53,12 +53,10 @@ class SendDailyClinicSummaries extends Command
                 $dateInput &&
                 $day->format('Y-m-d') !== $dateInput
             ) {
-                $this->error('Enter a valid calendar date.');
-
-                return self::FAILURE;
+                throw new \InvalidArgumentException();
             }
         } catch (Throwable $exception) {
-            $this->error('Enter a valid calendar date.');
+            $this->error('Use a valid --date=YYYY-MM-DD.');
 
             return self::FAILURE;
         }
@@ -75,6 +73,15 @@ class SendDailyClinicSummaries extends Command
             return self::FAILURE;
         }
 
+        $mailer = (string) config('mail.default');
+
+        // Log/array testing cannot block future real email delivery.
+        $channel = in_array(
+            config("mail.mailers.{$mailer}.transport"),
+            ['log', 'array'],
+            true
+        ) ? 'local-test' : 'email';
+
         $start = $day->format('Y-m-d H:i:s');
         $end = $day->addDay()->format('Y-m-d H:i:s');
 
@@ -85,12 +92,10 @@ class SendDailyClinicSummaries extends Command
             $query->where('clinic_id', (int) $clinicOption);
         }
 
-        $clinics = $query->orderBy('clinic_id')->get();
-
         $processed = 0;
         $failed = 0;
 
-        foreach ($clinics as $clinic) {
+        foreach ($query->orderBy('clinic_id')->get() as $clinic) {
             $settings = DB::table('settings')
                 ->where('clinic_id', $clinic->clinic_id)
                 ->pluck('setting_value', 'setting_key');
@@ -99,16 +104,9 @@ class SendDailyClinicSummaries extends Command
                 (string) $settings->get(
                     'daily_summary_enabled',
                     '0'
-                ) !== '1'
+                ) !== '1' ||
+                ! $this->hasValidLicense($clinic)
             ) {
-                continue;
-            }
-
-            if (! $this->hasValidLicense($clinic)) {
-                $this->warn(
-                    "Clinic #{$clinic->clinic_id}: skipped — no valid license."
-                );
-
                 continue;
             }
 
@@ -118,7 +116,7 @@ class SendDailyClinicSummaries extends Command
 
             if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $this->warn(
-                    "Clinic #{$clinic->clinic_id}: skipped — invalid summary email."
+                    "Clinic #{$clinic->clinic_id}: invalid summary email."
                 );
 
                 continue;
@@ -156,12 +154,10 @@ class SendDailyClinicSummaries extends Command
                 'expenses' => $expenses,
                 'net' => (float) $received - (float) $expenses,
                 'currency' => strtoupper($clinic->currency ?: 'AED'),
-
                 'decimal_places' =>
                     (string) $settings->get('decimal_places', '2') === '0'
                         ? 0
                         : 2,
-
                 'dashboard_url' => route('dashboard'),
                 'preferences_url' => route('settings.notifications'),
             ];
@@ -177,39 +173,89 @@ class SendDailyClinicSummaries extends Command
                 ]]
             );
 
-            if ($this->option('send')) {
-                try {
-                    Mail::to($email)->send(
-                        new DailyClinicSummary($summary)
-                    );
+            $processed++;
 
-                    $this->info(
-                        "Summary sent using the configured mailer: {$email}"
-                    );
-                } catch (Throwable $exception) {
-                    report($exception);
-
-                    $this->error(
-                        "Clinic #{$clinic->clinic_id}: email sending failed."
-                    );
-
-                    $failed++;
-
-                    continue;
-                }
+            if (! $this->option('send')) {
+                continue;
             }
 
-            $processed++;
+            $deliveryId = $this->claimDelivery(
+                (int) $clinic->clinic_id,
+                $day->format('Y-m-d'),
+                $channel,
+                $email
+            );
+
+            if ($deliveryId === null) {
+                $this->warn(
+                    'Skipped: already sent, processing, or failed without --retry-failed.'
+                );
+
+                continue;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Send and Record the Result
+            |--------------------------------------------------------------------------
+            */
+
+            try {
+                Mail::to($email)->send(
+                    new DailyClinicSummary($summary)
+                );
+
+                DB::table('clinic_summary_deliveries')
+                    ->where('clinic_summary_delivery_id', $deliveryId)
+                    ->update([
+                        'status' => 'sent',
+                        'sent_at' => now(),
+                        'processing_started_at' => null,
+                        'last_error' => null,
+                        'updated_at' => now(),
+                    ]);
+
+                $this->info(
+                    $channel === 'local-test'
+                        ? "Summary generated with local test mailer: {$email}"
+                        : "Summary submitted to email transport: {$email}"
+                );
+            } catch (Throwable $exception) {
+                report($exception);
+
+                try {
+                    DB::table('clinic_summary_deliveries')
+                        ->where('clinic_summary_delivery_id', $deliveryId)
+                        ->update([
+                            'status' => 'failed',
+                            'processing_started_at' => null,
+                            'last_error' => Str::limit(
+                                $exception->getMessage(),
+                                2000,
+                                ''
+                            ),
+                            'updated_at' => now(),
+                        ]);
+                } catch (Throwable $trackingException) {
+                    report($trackingException);
+                }
+
+                $this->error(
+                    "Clinic #{$clinic->clinic_id}: delivery failed; review before retrying."
+                );
+
+                $failed++;
+            }
         }
 
-        if ($processed === 0 && $failed === 0) {
+        if ($processed === 0) {
             $this->warn(
                 'No eligible clinics found. Check approval, license, daily summary toggle and email.'
             );
         }
 
         if (! $this->option('send')) {
-            $this->info('Preview only. No emails were sent.');
+            $this->info('Preview only. No emails or delivery records created.');
         }
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
@@ -217,13 +263,95 @@ class SendDailyClinicSummaries extends Command
 
     /*
     |--------------------------------------------------------------------------
-    | Approved Clinic — Current License Eligibility
+    | Delivery — Claim One Clinic/Date/Channel
+    |--------------------------------------------------------------------------
+    */
+
+    private function claimDelivery(
+        int $clinicId,
+        string $date,
+        string $channel,
+        string $email
+    ): ?int {
+        return DB::transaction(function () use (
+            $clinicId,
+            $date,
+            $channel,
+            $email
+        ) {
+            DB::table('clinic_summary_deliveries')->insertOrIgnore([
+                'clinic_id' => $clinicId,
+                'summary_date' => $date,
+                'delivery_channel' => $channel,
+                'recipient_email' => $email,
+                'status' => 'pending',
+                'attempts' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $delivery = DB::table('clinic_summary_deliveries')
+                ->where('clinic_id', $clinicId)
+                ->where('summary_date', $date)
+                ->where('delivery_channel', $channel)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $delivery) {
+                throw new \RuntimeException(
+                    'The summary delivery record could not be created.'
+                );
+            }
+
+            if (in_array(
+                $delivery->status,
+                ['sent', 'processing'],
+                true
+            )) {
+                return null;
+            }
+
+            if (
+                $delivery->status === 'failed' &&
+                ! $this->option('retry-failed')
+            ) {
+                return null;
+            }
+
+            if (! in_array(
+                $delivery->status,
+                ['pending', 'failed'],
+                true
+            )) {
+                return null;
+            }
+
+            DB::table('clinic_summary_deliveries')
+                ->where(
+                    'clinic_summary_delivery_id',
+                    $delivery->clinic_summary_delivery_id
+                )
+                ->update([
+                    'recipient_email' => $email,
+                    'status' => 'processing',
+                    'attempts' => $delivery->attempts + 1,
+                    'processing_started_at' => now(),
+                    'last_error' => null,
+                    'updated_at' => now(),
+                ]);
+
+            return (int) $delivery->clinic_summary_delivery_id;
+        }, 3);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Clinic — License Eligibility
     |--------------------------------------------------------------------------
     */
 
     private function hasValidLicense(object $clinic): bool
     {
-        // Preserve the existing legacy-clinic exemption.
         if ($clinic->saas_customer_id === null) {
             return true;
         }
@@ -231,6 +359,8 @@ class SendDailyClinicSummaries extends Command
         if (! $clinic->current_license_id) {
             return false;
         }
+
+        $now = now();
 
         return DB::table('clinic_licenses as licenses')
             ->join(
@@ -245,10 +375,10 @@ class SendDailyClinicSummaries extends Command
             )
             ->where('licenses.clinic_id', $clinic->clinic_id)
             ->where('licenses.status', 'active')
-            ->where('licenses.starts_at', '<=', now())
-            ->where(function ($query) {
+            ->where('licenses.starts_at', '<=', $now)
+            ->where(function ($query) use ($now) {
                 $query
-                    ->where('licenses.ends_at', '>', now())
+                    ->where('licenses.ends_at', '>', $now)
                     ->orWhere(function ($query) {
                         $query
                             ->where('plans.term_type', 'lifetime')

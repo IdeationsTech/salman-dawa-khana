@@ -19,6 +19,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitController;
 use App\Http\Controllers\NotificationSettingsController;
 use App\Http\Controllers\ClinicNotificationController;
+use App\Http\Controllers\ClinicSecurityController;
 
 use App\Http\Controllers\PlatformAdmin\LoginController as PlatformAdminLoginController;
 use App\Http\Controllers\PlatformAdmin\DashboardController as PlatformAdminDashboardController;
@@ -155,6 +156,11 @@ Route::middleware(['auth', EnsureClinicAccess::class])
             SettingController::class,
             'security',
         ])->name('settings.security');
+
+        Route::put('/settings/security/password', [
+            ClinicSecurityController::class,
+            'updatePassword',
+        ])->name('settings.security.password.update');
 
         Route::put('/settings', [SettingController::class, 'update'])
             ->name('settings.update');

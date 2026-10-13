@@ -1,51 +1,72 @@
 @extends('layouts.app')
 
-@section('title', 'Security Settings — Salman Dawa Khana')
+@section('title', 'Security — ' . $clinic->name)
 
 @section('content')
+@php
+    $sidebarLinks = [
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+    ];
+
+    $settingsLinks = [
+        ['route' => 'settings.index', 'icon' => 'bi-hospital', 'label' => 'Clinic profile'],
+        ['route' => 'settings.payments', 'icon' => 'bi-cash-coin', 'label' => 'Payment settings'],
+        ['route' => 'settings.account', 'icon' => 'bi-person-vcard', 'label' => 'User account'],
+        ['route' => 'settings.notifications', 'icon' => 'bi-bell', 'label' => 'Notifications'],
+        ['route' => 'settings.security', 'icon' => 'bi-shield-lock', 'label' => 'Security'],
+    ];
+@endphp
+
 <div class="app-shell">
 
-    {{-- Security Settings Sidebar --}}
+    {{-- Security — Application Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
+            <div class="sidebar-logo">
+                @if($clinic->logo_path)
+                    <img
+                        src="{{ asset('storage/' . $clinic->logo_path) }}"
+                        alt="{{ $clinic->name }} logo"
+                        class="settings-logo-image"
+                    >
+                @else
+                    <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+                @endif
+            </div>
+
+            <span>{{ $clinic->name }}</span>
         </div>
 
         <nav class="sidebar-nav">
-            <a href="/dashboard" class="sidebar-link">
-                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span><span>Dashboard</span>
-            </a>
+            @foreach($sidebarLinks as $link)
+                @if($link['route'] === 'reports.index')
+                    <div class="sidebar-divider"></div>
+                @endif
 
-            <a href="/patients" class="sidebar-link">
-                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span><span>Patients</span>
-            </a>
+                <a
+                    href="{{ route($link['route']) }}"
+                    class="sidebar-link {{ $link['route'] === 'settings.index' ? 'active' : '' }}"
+                    @if($link['route'] === 'settings.index')
+                        aria-current="page"
+                    @endif
+                >
+                    <span>
+                        <i
+                            class="bi {{ $link['icon'] }} app-icon"
+                            aria-hidden="true"
+                        ></i>
+                    </span>
 
-            <a href="/visits" class="sidebar-link">
-                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span><span>Visits</span>
-            </a>
-
-            <a href="/prescriptions" class="sidebar-link">
-                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span><span>Prescriptions</span>
-            </a>
-
-            <a href="/payments" class="sidebar-link">
-                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span><span>Payments</span>
-            </a>
-
-            <a href="/expenses" class="sidebar-link">
-                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span><span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="/reports" class="sidebar-link">
-                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span><span>Reports</span>
-            </a>
-
-            <a href="/settings/security" class="sidebar-link active">
-                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span><span>Settings</span>
-            </a>
+                    <span>{{ $link['label'] }}</span>
+                </a>
+            @endforeach
         </nav>
 
         <div class="sidebar-footer">
@@ -54,180 +75,194 @@
         </div>
     </aside>
 
+    {{-- Security — Main Content --}}
     <main class="dashboard-main">
-
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Settings</p>
                 <h1>Security</h1>
+
                 <p class="page-subtitle">
-                    Manage your password and account security.
+                    Manage your account password.
                 </p>
             </div>
         </header>
 
+        @if(session('success'))
+            <div class="alert alert-success" role="status">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <strong>Please correct the following:</strong>
+
+                <ul class="mb-0 mt-2">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <section class="settings-layout">
 
+            {{-- Security — Settings Navigation --}}
             <aside class="settings-navigation">
-                <a href="/settings" class="settings-nav-item">
-                    <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span> Clinic profile
-                </a>
+                @foreach($settingsLinks as $link)
+                    <a
+                        href="{{ route($link['route']) }}"
+                        class="settings-nav-item {{ request()->routeIs($link['route']) ? 'active' : '' }}"
+                        @if(request()->routeIs($link['route']))
+                            aria-current="page"
+                        @endif
+                    >
+                        <span>
+                            <i
+                                class="bi {{ $link['icon'] }} app-icon"
+                                aria-hidden="true"
+                            ></i>
+                        </span>
 
-                <a href="/settings/payments" class="settings-nav-item">
-                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span> Payment settings
-                </a>
-
-                <a href="/settings/account" class="settings-nav-item">
-                    <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span> User account
-                </a>
-
-                <a href="/settings/notifications" class="settings-nav-item">
-                    <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span> Notifications
-                </a>
-
-                <a href="/settings/security" class="settings-nav-item active">
-                    <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span> Security
-                </a>
+                        {{ $link['label'] }}
+                    </a>
+                @endforeach
             </aside>
 
             <div class="settings-content">
 
-                {{-- Change Password --}}
+                {{-- Security — Change Password Form --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
                             <h2>Change password</h2>
-                            <p>Use a strong password to protect your account.</p>
+                            <p>Confirm your current password before choosing a new one.</p>
                         </div>
 
-                        <div class="security-icon"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></div>
-                    </div>
-
-                    <div class="settings-form-grid">
-                        <div class="form-field settings-field-wide">
-                            <label for="current_password" class="form-label">
-                                Current password
-                            </label>
-
-                            <input
-                                type="password"
-                                id="current_password"
-                                class="form-control"
-                                placeholder="Enter current password"
-                            >
-                        </div>
-
-                        <div class="form-field">
-                            <label for="new_password" class="form-label">
-                                New password
-                            </label>
-
-                            <input
-                                type="password"
-                                id="new_password"
-                                class="form-control"
-                                placeholder="Enter new password"
-                            >
-                        </div>
-
-                        <div class="form-field">
-                            <label for="confirm_password" class="form-label">
-                                Confirm new password
-                            </label>
-
-                            <input
-                                type="password"
-                                id="confirm_password"
-                                class="form-control"
-                                placeholder="Repeat new password"
-                            >
+                        <div class="security-icon">
+                            <i
+                                class="bi bi-shield-lock app-icon"
+                                aria-hidden="true"
+                            ></i>
                         </div>
                     </div>
 
-                    <div class="password-requirements">
-                        <strong>Password requirements</strong>
+                    <form
+                        method="POST"
+                        action="{{ route('settings.security.password.update') }}"
+                    >
+                        @csrf
+                        @method('PUT')
 
-                        <ul>
-                            <li>At least 8 characters</li>
-                            <li>One uppercase letter</li>
-                            <li>One number or special character</li>
-                        </ul>
+                        <div class="settings-form-grid">
+                            <div class="form-field settings-field-wide">
+                                <label for="current_password" class="form-label">
+                                    Current password *
+                                </label>
+
+                                <input
+                                    type="password"
+                                    id="current_password"
+                                    name="current_password"
+                                    class="form-control @error('current_password') is-invalid @enderror"
+                                    autocomplete="current-password"
+                                    required
+                                >
+
+                                @error('current_password')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-field">
+                                <label for="new_password" class="form-label">
+                                    New password *
+                                </label>
+
+                                <input
+                                    type="password"
+                                    id="new_password"
+                                    name="password"
+                                    class="form-control @error('password') is-invalid @enderror"
+                                    minlength="8"
+                                    autocomplete="new-password"
+                                    required
+                                >
+
+                                @error('password')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-field">
+                                <label for="password_confirmation" class="form-label">
+                                    Confirm new password *
+                                </label>
+
+                                <input
+                                    type="password"
+                                    id="password_confirmation"
+                                    name="password_confirmation"
+                                    class="form-control"
+                                    minlength="8"
+                                    autocomplete="new-password"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="password-requirements">
+                            <strong>Password requirements</strong>
+
+                            <ul>
+                                <li>At least 8 characters.</li>
+                                <li>Different from your current password.</li>
+                                <li>Both new-password fields must match.</li>
+                            </ul>
+                        </div>
+
+                        <div class="settings-panel-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i
+                                    class="bi bi-shield-check app-icon"
+                                    aria-hidden="true"
+                                ></i>
+                                Update password
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                {{-- Security — Current Account --}}
+                <section class="settings-panel">
+                    <div class="settings-panel-heading">
+                        <div>
+                            <h2>Signed-in account</h2>
+                            <p>{{ $user->name }} · {{ $user->email }}</p>
+                        </div>
                     </div>
 
                     <div class="settings-panel-actions">
-                        <button class="btn btn-primary">
-                            Update password
-                        </button>
-                    </div>
-                </section>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
 
-                {{-- Session Security --}}
-                <section class="settings-panel">
-                    <div class="settings-panel-heading">
-                        <div>
-                            <h2>Session security</h2>
-                            <p>Manage how your account sessions are handled.</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-toggle-list">
-                        <div class="settings-toggle-row">
-                            <div>
-                                <strong>Remember this device</strong>
-                                <small>Keep this device signed in for 30 days.</small>
-                            </div>
-
-                            <input class="form-check-input" type="checkbox" checked>
-                        </div>
-
-                        <div class="settings-toggle-row">
-                            <div>
-                                <strong>Automatic logout</strong>
-                                <small>Log out after extended inactivity.</small>
-                            </div>
-
-                            <input class="form-check-input" type="checkbox" checked>
-                        </div>
-                    </div>
-                </section>
-
-                {{-- Active Sessions --}}
-                <section class="settings-panel">
-                    <div class="settings-panel-heading">
-                        <div>
-                            <h2>Active sessions</h2>
-                            <p>Devices currently signed in to your account.</p>
-                        </div>
-                    </div>
-
-                    <div class="active-session-row">
-                        <div class="session-device-icon">⌂</div>
-
-                        <div>
-                            <strong>Windows PC — Current device</strong>
-                            <small>Chrome · Dubai, UAE · Active now</small>
-                        </div>
-
-                        <span class="session-current-badge">Current</span>
-                    </div>
-
-                    <div class="active-session-row">
-                        <div class="session-device-icon"><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></div>
-
-                        <div>
-                            <strong>Mobile device</strong>
-                            <small>Last active yesterday</small>
-                        </div>
-
-                        <button class="btn btn-sm btn-outline-danger">
-                            Sign out
-                        </button>
+                            <button
+                                type="submit"
+                                class="btn btn-outline-secondary"
+                            >
+                                <i
+                                    class="bi bi-box-arrow-right app-icon"
+                                    aria-hidden="true"
+                                ></i>
+                                Sign out
+                            </button>
+                        </form>
                     </div>
                 </section>
 
             </div>
         </section>
-
     </main>
 </div>
 @endsection
