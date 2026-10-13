@@ -200,3 +200,28 @@
         transform: none;
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| SHARED PHONE INPUT — Country Dropdown
+|--------------------------------------------------------------------------
+*/
+
+.international-phone-field {
+    min-width: 0;
+}
+
+.international-phone-field .iti {
+    display: block;
+    width: 100%;
+}
+
+.international-phone-field .form-control {
+    width: 100%;
+}
+
+.international-phone-field > small {
+    display: block;
+    margin-top: 6px;
+}
+

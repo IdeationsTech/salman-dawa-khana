@@ -34,6 +34,9 @@ class Patient extends Model
         'has_children',
         'children_count',
         'emirates_id',
+        'national_id_country',
+        'national_id_type',
+        'national_id_number',
     ];
 
     protected function casts(): array

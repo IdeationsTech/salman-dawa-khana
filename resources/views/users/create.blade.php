@@ -119,7 +119,7 @@
 
                     <div>
                         <h2>Personal details</h2>
-                        <p>Enter the user’s name and login email.</p>
+                        <p>Enter the user’s name, email and phone number.</p>
                     </div>
                 </div>
 
@@ -164,6 +164,20 @@
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                    </div>
+
+                    {{-- User Form — Required International Phone --}}
+                    <div class="form-field">
+                        <label for="user_phone" class="form-label">
+                            Personal phone number <span>*</span>
+                        </label>
+
+                        <x-phone-input
+                            name="phone"
+                            id="user_phone"
+                            :value="$editing ? $user->phone : ''"
+                            :required="true"
+                        />
                     </div>
                 </div>
             </section>
@@ -300,11 +314,7 @@
                         <small>Inactive accounts cannot sign in.</small>
                     </div>
 
-                    <input
-                        type="hidden"
-                        name="is_active"
-                        value="0"
-                    >
+                    <input type="hidden" name="is_active" value="0">
 
                     <input
                         type="checkbox"

@@ -6,9 +6,11 @@
 <div class="auth-page">
     <div class="auth-card register-card">
 
-        {{-- Registration Brand Panel --}}
+        {{-- Registration — Brand Panel --}}
         <div class="auth-brand-panel">
-            <div class="brand-mark">+</div>
+            <div class="brand-mark">
+                <i class="bi bi-hospital" aria-hidden="true"></i>
+            </div>
 
             <h1>Salman Dawa Khana</h1>
 
@@ -24,12 +26,14 @@
             </p>
         </div>
 
-        {{-- Registration Form Panel --}}
+        {{-- Registration — Form Panel --}}
         <div class="auth-form-panel">
             <div class="auth-form-content">
-
                 <div class="mobile-brand">
-                    <div class="brand-mark">+</div>
+                    <div class="brand-mark">
+                        <i class="bi bi-hospital" aria-hidden="true"></i>
+                    </div>
+
                     <h2>Salman Dawa Khana</h2>
                 </div>
 
@@ -39,7 +43,7 @@
                     <p>Enter your clinic and owner details below.</p>
                 </div>
 
-                @if ($errors->any())
+                @if($errors->any())
                     <div class="alert alert-danger" role="alert">
                         <button
                             type="button"
@@ -49,7 +53,7 @@
                         ></button>
 
                         <ul class="mb-0 ps-3">
-                            @foreach ($errors->all() as $error)
+                            @foreach($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
                         </ul>
@@ -63,159 +67,118 @@
                     @csrf
 
                     <div class="register-form-grid">
-
                         <div>
                             <label for="clinic_name" class="form-label">
-                                Clinic Name
+                                Clinic Name *
                             </label>
 
                             <input
                                 type="text"
-                                class="form-control @error('clinic_name') is-invalid @enderror"
                                 id="clinic_name"
                                 name="clinic_name"
+                                class="form-control"
                                 value="{{ old('clinic_name') }}"
-                                placeholder="Salman Dawa Khana"
+                                maxlength="160"
                                 required
                             >
-
-                            @error('clinic_name')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
                         </div>
 
                         <div>
                             <label for="owner_name" class="form-label">
-                                Owner Name
+                                Owner Name *
                             </label>
 
                             <input
                                 type="text"
-                                class="form-control @error('owner_name') is-invalid @enderror"
                                 id="owner_name"
                                 name="owner_name"
+                                class="form-control"
                                 value="{{ old('owner_name') }}"
-                                placeholder="Your full name"
+                                maxlength="120"
+                                autocomplete="name"
                                 required
                             >
-
-                            @error('owner_name')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
                         </div>
 
                         <div>
                             <label for="email" class="form-label">
-                                Email Address
+                                Email Address *
                             </label>
 
                             <input
                                 type="email"
-                                class="form-control @error('email') is-invalid @enderror"
                                 id="email"
                                 name="email"
+                                class="form-control"
                                 value="{{ old('email') }}"
-                                placeholder="you@example.com"
+                                maxlength="160"
                                 autocomplete="email"
                                 required
                             >
-
-                            @error('email')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
                         </div>
 
+                        {{-- Registration — International Clinic Phone --}}
                         <div>
                             <label for="phone" class="form-label">
-                                Phone Number
+                                Clinic Phone Number *
                             </label>
 
-                            <input
-                                type="tel"
-                                class="form-control @error('phone') is-invalid @enderror"
-                                id="phone"
+                            <x-phone-input
                                 name="phone"
-                                value="{{ old('phone') }}"
-                                placeholder="+971 50 000 0000"
-                                required
-                            >
-
-                            @error('phone')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
+                                id="phone"
+                                :required="true"
+                            />
                         </div>
 
                         <div>
                             <label for="password" class="form-label">
-                                Password
+                                Password *
                             </label>
 
                             <input
                                 type="password"
-                                class="form-control @error('password') is-invalid @enderror"
                                 id="password"
                                 name="password"
-                                placeholder="Create a password"
+                                class="form-control"
+                                minlength="8"
                                 autocomplete="new-password"
                                 required
                             >
-
-                            @error('password')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
                         </div>
 
                         <div>
-                            <label
-                                for="password_confirmation"
-                                class="form-label"
-                            >
-                                Confirm Password
+                            <label for="password_confirmation" class="form-label">
+                                Confirm Password *
                             </label>
 
                             <input
                                 type="password"
-                                class="form-control"
                                 id="password_confirmation"
                                 name="password_confirmation"
-                                placeholder="Repeat your password"
+                                class="form-control"
+                                minlength="8"
                                 autocomplete="new-password"
                                 required
                             >
                         </div>
-
                     </div>
 
                     <div class="form-check register-terms">
                         <input
-                            class="form-check-input"
                             type="checkbox"
                             id="terms"
                             name="terms"
+                            class="form-check-input"
                             value="1"
-                            {{ old('terms') ? 'checked' : '' }}
+                            @checked(old('terms'))
                             required
                         >
 
-                        <label class="form-check-label" for="terms">
+                        <label for="terms" class="form-check-label">
                             I agree to the
-                            <a href="#" class="auth-link">
-                                Terms of Service
-                            </a>
+                            <a href="#" class="auth-link">Terms of Service</a>
                             and
-                            <a href="#" class="auth-link">
-                                Privacy Policy
-                            </a>
+                            <a href="#" class="auth-link">Privacy Policy</a>.
                         </label>
                     </div>
 
@@ -234,10 +197,8 @@
                         Sign in
                     </a>
                 </div>
-
             </div>
         </div>
-
     </div>
 </div>
 @endsection

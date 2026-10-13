@@ -5,77 +5,10 @@
 @section('content')
 @php
     $roleName = $user->role?->name ?? 'Staff';
-
-    $sidebarLinks = [
-        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
-        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
-        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
-        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
-        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
-        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
-        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
-        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
-    ];
-
-    $settingsLinks = [
-        ['route' => 'settings.index', 'icon' => 'bi-hospital', 'label' => 'Clinic profile'],
-        ['route' => 'settings.payments', 'icon' => 'bi-cash-coin', 'label' => 'Payment settings'],
-        ['route' => 'settings.account', 'icon' => 'bi-person-vcard', 'label' => 'User account'],
-        ['route' => 'settings.notifications', 'icon' => 'bi-bell', 'label' => 'Notifications'],
-        ['route' => 'settings.security', 'icon' => 'bi-shield-lock', 'label' => 'Security'],
-    ];
 @endphp
 
 <div class="app-shell">
-
-    {{-- User Account — Application Sidebar --}}
-    <aside class="app-sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">
-                @if($clinic->logo_path)
-                    <img
-                        src="{{ asset('storage/' . $clinic->logo_path) }}"
-                        alt="{{ $clinic->name }} logo"
-                        class="settings-logo-image"
-                    >
-                @else
-                    <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
-                @endif
-            </div>
-
-            <span>{{ $clinic->name }}</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            @foreach($sidebarLinks as $link)
-                @if($link['route'] === 'reports.index')
-                    <div class="sidebar-divider"></div>
-                @endif
-
-                <a
-                    href="{{ route($link['route']) }}"
-                    class="sidebar-link {{ $link['route'] === 'settings.index' ? 'active' : '' }}"
-                    @if($link['route'] === 'settings.index')
-                        aria-current="page"
-                    @endif
-                >
-                    <span>
-                        <i
-                            class="bi {{ $link['icon'] }} app-icon"
-                            aria-hidden="true"
-                        ></i>
-                    </span>
-
-                    <span>{{ $link['label'] }}</span>
-                </a>
-            @endforeach
-        </nav>
-
-        <div class="sidebar-footer">
-            <span class="status-dot"></span>
-            System online
-        </div>
-    </aside>
+    @include('settings._sidebar')
 
     {{-- User Account — Main Content --}}
     <main class="dashboard-main">
@@ -83,7 +16,6 @@
             <div>
                 <p class="dashboard-date">Settings</p>
                 <h1>User account</h1>
-
                 <p class="page-subtitle">
                     Manage your personal information and profile photo.
                 </p>
@@ -99,7 +31,6 @@
         @if($errors->any())
             <div class="alert alert-danger" role="alert">
                 <strong>Please correct the following:</strong>
-
                 <ul class="mb-0 mt-2">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -109,28 +40,7 @@
         @endif
 
         <section class="settings-layout">
-
-            {{-- User Account — Settings Navigation --}}
-            <aside class="settings-navigation">
-                @foreach($settingsLinks as $link)
-                    <a
-                        href="{{ route($link['route']) }}"
-                        class="settings-nav-item {{ request()->routeIs($link['route']) ? 'active' : '' }}"
-                        @if(request()->routeIs($link['route']))
-                            aria-current="page"
-                        @endif
-                    >
-                        <span>
-                            <i
-                                class="bi {{ $link['icon'] }} app-icon"
-                                aria-hidden="true"
-                            ></i>
-                        </span>
-
-                        {{ $link['label'] }}
-                    </a>
-                @endforeach
-            </aside>
+            @include('settings._navigation')
 
             <div class="settings-content">
 
@@ -151,7 +61,6 @@
                     <div class="account-profile-info">
                         <h2>{{ $user->name }}</h2>
                         <p>{{ $roleName }}</p>
-
                         @if($user->created_at)
                             <span>
                                 Member since {{ $user->created_at->format('F Y') }}
@@ -165,7 +74,7 @@
                     <div class="settings-panel-heading">
                         <div>
                             <h2>Personal information</h2>
-                            <p>Update your details and confirm with your current password.</p>
+                            <p>Confirm changes with your current password.</p>
                         </div>
                     </div>
 
@@ -182,7 +91,6 @@
                                 <label for="account_name" class="form-label">
                                     Full name *
                                 </label>
-
                                 <input
                                     type="text"
                                     id="account_name"
@@ -199,7 +107,6 @@
                                 <label for="account_email" class="form-label">
                                     Email address *
                                 </label>
-
                                 <input
                                     type="email"
                                     id="account_email"
@@ -212,20 +119,17 @@
                                 >
                             </div>
 
+                            {{-- User Account — International Personal Phone --}}
                             <div class="form-field settings-field-wide">
                                 <label for="account_phone" class="form-label">
                                     Personal phone number
                                 </label>
 
-                                <input
-                                    type="tel"
-                                    id="account_phone"
+                                <x-phone-input
                                     name="phone"
-                                    class="form-control"
-                                    value="{{ old('phone', $user->phone) }}"
-                                    maxlength="30"
-                                    autocomplete="tel"
-                                >
+                                    id="account_phone"
+                                    :value="$user->phone"
+                                />
                             </div>
 
                             <div class="form-field settings-field-wide">
@@ -234,7 +138,6 @@
                                         ? 'Change profile photo'
                                         : 'Upload profile photo' }}
                                 </label>
-
                                 <input
                                     type="file"
                                     id="profile_photo"
@@ -242,7 +145,6 @@
                                     class="form-control"
                                     accept="image/png,image/jpeg,image/webp"
                                 >
-
                                 <small class="text-muted">
                                     PNG, JPG or WebP. Maximum 2 MB and 3000 × 3000 pixels.
                                 </small>
@@ -255,12 +157,10 @@
                                             <label for="remove_photo">
                                                 <strong>Remove current photo</strong>
                                             </label>
-
                                             <small>
                                                 Select this without choosing a new photo.
                                             </small>
                                         </div>
-
                                         <input
                                             type="checkbox"
                                             id="remove_photo"
@@ -277,7 +177,6 @@
                                 <label for="account_current_password" class="form-label">
                                     Current password *
                                 </label>
-
                                 <input
                                     type="password"
                                     id="account_current_password"
@@ -291,10 +190,7 @@
 
                         <div class="settings-panel-actions">
                             <button type="submit" class="btn btn-primary">
-                                <i
-                                    class="bi bi-check2-circle app-icon"
-                                    aria-hidden="true"
-                                ></i>
+                                <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
                                 Save changes
                             </button>
                         </div>
@@ -312,10 +208,7 @@
 
                     <div class="account-role-box">
                         <div class="account-role-icon">
-                            <i
-                                class="bi bi-person-badge app-icon"
-                                aria-hidden="true"
-                            ></i>
+                            <i class="bi bi-person-badge app-icon" aria-hidden="true"></i>
                         </div>
 
                         <div>
@@ -323,14 +216,11 @@
                             <small>{{ $clinic->name }}</small>
                         </div>
 
-                        <span
-                            class="status-badge {{ $user->is_active ? 'active-badge' : 'due-badge' }}"
-                        >
+                        <span class="status-badge {{ $user->is_active ? 'active-badge' : 'due-badge' }}">
                             {{ $user->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </div>
                 </section>
-
             </div>
         </section>
     </main>

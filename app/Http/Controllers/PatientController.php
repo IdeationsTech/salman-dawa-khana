@@ -102,7 +102,9 @@ class PatientController extends Controller
 
     public function create()
     {
-        return view('patients.create');
+        $idCountry = $this->patientIdCountry();
+
+        return view('patients.create', compact('idCountry'));
     }
 
 /*
@@ -245,7 +247,12 @@ class PatientController extends Controller
     {
         $this->ensureClinicAccess($patient);
 
-        return view('patients.create', compact('patient'));
+        $idCountry = $this->patientIdCountry($patient);
+
+        return view(
+            'patients.create',
+            compact('patient', 'idCountry')
+        );
     }
 
     /*
@@ -321,32 +328,80 @@ class PatientController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    /*
+|--------------------------------------------------------------------------
+| PATIENTS — Country-Specific ID and Required Fields
+|--------------------------------------------------------------------------
+*/
+
     private function validatePatient(
         Request $request,
         ?Patient $patient = null
     ): array {
-        $emiratesId = $request->input('emirates_id');
+        $clinicId = (int) Auth::user()->clinic_id;
 
-        if (is_string($emiratesId)) {
+        // Never trust a submitted country to bypass the clinic's ID rules.
+        $country = $this->patientIdCountry($patient);
+        $idType = $country === 'PK' ? 'cnic' : 'emirates_id';
+
+        $idInput = $request->input('national_id_number');
+
+        if (is_string($idInput)) {
             $request->merge([
-                'emirates_id' => preg_replace(
+                'national_id_number' => preg_replace(
                     '/[\s-]+/',
                     '',
-                    $emiratesId
+                    $idInput
                 ),
             ]);
         }
 
-        $uniqueEmiratesId = Rule::unique(
+        $uniqueId = Rule::unique(
             'patients',
-            'emirates_id'
-        )->where('clinic_id', Auth::user()->clinic_id);
+            'national_id_number'
+        )
+            ->where('clinic_id', $clinicId)
+            ->where('national_id_country', $country)
+            ->where('national_id_type', $idType);
 
         if ($patient !== null) {
-            $uniqueEmiratesId->ignore(
-                $patient->patient_id,
-                'patient_id'
-            );
+            $uniqueId->ignore($patient->patient_id, 'patient_id');
+        }
+
+        $idRules = [
+            'bail',
+            'required',
+            'string',
+            $country === 'PK'
+                ? 'regex:/^[0-9]{13}$/'
+                : 'regex:/^784[0-9]{12}$/',
+            $uniqueId,
+        ];
+
+        /*
+        * Also check legacy Emirates ID rows that have not yet been
+        * populated with the new national ID fields.
+        */
+        if ($country === 'AE') {
+            $idRules[] = function ($attribute, $value, $fail) use (
+                $clinicId,
+                $patient
+            ) {
+                $query = Patient::query()
+                    ->where('clinic_id', $clinicId)
+                    ->whereRaw(
+                        "REPLACE(REPLACE(emirates_id, '-', ''), ' ', '') = ?",
+                        [$value]
+                    );
+
+                if ($patient !== null) {
+                    $query->where('patient_id', '<>', $patient->patient_id);
+                }
+
+                if ($query->exists()) {
+                    $fail('This Emirates ID is already registered in your clinic.');
+                }
+            };
         }
 
         $validated = $request->validate([
@@ -366,17 +421,11 @@ class PatientController extends Controller
                 'bail',
                 'required',
                 'string',
-                'max:30',
-                'regex:/^\+?[0-9][0-9\s().-]{5,29}$/',
+                'max:16',
+                new \App\Rules\InternationalPhone(),
             ],
 
-            'emirates_id' => [
-                'bail',
-                'required',
-                'string',
-                'regex:/^784[0-9]{12}$/',
-                $uniqueEmiratesId,
-            ],
+            'national_id_number' => $idRules,
 
             'date_of_birth' => [
                 'bail',
@@ -427,17 +476,18 @@ class PatientController extends Controller
             'phone.required' =>
                 'Please enter the phone number.',
 
-            'phone.regex' =>
-                'Please enter a valid phone number.',
+            'national_id_number.required' =>
+                $country === 'PK'
+                    ? 'Please enter the CNIC.'
+                    : 'Please enter the Emirates ID.',
 
-            'emirates_id.required' =>
-                'Please enter the Emirates ID.',
+            'national_id_number.regex' =>
+                $country === 'PK'
+                    ? 'Enter a 13-digit CNIC.'
+                    : 'Enter a 15-digit Emirates ID starting with 784.',
 
-            'emirates_id.regex' =>
-                'Enter a 15-digit Emirates ID starting with 784.',
-
-            'emirates_id.unique' =>
-                'This Emirates ID is already registered in your clinic.',
+            'national_id_number.unique' =>
+                'This ID is already registered in your clinic.',
 
             'date_of_birth.required' =>
                 'Please enter the date of birth.',
@@ -470,7 +520,20 @@ class PatientController extends Controller
                 'Enter at least 1 child when Yes is selected.',
         ]);
 
-        // Clear fields that no longer apply when editing a patient.
+        /*
+        |--------------------------------------------------------------------------
+        | Save the ID Country and Type with Each Patient
+        |--------------------------------------------------------------------------
+        */
+
+        $validated['national_id_country'] = $country;
+        $validated['national_id_type'] = $idType;
+
+        // Keep the legacy UAE field synchronized during transition.
+        $validated['emirates_id'] = $country === 'AE'
+            ? $validated['national_id_number']
+            : null;
+
         if ($validated['marital_status'] !== 'married') {
             $validated['has_children'] = null;
             $validated['children_count'] = null;
@@ -485,5 +548,35 @@ class PatientController extends Controller
         }
 
         return $validated;
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| PATIENTS — Saved ID Country or Clinic Default
+|--------------------------------------------------------------------------
+*/
+
+    private function patientIdCountry(?Patient $patient = null): string
+    {
+        if ($patient !== null) {
+            if (in_array(
+                $patient->national_id_country,
+                ['AE', 'PK'],
+                true
+            )) {
+                return $patient->national_id_country;
+            }
+
+            if (filled($patient->emirates_id)) {
+                return 'AE';
+            }
+        }
+
+        $country = \App\Models\Setting::query()
+            ->where('clinic_id', Auth::user()->clinic_id)
+            ->where('setting_key', 'patient_id_country')
+            ->value('setting_value');
+
+        return $country === 'PK' ? 'PK' : 'AE';
     }
 }

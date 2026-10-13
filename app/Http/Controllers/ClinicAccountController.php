@@ -48,9 +48,11 @@ class ClinicAccountController extends Controller
             ],
 
             'phone' => [
+                'bail',
                 'nullable',
                 'string',
-                'max:30',
+                'max:16',
+                new \App\Rules\InternationalPhone(),
             ],
 
             'profile_photo' => [

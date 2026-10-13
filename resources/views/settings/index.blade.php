@@ -6,84 +6,22 @@
 @php
     $currentUser = auth()->user();
 
-    $sidebarLinks = [
-        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
-        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
-        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
-        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
-        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
-        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
-        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
-        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
-    ];
+    $patientIdCountry = old(
+        'patient_id_country',
+        $settings->get('patient_id_country')?->setting_value ?? 'AE'
+    );
 
-    $settingsLinks = [
-        ['route' => 'settings.index', 'icon' => 'bi-hospital', 'label' => 'Clinic profile'],
-        ['route' => 'settings.payments', 'icon' => 'bi-cash-coin', 'label' => 'Payment settings'],
-        ['route' => 'settings.account', 'icon' => 'bi-person-vcard', 'label' => 'User account'],
-        ['route' => 'settings.notifications', 'icon' => 'bi-bell', 'label' => 'Notifications'],
-        ['route' => 'settings.security', 'icon' => 'bi-shield-lock', 'label' => 'Security'],
-    ];
+    $isOwner = $currentUser->role?->name === 'Owner';
 @endphp
 
 <div class="app-shell">
+    @include('settings._sidebar')
 
-    {{-- Clinic Settings — Application Sidebar --}}
-    <aside class="app-sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">
-                @if($clinic->logo_path)
-                    <img
-                        src="{{ asset('storage/' . $clinic->logo_path) }}"
-                        alt="{{ $clinic->name }} logo"
-                        class="settings-logo-image"
-                    >
-                @else
-                    <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
-                @endif
-            </div>
-
-            <span>{{ $clinic->name }}</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            @foreach($sidebarLinks as $link)
-                @if($link['route'] === 'reports.index')
-                    <div class="sidebar-divider"></div>
-                @endif
-
-                <a
-                    href="{{ route($link['route']) }}"
-                    class="sidebar-link {{ $link['route'] === 'settings.index' ? 'active' : '' }}"
-                    @if($link['route'] === 'settings.index')
-                        aria-current="page"
-                    @endif
-                >
-                    <span>
-                        <i
-                            class="bi {{ $link['icon'] }} app-icon"
-                            aria-hidden="true"
-                        ></i>
-                    </span>
-
-                    <span>{{ $link['label'] }}</span>
-                </a>
-            @endforeach
-        </nav>
-
-        <div class="sidebar-footer">
-            <span class="status-dot"></span>
-            System online
-        </div>
-    </aside>
-
-    {{-- Clinic Settings — Main Content --}}
     <main class="dashboard-main">
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Application configuration</p>
                 <h1>Settings</h1>
-
                 <p class="page-subtitle">
                     Manage your clinic profile and system preferences.
                 </p>
@@ -99,7 +37,6 @@
         @if($errors->any())
             <div class="alert alert-danger" role="alert">
                 <strong>Please correct the following:</strong>
-
                 <ul class="mb-0 mt-2">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -109,32 +46,11 @@
         @endif
 
         <section class="settings-layout">
-
-            {{-- Clinic Settings — Navigation --}}
-            <aside class="settings-navigation">
-                @foreach($settingsLinks as $link)
-                    <a
-                        href="{{ route($link['route']) }}"
-                        class="settings-nav-item {{ request()->routeIs($link['route']) ? 'active' : '' }}"
-                        @if(request()->routeIs($link['route']))
-                            aria-current="page"
-                        @endif
-                    >
-                        <span>
-                            <i
-                                class="bi {{ $link['icon'] }} app-icon"
-                                aria-hidden="true"
-                            ></i>
-                        </span>
-
-                        {{ $link['label'] }}
-                    </a>
-                @endforeach
-            </aside>
+            @include('settings._navigation')
 
             <div class="settings-content">
 
-                {{-- Clinic Settings — Profile and Logo Form --}}
+                {{-- Clinic Profile — Details and Logo --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
@@ -150,10 +66,7 @@
                                     class="settings-logo-image"
                                 >
                             @else
-                                <i
-                                    class="bi bi-hospital app-icon"
-                                    aria-hidden="true"
-                                ></i>
+                                <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
                             @endif
                         </div>
                     </div>
@@ -171,48 +84,33 @@
                                 <label for="clinic_name" class="form-label">
                                     Clinic name *
                                 </label>
-
                                 <input
                                     type="text"
                                     id="clinic_name"
                                     name="clinic_name"
-                                    class="form-control @error('clinic_name') is-invalid @enderror"
+                                    class="form-control"
                                     value="{{ old('clinic_name', $clinic->name) }}"
                                     maxlength="160"
                                     required
                                 >
-
-                                @error('clinic_name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
 
                             <div class="form-field">
                                 <label for="clinic_phone" class="form-label">
                                     Phone number *
                                 </label>
-
-                                <input
-                                    type="tel"
-                                    id="clinic_phone"
+                                <x-phone-input
                                     name="clinic_phone"
-                                    class="form-control @error('clinic_phone') is-invalid @enderror"
-                                    value="{{ old('clinic_phone', $clinic->phone) }}"
-                                    maxlength="30"
-                                    autocomplete="tel"
-                                    required
-                                >
-
-                                @error('clinic_phone')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                    id="clinic_phone"
+                                    :value="$clinic->phone"
+                                    :required="true"
+                                />
                             </div>
 
                             <div class="form-field">
                                 <label for="account_email" class="form-label">
                                     Your account email
                                 </label>
-
                                 <input
                                     type="email"
                                     id="account_email"
@@ -220,7 +118,6 @@
                                     value="{{ $currentUser->email }}"
                                     readonly
                                 >
-
                                 <small class="text-muted">
                                     Manage your email in User account.
                                 </small>
@@ -230,40 +127,29 @@
                                 <label for="clinic_address" class="form-label">
                                     Clinic address
                                 </label>
-
                                 <textarea
                                     id="clinic_address"
                                     name="clinic_address"
-                                    class="form-control @error('clinic_address') is-invalid @enderror"
+                                    class="form-control"
                                     rows="3"
                                     maxlength="255"
                                 >{{ old('clinic_address', $clinic->address) }}</textarea>
-
-                                @error('clinic_address')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
 
                             <div class="form-field settings-field-wide">
                                 <label for="clinic_logo" class="form-label">
                                     {{ $clinic->logo_path ? 'Change clinic logo' : 'Upload clinic logo' }}
                                 </label>
-
                                 <input
                                     type="file"
                                     id="clinic_logo"
                                     name="clinic_logo"
-                                    class="form-control @error('clinic_logo') is-invalid @enderror"
+                                    class="form-control"
                                     accept="image/png,image/jpeg,image/webp"
                                 >
-
                                 <small class="text-muted">
                                     PNG, JPG or WebP. Maximum 2 MB and 3000 × 3000 pixels.
                                 </small>
-
-                                @error('clinic_logo')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
                             </div>
 
                             @if($clinic->logo_path)
@@ -273,12 +159,10 @@
                                             <label for="remove_logo">
                                                 <strong>Remove current logo</strong>
                                             </label>
-
                                             <small>
                                                 Select this without choosing a new file.
                                             </small>
                                         </div>
-
                                         <input
                                             type="checkbox"
                                             id="remove_logo"
@@ -301,12 +185,83 @@
                     </form>
                 </section>
 
-                {{-- Clinic Settings — Payment Preferences --}}
+                {{-- Clinic Profile — Patient ID Country --}}
+                <section class="settings-panel">
+                    <div class="settings-panel-heading">
+                        <div>
+                            <h2>Patient identification</h2>
+                            <p>Select the default ID format for new patients.</p>
+                        </div>
+                    </div>
+
+                    @if($isOwner)
+                        <form
+                            method="POST"
+                            action="{{ route('settings.patient-id.update') }}"
+                        >
+                            @csrf
+                            @method('PUT')
+
+                            <div class="settings-form-grid">
+                                <div class="form-field settings-field-wide">
+                                    <label for="patient_id_country" class="form-label">
+                                        Patient ID country *
+                                    </label>
+
+                                    <select
+                                        id="patient_id_country"
+                                        name="patient_id_country"
+                                        class="form-select"
+                                        required
+                                    >
+                                        <option
+                                            value="AE"
+                                            @selected($patientIdCountry === 'AE')
+                                        >
+                                            United Arab Emirates — Emirates ID
+                                        </option>
+
+                                        <option
+                                            value="PK"
+                                            @selected($patientIdCountry === 'PK')
+                                        >
+                                            Pakistan — CNIC
+                                        </option>
+                                    </select>
+
+                                    <small class="text-muted">
+                                        This applies to new patients.
+                                        Existing records retain their saved ID country.
+                                        Phone country selection is independent.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="settings-panel-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
+                                    Save ID country
+                                </button>
+                            </div>
+                        </form>
+                    @else
+                        <p>
+                            {{ $patientIdCountry === 'PK'
+                                ? 'Pakistan — CNIC'
+                                : 'United Arab Emirates — Emirates ID' }}
+                        </p>
+
+                        <small class="text-muted">
+                            The clinic Owner manages this setting.
+                        </small>
+                    @endif
+                </section>
+
+                {{-- Clinic Profile — Payment Preferences --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
                             <h2>Payment settings</h2>
-
                             <p>
                                 Current clinic currency:
                                 <strong>{{ $clinic->currency }}</strong>
@@ -319,13 +274,12 @@
                             href="{{ route('settings.payments') }}"
                             class="btn btn-outline-secondary"
                         >
-                            <i class="bi bi-cash-coin app-icon" aria-hidden="true"></i>
                             Open payment settings
                         </a>
                     </div>
                 </section>
 
-                {{-- Clinic Settings — Current User --}}
+                {{-- Clinic Profile — Current User --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>

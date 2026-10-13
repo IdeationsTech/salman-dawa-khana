@@ -20,6 +20,7 @@ use App\Http\Controllers\VisitController;
 use App\Http\Controllers\NotificationSettingsController;
 use App\Http\Controllers\ClinicNotificationController;
 use App\Http\Controllers\ClinicSecurityController;
+use App\Http\Controllers\PatientIdSettingsController;
 
 use App\Http\Controllers\PlatformAdmin\LoginController as PlatformAdminLoginController;
 use App\Http\Controllers\PlatformAdmin\DashboardController as PlatformAdminDashboardController;
@@ -175,7 +176,12 @@ Route::middleware(['auth', EnsureClinicAccess::class])
         Route::put('/settings', [SettingController::class, 'update'])
             ->name('settings.update');
 
-        /*
+        Route::put('/settings/patient-id', [
+            PatientIdSettingsController::class,
+            'update',
+        ])->name('settings.patient-id.update');
+
+/*
 |--------------------------------------------------------------------------
 | User Management — Owner Only
 |--------------------------------------------------------------------------

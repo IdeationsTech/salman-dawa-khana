@@ -115,6 +115,14 @@ class UserController extends Controller
                 Rule::unique('users', 'email'),
             ],
 
+            'phone' => [
+                'bail',
+                'required',
+                'string',
+                'max:16',
+                new \App\Rules\InternationalPhone(),
+            ],
+
             'role_id' => [
                 'required',
                 'integer',
@@ -148,6 +156,7 @@ class UserController extends Controller
             'role_id' => $validated['role_id'],
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
             'password' => Hash::make($validated['password']),
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -221,6 +230,14 @@ class UserController extends Controller
                     ->ignore($user->user_id, 'user_id'),
             ],
 
+            'phone' => [
+                'bail',
+                'required',
+                'string',
+                'max:16',
+                new \App\Rules\InternationalPhone(),
+            ],
+
             'role_id' => [
                 'required',
                 'integer',
@@ -287,6 +304,7 @@ class UserController extends Controller
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
+        $user->phone = $validated['phone'] ?? null;
         $user->role_id = $validated['role_id'];
         $user->is_active = $request->boolean('is_active');
 

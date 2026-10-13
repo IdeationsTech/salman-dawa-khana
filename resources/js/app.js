@@ -1,4 +1,6 @@
 import 'bootstrap';
+import intlTelInput from 'intl-tel-input';
+import 'intl-tel-input/styles';
 
 document.addEventListener('DOMContentLoaded', () => {
     initPasswordToggles();
@@ -1588,4 +1590,260 @@ if (document.readyState === 'loading') {
     );
 } else {
     initializeClinicRoleNavigation();
+}
+
+/*
+|--------------------------------------------------------------------------
+| SHARED PHONE INPUT — Country Selection and Validation
+|--------------------------------------------------------------------------
+*/
+
+function initializeInternationalPhoneInputs() {
+    const formFields = new Map();
+
+    document.querySelectorAll('[data-phone-field]').forEach((wrapper) => {
+        const input = wrapper.querySelector('[data-international-phone]');
+        const hidden = wrapper.querySelector('[data-phone-full]');
+        const form = input?.form;
+
+        if (!input || !hidden || !form || wrapper.dataset.phoneInitialized) {
+            return;
+        }
+
+        wrapper.dataset.phoneInitialized = '1';
+
+        const state = {
+            input,
+            hidden,
+            instance: null,
+            ready: false,
+            failed: false,
+        };
+
+        state.instance = intlTelInput(input, {
+            // No country is assumed for an empty field.
+            // Existing international numbers select their country.
+            initialCountry: '',
+            countryOrder: ['ae', 'pk'],
+            countrySearch: true,
+            countrySelectorMode: 'AUTO',
+            separateDialCode: true,
+            showFlags: true,
+            strictMode: true,
+            formatAsYouType: true,
+            allowedNumberTypes: ['MOBILE', 'FIXED_LINE'],
+            allowNumberExtensions: false,
+            loadUtils: () => import('intl-tel-input/utils'),
+        });
+
+        if (!formFields.has(form)) {
+            formFields.set(form, []);
+        }
+
+        formFields.get(form).push(state);
+
+        const syncNumber = () => {
+            input.setCustomValidity('');
+
+            if (!state.ready) {
+                return;
+            }
+
+            hidden.value = input.value.trim()
+                ? state.instance.getNumber()
+                : '';
+        };
+
+        input.addEventListener('input', syncNumber);
+        input.addEventListener('change', syncNumber);
+        input.addEventListener('countrychange', syncNumber);
+
+        state.instance.promise.then(() => {
+            state.ready = true;
+            syncNumber();
+        }).catch(() => {
+            state.failed = true;
+        });
+
+        input.addEventListener('blur', () => {
+            if (state.ready && input.value.trim()) {
+                if (!state.instance.isValidNumberPrecise()) {
+                    input.setCustomValidity(
+                        'Enter a valid phone number for the selected country.'
+                    );
+                }
+            }
+        });
+    });
+
+    formFields.forEach((fields, form) => {
+        form.addEventListener('submit', (event) => {
+            let firstInvalid = null;
+
+            fields.forEach((state) => {
+                const { input, hidden, instance } = state;
+
+                if (input.disabled) {
+                    return;
+                }
+
+                input.setCustomValidity('');
+
+                if (!state.ready) {
+                    input.setCustomValidity(
+                        state.failed
+                            ? 'Phone validation could not load. Refresh and try again.'
+                            : 'Phone validation is loading. Please try again shortly.'
+                    );
+
+                    firstInvalid ??= input;
+                    return;
+                }
+
+                if (!input.value.trim()) {
+                    hidden.value = '';
+
+                    if (input.required) {
+                        input.setCustomValidity('Enter a phone number.');
+                        firstInvalid ??= input;
+                    }
+
+                    return;
+                }
+
+                const country = instance.getSelectedCountryData();
+
+                if (!country?.iso2) {
+                    input.setCustomValidity('Select a country.');
+                    firstInvalid ??= input;
+                    return;
+                }
+
+                if (!instance.isValidNumberPrecise()) {
+                    input.setCustomValidity(
+                        'Enter a valid phone number for the selected country.'
+                    );
+
+                    firstInvalid ??= input;
+                    return;
+                }
+
+                hidden.value = instance.getNumber();
+
+                if (!/^\+[1-9]\d{1,14}$/.test(hidden.value)) {
+                    input.setCustomValidity(
+                        'Enter a valid international phone number.'
+                    );
+
+                    firstInvalid ??= input;
+                }
+            });
+
+            if (firstInvalid) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                firstInvalid.focus();
+                firstInvalid.reportValidity();
+            }
+        }, true);
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeInternationalPhoneInputs
+    );
+} else {
+    initializeInternationalPhoneInputs();
+}
+
+/*
+|--------------------------------------------------------------------------
+| PATIENT ID — CNIC and Emirates ID Formatting
+|--------------------------------------------------------------------------
+*/
+
+function initializeNationalIdFormatting() {
+    document.querySelectorAll('[data-national-id]').forEach((input) => {
+        if (input.dataset.idInitialized === '1') {
+            return;
+        }
+
+        input.dataset.idInitialized = '1';
+
+        const groups = input.dataset.idCountry === 'PK'
+            ? [5, 7, 1]
+            : [3, 4, 7, 1];
+
+        const maxDigits = groups.reduce((total, size) => total + size, 0);
+
+        const formatDigits = (digits) => {
+            const parts = [];
+            let offset = 0;
+
+            groups.forEach((size) => {
+                const part = digits.slice(offset, offset + size);
+
+                if (part) {
+                    parts.push(part);
+                }
+
+                offset += size;
+            });
+
+            return parts.join('-');
+        };
+
+        const formatInput = (preserveCaret = true) => {
+            const original = input.value;
+            const caret = input.selectionStart ?? original.length;
+
+            const digitsBeforeCaret = original
+                .slice(0, caret)
+                .replace(/\D/g, '')
+                .length;
+
+            const digits = original
+                .replace(/\D/g, '')
+                .slice(0, maxDigits);
+
+            input.value = formatDigits(digits);
+
+            if (!preserveCaret || document.activeElement !== input) {
+                return;
+            }
+
+            let position = 0;
+            let counted = 0;
+
+            while (
+                position < input.value.length &&
+                counted < digitsBeforeCaret
+            ) {
+                if (/\d/.test(input.value[position])) {
+                    counted++;
+                }
+
+                position++;
+            }
+
+            input.setSelectionRange(position, position);
+        };
+
+        input.addEventListener('input', () => formatInput());
+        input.addEventListener('blur', () => formatInput(false));
+
+        // Existing saved numbers also appear with hyphens.
+        formatInput(false);
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeNationalIdFormatting
+    );
+} else {
+    initializeNationalIdFormatting();
 }

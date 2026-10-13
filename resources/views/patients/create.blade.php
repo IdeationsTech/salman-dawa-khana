@@ -1,15 +1,18 @@
 @extends('layouts.app')
 
-@section(
-    'title',
-    isset($patient)
-        ? 'Edit Patient — Salman Dawa Khana'
-        : 'Add Patient — Salman Dawa Khana'
-)
+@section('title', isset($patient) ? 'Edit Patient' : 'Add Patient')
 
 @section('content')
 @php
     $editing = isset($patient) && $patient->exists;
+    $clinic = auth()->user()->clinic;
+
+    $isPakistan = $idCountry === 'PK';
+    $idLabel = $isPakistan ? 'CNIC' : 'Emirates ID';
+
+    $existingId = $editing
+        ? ($patient->national_id_number ?: $patient->emirates_id)
+        : '';
 
     $birthDate = $editing && $patient->date_of_birth
         ? $patient->date_of_birth->format('Y-m-d')
@@ -20,71 +23,69 @@
         $patient->marital_status ?? ''
     );
 
-    $existingChildren = isset($patient)
-        && $patient->has_children !== null
-            ? (int) $patient->has_children
-            : '';
+    $existingChildren = isset($patient) && $patient->has_children !== null
+        ? (int) $patient->has_children
+        : '';
 
     $hasChildren = (string) old('has_children', $existingChildren);
-
     $isMarried = $maritalStatus === 'married';
     $showChildrenCount = $isMarried && $hasChildren === '1';
+
+    $navigation = [
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+    ];
 @endphp
 
 <div class="app-shell">
 
-    {{-- PATIENT FORM — Sidebar --}}
+    {{-- Patient Form — Sidebar --}}
     <aside class="app-sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
+            <div class="sidebar-logo">
+                @if($clinic->logo_path)
+                    <img
+                        src="{{ asset('storage/' . $clinic->logo_path) }}"
+                        alt="{{ $clinic->name }} logo"
+                        class="settings-logo-image"
+                    >
+                @else
+                    <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+                @endif
+            </div>
+
+            <span>{{ $clinic->name }}</span>
         </div>
 
         <nav class="sidebar-nav">
-            <a href="{{ url('/dashboard') }}" class="sidebar-link">
-                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span>
-                <span>Dashboard</span>
-            </a>
+            @foreach($navigation as $item)
+                @if($item['route'] === 'reports.index')
+                    <div class="sidebar-divider"></div>
+                @endif
 
-            <a
-                href="{{ route('patients.index') }}"
-                class="sidebar-link active"
-            >
-                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
-                <span>Patients</span>
-            </a>
+                <a
+                    href="{{ route($item['route']) }}"
+                    class="sidebar-link {{ $item['route'] === 'patients.index' ? 'active' : '' }}"
+                    @if($item['route'] === 'patients.index')
+                        aria-current="page"
+                    @endif
+                >
+                    <span>
+                        <i
+                            class="bi {{ $item['icon'] }} app-icon"
+                            aria-hidden="true"
+                        ></i>
+                    </span>
 
-            <a href="{{ url('/visits') }}" class="sidebar-link">
-                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
-                <span>Visits</span>
-            </a>
-
-            <a href="{{ url('/prescriptions') }}" class="sidebar-link">
-                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
-                <span>Prescriptions</span>
-            </a>
-
-            <a href="{{ url('/payments') }}" class="sidebar-link">
-                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
-                <span>Payments</span>
-            </a>
-
-            <a href="{{ url('/expenses') }}" class="sidebar-link">
-                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span>
-                <span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="{{ url('/reports') }}" class="sidebar-link">
-                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span>
-                <span>Reports</span>
-            </a>
-
-            <a href="{{ url('/settings') }}" class="sidebar-link">
-                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span>
-                <span>Settings</span>
-            </a>
+                    <span>{{ $item['label'] }}</span>
+                </a>
+            @endforeach
         </nav>
 
         <div class="sidebar-footer">
@@ -93,36 +94,31 @@
         </div>
     </aside>
 
-    {{-- PATIENT FORM — Main Content --}}
+    {{-- Patient Form — Main Content --}}
     <main class="dashboard-main">
-
         <div class="form-page-header">
             <div>
-                <a
-                    href="{{ route('patients.index') }}"
-                    class="back-link"
-                >
-                    ← Back to patients
+                <a href="{{ route('patients.index') }}" class="back-link">
+                    <i class="bi bi-arrow-left app-icon" aria-hidden="true"></i>
+                    Back to patients
                 </a>
 
-                <h1>
-                    {{ $editing ? 'Edit patient' : 'Add new patient' }}
-                </h1>
+                <h1>{{ $editing ? 'Edit patient' : 'Add new patient' }}</h1>
 
                 <p>
                     {{ $editing
                         ? 'Update the patient’s record.'
-                        : 'Create a patient record for Salman Dawa Khana.' }}
+                        : 'Create a patient record for ' . $clinic->name . '.' }}
                 </p>
             </div>
         </div>
 
-        @if ($errors->any())
+        @if($errors->any())
             <div class="alert alert-danger" role="alert">
                 <strong>Please correct the following:</strong>
 
                 <ul class="mb-0 mt-2">
-                    @foreach ($errors->all() as $error)
+                    @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
@@ -138,11 +134,11 @@
         >
             @csrf
 
-            @if ($editing)
+            @if($editing)
                 @method('PUT')
             @endif
 
-            {{-- PATIENT FORM — Basic Information --}}
+            {{-- Patient Form — Basic Information --}}
             <section class="patient-form-panel">
                 <div class="form-section-heading">
                     <div class="form-section-number">01</div>
@@ -154,7 +150,6 @@
                 </div>
 
                 <div class="patient-form-grid">
-
                     <div class="form-field">
                         <label for="full_name" class="form-label">
                             Full Name <span>*</span>
@@ -162,11 +157,10 @@
 
                         <input
                             type="text"
-                            class="form-control @error('full_name') is-invalid @enderror"
                             id="full_name"
                             name="full_name"
+                            class="form-control @error('full_name') is-invalid @enderror"
                             value="{{ old('full_name', $patient->full_name ?? '') }}"
-                            placeholder="e.g. Muhammad Ali"
                             maxlength="160"
                             autocomplete="name"
                             required
@@ -178,69 +172,73 @@
                     </div>
 
                     <div class="form-field">
-                        <label
-                            for="father_or_husband_name"
-                            class="form-label"
-                        >
+                        <label for="father_or_husband_name" class="form-label">
                             Father / Husband Name
                         </label>
 
                         <input
                             type="text"
-                            class="form-control @error('father_or_husband_name') is-invalid @enderror"
                             id="father_or_husband_name"
                             name="father_or_husband_name"
-                            value="{{ old('father_or_husband_name', $patient->father_or_husband_name ?? '') }}"
-                            placeholder="Enter name"
+                            class="form-control"
+                            value="{{ old(
+                                'father_or_husband_name',
+                                $patient->father_or_husband_name ?? ''
+                            ) }}"
                             maxlength="160"
                         >
-
-                        @error('father_or_husband_name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
 
+                    {{-- Patient Form — International Phone --}}
                     <div class="form-field">
                         <label for="phone" class="form-label">
                             Phone Number <span>*</span>
                         </label>
 
-                        <input
-                            type="tel"
-                            class="form-control @error('phone') is-invalid @enderror"
-                            id="phone"
+                        <x-phone-input
                             name="phone"
-                            value="{{ old('phone', $patient->phone ?? '') }}"
-                            placeholder="+971 50 000 0000"
-                            maxlength="30"
-                            autocomplete="tel"
-                            required
-                        >
-
-                        @error('phone')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                            id="phone"
+                            :value="$patient->phone ?? ''"
+                            :required="true"
+                        />
                     </div>
 
+                    {{-- Patient Form — Country-Specific National ID --}}
                     <div class="form-field">
-                        <label for="emirates_id" class="form-label">
-                            Emirates ID <span>*</span>
+                        <label for="national_id_number" class="form-label">
+                            {{ $idLabel }} <span>*</span>
                         </label>
 
                         <input
                             type="text"
-                            class="form-control @error('emirates_id') is-invalid @enderror"
-                            id="emirates_id"
-                            name="emirates_id"
-                            value="{{ old('emirates_id', $patient->emirates_id ?? '') }}"
-                            placeholder="784-XXXX-XXXXXXX-X"
-                            maxlength="18"
-                            pattern="784[0-9]{12}|784-[0-9]{4}-[0-9]{7}-[0-9]"
-                            title="Enter 15 digits starting with 784, with or without hyphens."
+                            id="national_id_number"
+                            name="national_id_number"
+                            class="form-control @error('national_id_number') is-invalid @enderror"
+                            value="{{ old('national_id_number', $existingId) }}"
+                            placeholder="{{ $isPakistan
+                                ? '12345-1234567-1'
+                                : '784-1234-1234567-1' }}"
+                            maxlength="{{ $isPakistan ? 15 : 18 }}"
+                            pattern="{{ $isPakistan
+                                ? '[0-9]{13}|[0-9]{5}-[0-9]{7}-[0-9]'
+                                : '784[0-9]{12}|784-[0-9]{4}-[0-9]{7}-[0-9]' }}"
+                            title="{{ $isPakistan
+                                ? 'Enter a 13-digit CNIC.'
+                                : 'Enter a 15-digit Emirates ID starting with 784.' }}"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            data-national-id
+                            data-id-country="{{ $idCountry }}"
                             required
                         >
 
-                        @error('emirates_id')
+                        <small class="text-muted">
+                            {{ $isPakistan
+                                ? 'Pakistan · 13 digits'
+                                : 'United Arab Emirates · 15 digits starting with 784' }}
+                        </small>
+
+                        @error('national_id_number')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -251,29 +249,25 @@
                         </label>
 
                         <select
-                            class="form-select @error('gender') is-invalid @enderror"
                             id="gender"
                             name="gender"
+                            class="form-select"
                             required
                         >
                             <option value="">Select gender</option>
 
-                            @foreach (['Male', 'Female', 'Other'] as $gender)
+                            @foreach(['Male', 'Female', 'Other'] as $gender)
                                 <option
                                     value="{{ $gender }}"
                                     @selected(
                                         strtolower(old('gender', $patient->gender ?? ''))
-                                        === strtolower($gender)
+                                            === strtolower($gender)
                                     )
                                 >
                                     {{ $gender }}
                                 </option>
                             @endforeach
                         </select>
-
-                        @error('gender')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
 
                     <div class="form-field">
@@ -283,23 +277,19 @@
 
                         <input
                             type="date"
-                            class="form-control @error('date_of_birth') is-invalid @enderror"
                             id="date_of_birth"
                             name="date_of_birth"
+                            class="form-control"
                             value="{{ old('date_of_birth', $birthDate) }}"
                             max="{{ now()->format('Y-m-d') }}"
                             autocomplete="bday"
                             required
                         >
-
-                        @error('date_of_birth')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
                 </div>
             </section>
 
-            {{-- PATIENT FORM — Family Details --}}
+            {{-- Patient Form — Family Details --}}
             <section class="patient-form-panel">
                 <div class="form-section-heading">
                     <div class="form-section-number">02</div>
@@ -311,16 +301,15 @@
                 </div>
 
                 <div class="patient-form-grid">
-
                     <div class="form-field">
                         <label for="marital_status" class="form-label">
                             Marital Status <span>*</span>
                         </label>
 
                         <select
-                            class="form-select @error('marital_status') is-invalid @enderror"
                             id="marital_status"
                             name="marital_status"
+                            class="form-select"
                             required
                         >
                             <option value="">Select marital status</option>
@@ -339,10 +328,6 @@
                                 Married
                             </option>
                         </select>
-
-                        @error('marital_status')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
 
                     <div
@@ -355,52 +340,28 @@
                             </legend>
 
                             <div class="d-flex gap-4">
-                                <div class="form-check">
-                                    <input
-                                        type="radio"
-                                        class="form-check-input"
-                                        id="has_children_yes"
-                                        name="has_children"
-                                        value="1"
-                                        @checked($hasChildren === '1')
-                                        @required($isMarried)
-                                        @disabled(!$isMarried)
-                                    >
+                                @foreach(['1' => 'Yes', '0' => 'No'] as $value => $label)
+                                    <div class="form-check">
+                                        <input
+                                            type="radio"
+                                            id="{{ $value == '1' ? 'has_children_yes' : 'has_children_no' }}"
+                                            name="has_children"
+                                            class="form-check-input"
+                                            value="{{ $value }}"
+                                            @checked($hasChildren === (string) $value)
+                                            @required($isMarried)
+                                            @disabled(!$isMarried)
+                                        >
 
-                                    <label
-                                        class="form-check-label"
-                                        for="has_children_yes"
-                                    >
-                                        Yes
-                                    </label>
-                                </div>
-
-                                <div class="form-check">
-                                    <input
-                                        type="radio"
-                                        class="form-check-input"
-                                        id="has_children_no"
-                                        name="has_children"
-                                        value="0"
-                                        @checked($hasChildren === '0')
-                                        @required($isMarried)
-                                        @disabled(!$isMarried)
-                                    >
-
-                                    <label
-                                        class="form-check-label"
-                                        for="has_children_no"
-                                    >
-                                        No
-                                    </label>
-                                </div>
+                                        <label
+                                            class="form-check-label"
+                                            for="{{ $value == '1' ? 'has_children_yes' : 'has_children_no' }}"
+                                        >
+                                            {{ $label }}
+                                        </label>
+                                    </div>
+                                @endforeach
                             </div>
-
-                            @error('has_children')
-                                <div class="text-danger small mt-2">
-                                    {{ $message }}
-                                </div>
-                            @enderror
                         </fieldset>
                     </div>
 
@@ -414,61 +375,49 @@
 
                         <input
                             type="number"
-                            class="form-control @error('children_count') is-invalid @enderror"
                             id="children_count"
                             name="children_count"
+                            class="form-control"
                             value="{{ old('children_count', $patient->children_count ?? '') }}"
-                            placeholder="Enter number"
                             min="1"
                             max="65535"
                             step="1"
                             @required($showChildrenCount)
                             @disabled(!$showChildrenCount)
                         >
-
-                        @error('children_count')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
                 </div>
             </section>
 
-            {{-- PATIENT FORM — Contact Details --}}
+            {{-- Patient Form — Contact Details --}}
             <section class="patient-form-panel">
                 <div class="form-section-heading">
                     <div class="form-section-number">03</div>
 
                     <div>
                         <h2>Contact details</h2>
-                        <p>Add the patient's residential address.</p>
+                        <p>Add the patient’s residential address.</p>
                     </div>
                 </div>
 
                 <div class="patient-form-grid">
                     <div class="form-field form-field-wide">
-                        <label for="address" class="form-label">
-                            Address
-                        </label>
+                        <label for="address" class="form-label">Address</label>
 
                         <input
                             type="text"
-                            class="form-control @error('address') is-invalid @enderror"
                             id="address"
                             name="address"
+                            class="form-control"
                             value="{{ old('address', $patient->address ?? '') }}"
-                            placeholder="Enter residential address, including city"
                             maxlength="255"
                             autocomplete="street-address"
                         >
-
-                        @error('address')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
                 </div>
             </section>
 
-            {{-- PATIENT FORM — Additional Notes --}}
+            {{-- Patient Form — Additional Notes --}}
             <section class="patient-form-panel">
                 <div class="form-section-heading">
                     <div class="form-section-number">04</div>
@@ -480,34 +429,25 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="notes" class="form-label">
-                        Notes
-                    </label>
+                    <label for="notes" class="form-label">Notes</label>
 
                     <textarea
-                        class="form-control @error('notes') is-invalid @enderror"
                         id="notes"
                         name="notes"
+                        class="form-control"
                         rows="4"
-                        placeholder="Write any additional notes here..."
                     >{{ old('notes', $patient->notes ?? '') }}</textarea>
-
-                    @error('notes')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
             </section>
 
-            {{-- PATIENT FORM — Actions --}}
+            {{-- Patient Form — Actions --}}
             <div class="patient-form-actions">
-                <a
-                    href="{{ route('patients.index') }}"
-                    class="btn btn-light"
-                >
+                <a href="{{ route('patients.index') }}" class="btn btn-light">
                     Cancel
                 </a>
 
                 <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
                     {{ $editing ? 'Update Patient' : 'Save Patient' }}
                 </button>
             </div>

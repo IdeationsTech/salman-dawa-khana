@@ -117,10 +117,12 @@ class SettingController extends Controller
             ],
 
             'clinic_phone' => [
+                'bail',
                 'sometimes',
                 'required',
                 'string',
-                'max:30',
+                'max:16',
+                new \App\Rules\InternationalPhone(),
             ],
 
             'clinic_address' => [

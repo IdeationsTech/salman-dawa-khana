@@ -7,11 +7,13 @@ use App\Models\Clinic;
 use App\Models\Role;
 use App\Models\SaasCustomer;
 use App\Models\User;
+use App\Rules\InternationalPhone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use libphonenumber\PhoneNumberUtil;
 
 class RegisterController extends Controller
 {
@@ -19,6 +21,12 @@ class RegisterController extends Controller
     {
         return view('auth.register');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Registration — Validated International Phone
+    |--------------------------------------------------------------------------
+    */
 
     public function register(Request $request): RedirectResponse
     {
@@ -31,29 +39,55 @@ class RegisterController extends Controller
         $validated = $request->validate([
             'clinic_name' => ['required', 'string', 'max:160'],
             'owner_name' => ['required', 'string', 'max:120'],
+
             'email' => [
                 'required',
                 'email',
                 'max:160',
                 'unique:users,email',
             ],
-            'phone' => ['required', 'string', 'max:30'],
+
+            'phone' => [
+                'bail',
+                'required',
+                'string',
+                'max:16',
+                new InternationalPhone(),
+            ],
+
             'password' => [
                 'required',
                 'string',
                 'min:8',
                 'confirmed',
+                function ($attribute, $value, $fail) {
+                    if (strlen($value) > 72) {
+                        $fail('The password must not exceed 72 bytes.');
+                    }
+                },
             ],
+
             'terms' => ['accepted'],
         ]);
 
-        DB::transaction(function () use ($validated) {
+        $phoneUtil = PhoneNumberUtil::getInstance();
+
+        $phoneCountry = $phoneUtil->getRegionCodeForNumber(
+            $phoneUtil->parse($validated['phone'], null)
+        );
+
+        DB::transaction(function () use (
+            $validated,
+            $phoneCountry
+        ) {
             $customer = SaasCustomer::create([
                 'contact_name' => $validated['owner_name'],
                 'company_name' => $validated['clinic_name'],
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
-                'country_code' => 'AE',
+
+                // Derived from the phone number; not a residence claim.
+                'country_code' => $phoneCountry,
                 'status' => 'active',
             ]);
 
@@ -62,8 +96,7 @@ class RegisterController extends Controller
             $clinic->name = $validated['clinic_name'];
             $clinic->phone = $validated['phone'];
             $clinic->currency = 'AED';
-            $clinic->saas_customer_id =
-                $customer->saas_customer_id;
+            $clinic->saas_customer_id = $customer->saas_customer_id;
             $clinic->onboarding_status = 'pending_review';
 
             $clinic->save();
