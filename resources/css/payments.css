@@ -696,3 +696,22 @@
     }
 }
 
+/* RECEIPT — Check stylesheet loading */
+
+.receipt-v2 .r2-logo {
+    width: 62px;
+    height: 62px;
+    flex: 0 0 62px;
+}
+
+.receipt-v2 .r2-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.receipt-v2 .r2-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
