@@ -21,6 +21,7 @@ use App\Http\Controllers\NotificationSettingsController;
 use App\Http\Controllers\ClinicNotificationController;
 use App\Http\Controllers\ClinicSecurityController;
 use App\Http\Controllers\PatientIdSettingsController;
+use App\Http\Controllers\NuskhaOrderController;
 
 use App\Http\Controllers\PlatformAdmin\LoginController as PlatformAdminLoginController;
 use App\Http\Controllers\PlatformAdmin\DashboardController as PlatformAdminDashboardController;
@@ -127,8 +128,55 @@ Route::middleware(['auth', EnsureClinicAccess::class])
 
         Route::resource('prescriptions', PrescriptionController::class);
 
-        Route::get('/reports', [ReportController::class, 'index'])
-            ->name('reports.index');
+        /*
+|--------------------------------------------------------------------------
+| Nuskha Orders — Non-Patient Sales
+|--------------------------------------------------------------------------
+*/
+
+        Route::get('/orders', [
+            NuskhaOrderController::class,
+            'index',
+        ])->name('orders.index');
+
+        Route::get('/orders/create', [
+            NuskhaOrderController::class,
+            'create',
+        ])->name('orders.create');
+
+        Route::post('/orders', [
+            NuskhaOrderController::class,
+            'store',
+        ])->name('orders.store');
+
+        Route::get('/orders/{order}', [
+            NuskhaOrderController::class,
+            'show',
+        ])->whereNumber('order')->name('orders.show');
+
+        Route::post('/orders/{order}/payments', [
+            NuskhaOrderController::class,
+            'receivePayment',
+        ])->whereNumber('order')->name('orders.payments.store');
+
+        Route::patch('/orders/{order}/status', [
+            NuskhaOrderController::class,
+            'updateStatus',
+        ])->whereNumber('order')->name('orders.status.update');
+
+/*
+|--------------------------------------------------------------------------
+| Reports — Owner and Doctor Only
+|--------------------------------------------------------------------------
+*/
+
+        Route::middleware(EnsureClinicRole::class . ':Owner,Doctor')
+            ->group(function () {
+                Route::get('/reports', [
+                    ReportController::class,
+                    'index',
+                ])->name('reports.index');
+            });
 
         Route::get('/settings', [SettingController::class, 'index'])
             ->name('settings.index');

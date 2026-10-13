@@ -1,394 +1,240 @@
 @extends('layouts.app')
 
-@section('title', 'Reports — Salman Dawa Khana')
+@section('title', 'Reports — ' . $clinic->name)
 
 @section('content')
+@php
+    $money = fn ($value, $code = null) =>
+        ($code ?? $currency) . ' '
+        . number_format((float) $value, $decimalPlaces);
+@endphp
+
 <div class="app-shell">
-
-    <aside class="app-sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-            <span>Salman Dawa Khana</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="{{ route('dashboard') }}" class="sidebar-link">
-                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('patients.index') }}" class="sidebar-link">
-                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
-                <span>Patients</span>
-            </a>
-
-            <a href="{{ route('visits.index') }}" class="sidebar-link">
-                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
-                <span>Visits</span>
-            </a>
-
-            <a href="{{ route('prescriptions.index') }}" class="sidebar-link">
-                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
-                <span>Prescriptions</span>
-            </a>
-
-            <a href="{{ route('payments.index') }}" class="sidebar-link">
-                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
-                <span>Payments</span>
-            </a>
-
-            <a href="{{ route('expenses.index') }}" class="sidebar-link">
-                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span>
-                <span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="{{ route('reports.index') }}" class="sidebar-link active">
-                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span>
-                <span>Reports</span>
-            </a>
-
-            <a href="{{ route('settings.index') }}" class="sidebar-link">
-                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span>
-                <span>Settings</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <span class="status-dot"></span>
-            System online
-        </div>
-    </aside>
+    @include('layouts._sidebar')
 
     <main class="dashboard-main">
-
-        <header class="page-header report-page-header">
+        <header class="page-header no-print">
             <div>
-                <p class="dashboard-date">Business reporting</p>
-
+                <p class="dashboard-date">Clinic performance</p>
                 <h1>Reports</h1>
-
                 <p class="page-subtitle">
-                    Review clinic activity, income and expenses.
+                    Patient and nuskha-order collections, expenses and activity.
                 </p>
             </div>
 
-            <div class="report-header-actions">
-                <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    data-print-page
-                >
-                    Print Report
-                </button>
-            </div>
+            <button type="button" class="btn btn-primary" data-print-page>
+                <i class="bi bi-printer app-icon" aria-hidden="true"></i>
+                Print / Save PDF
+            </button>
         </header>
 
-        <form
-            method="GET"
-            action="{{ route('reports.index') }}"
-            class="report-filter-panel"
-        >
-            <div class="report-filter-group">
-                <label for="report_type">Report type</label>
+        @if($errors->any())
+            <div class="alert alert-danger no-print">
+                <ul class="mb-0">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-                <select
-                    name="report_type"
-                    id="report_type"
-                    class="form-select"
-                >
-                    <option
-                        value="summary"
-                        {{ $reportType === 'summary' ? 'selected' : '' }}
+        {{-- Reports — Actual Date and Type Filters --}}
+        <section class="orders-panel mb-4 no-print">
+            <form method="GET" action="{{ route('reports.index') }}" class="orders-filter-grid">
+                <label class="form-field">
+                    <span class="form-label">Report type</span>
+                    <select name="report_type" class="form-select">
+                        @foreach([
+                            'summary' => 'Summary',
+                            'payments' => 'Collections',
+                            'expenses' => 'Expenses',
+                        ] as $value => $label)
+                            <option value="{{ $value }}" @selected($reportType === $value)>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                </label>
+
+                <label class="form-field">
+                    <span class="form-label">From date</span>
+                    <input
+                        type="date"
+                        name="from"
+                        class="form-control"
+                        value="{{ $from->format('Y-m-d') }}"
+                        required
                     >
-                        Summary
-                    </option>
+                </label>
 
-                    <option
-                        value="payments"
-                        {{ $reportType === 'payments' ? 'selected' : '' }}
+                <label class="form-field">
+                    <span class="form-label">To date</span>
+                    <input
+                        type="date"
+                        name="to"
+                        class="form-control"
+                        value="{{ $to->format('Y-m-d') }}"
+                        required
                     >
-                        Payments
-                    </option>
+                </label>
 
-                    <option
-                        value="expenses"
-                        {{ $reportType === 'expenses' ? 'selected' : '' }}
-                    >
-                        Expenses
-                    </option>
-                </select>
-            </div>
-
-            <div class="report-filter-date">
-                <label for="from">From date</label>
-
-                <input
-                    type="date"
-                    name="from"
-                    id="from"
-                    class="form-control"
-                    value="{{ $from->format('Y-m-d') }}"
-                >
-            </div>
-
-            <div class="report-filter-date">
-                <label for="to">To date</label>
-
-                <input
-                    type="date"
-                    name="to"
-                    id="to"
-                    class="form-control"
-                    value="{{ $to->format('Y-m-d') }}"
-                >
-            </div>
-
-            <div class="report-filter-group">
-                <label>Period</label>
-
-                <span class="report-period-label">
-                    {{ $from->format('d M Y') }}
-                    –
-                    {{ $to->format('d M Y') }}
-                </span>
-            </div>
-
-            <button type="submit" class="btn btn-primary report-apply-button">
-                Generate Report
-            </button>
-        </form>
-
-        <section class="report-summary-grid">
-
-            <article class="report-summary-card">
-                <div class="report-card-icon"><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></div>
-
-                <div>
-                    <span>Total patients</span>
-                    <strong>{{ number_format($totalPatients ?? 0) }}</strong>
-                    <small>Registered in selected period</small>
+                <div class="orders-filter-actions">
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                    <a href="{{ route('reports.index') }}" class="btn btn-light">Reset</a>
                 </div>
-            </article>
-
-            <article class="report-summary-card">
-                <div class="report-card-icon"><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></div>
-
-                <div>
-                    <span>Total visits</span>
-                    <strong>{{ number_format($totalVisits ?? 0) }}</strong>
-                    <small>Patient visits recorded</small>
-                </div>
-            </article>
-
-            <article class="report-summary-card">
-                <div class="report-card-icon"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></div>
-
-                <div>
-                    <span>Total income</span>
-                    <strong>
-                        PKR {{ number_format($totalIncome ?? 0, 2) }}
-                    </strong>
-                    <small>Payments received</small>
-                </div>
-            </article>
-
-            <article class="report-summary-card">
-                <div class="report-card-icon"><i class="bi bi-receipt app-icon" aria-hidden="true"></i></div>
-
-                <div>
-                    <span>Total expenses</span>
-                    <strong>
-                        PKR {{ number_format($totalExpenses ?? 0, 2) }}
-                    </strong>
-                    <small>Operating expenses</small>
-                </div>
-            </article>
+            </form>
         </section>
 
-        <div class="report-content-grid">
+        <section class="orders-panel mb-4">
+            <h2 class="h5">{{ $clinic->name }}</h2>
+            <p class="text-muted">
+                {{ $from->format('d M Y') }} — {{ $to->format('d M Y') }}
+            </p>
 
-            <section class="report-panel">
-                <div class="report-panel-heading">
-                    <div>
-                        <h2>Income vs expenses</h2>
-                        <p>Financial activity for the selected period.</p>
-                    </div>
+            <div class="payment-summary-grid">
+                <article class="payment-summary-card">
+                    <span>Patient collections</span>
+                    <strong>{{ $money($patientIncome) }}</strong>
+                    <small>Received patient payments</small>
+                </article>
 
-                    <span class="report-period-label">
-                        Selected period
-                    </span>
-                </div>
+                <article class="payment-summary-card">
+                    <span>Nuskha order collections</span>
+                    <strong>{{ $money($orderIncome) }}</strong>
+                    <small>Received in {{ $currency }}</small>
+                </article>
 
-                <div class="report-chart-placeholder">
-                    <div class="chart-y-labels">
-                        <span>100k</span>
-                        <span>75k</span>
-                        <span>50k</span>
-                        <span>25k</span>
-                        <span>0</span>
-                    </div>
+                <article class="payment-summary-card">
+                    <span>Total collections</span>
+                    <strong>{{ $money($totalIncome) }}</strong>
+                    <small>Patient + order payments</small>
+                </article>
 
-                    <div class="chart-area">
-                        <span class="chart-grid-line"></span>
-                        <span class="chart-grid-line"></span>
-                        <span class="chart-grid-line"></span>
-                        <span class="chart-grid-line"></span>
+                <article class="payment-summary-card">
+                    <span>Expenses</span>
+                    <strong>{{ $money($totalExpenses) }}</strong>
+                    <small>Recorded clinic expenses</small>
+                </article>
+            </div>
 
-                        <div class="chart-bars">
-                            <div class="chart-group">
-                                <div class="chart-bar income-bar" style="height: 78%;"></div>
-                                <div class="chart-bar expense-bar" style="height: 35%;"></div>
-                                <small>Week 1</small>
-                            </div>
-
-                            <div class="chart-group">
-                                <div class="chart-bar income-bar" style="height: 65%;"></div>
-                                <div class="chart-bar expense-bar" style="height: 30%;"></div>
-                                <small>Week 2</small>
-                            </div>
-
-                            <div class="chart-group">
-                                <div class="chart-bar income-bar" style="height: 88%;"></div>
-                                <div class="chart-bar expense-bar" style="height: 42%;"></div>
-                                <small>Week 3</small>
-                            </div>
-
-                            <div class="chart-group">
-                                <div class="chart-bar income-bar" style="height: 72%;"></div>
-                                <div class="chart-bar expense-bar" style="height: 28%;"></div>
-                                <small>Week 4</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="chart-legend">
-                    <span>
-                        <i class="legend-dot income-dot"></i>
-                        Income
-                    </span>
-
-                    <span>
-                        <i class="legend-dot expense-dot"></i>
-                        Expenses
-                    </span>
-                </div>
-            </section>
-
-            <section class="report-panel">
-                <div class="report-panel-heading">
-                    <div>
-                        <h2>Expense breakdown</h2>
-                        <p>Expenses by category.</p>
-                    </div>
-                </div>
-
-                <div class="expense-breakdown">
-                    <div>
-                        <div class="breakdown-label">
-                            <span>Rent</span>
-                            <strong>35%</strong>
-                        </div>
-
-                        <div class="breakdown-track">
-                            <div class="breakdown-fill rent-fill" style="width: 35%;"></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="breakdown-label">
-                            <span>Utilities</span>
-                            <strong>28%</strong>
-                        </div>
-
-                        <div class="breakdown-track">
-                            <div class="breakdown-fill utility-fill" style="width: 28%;"></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="breakdown-label">
-                            <span>Supplies</span>
-                            <strong>22%</strong>
-                        </div>
-
-                        <div class="breakdown-track">
-                            <div class="breakdown-fill supply-fill" style="width: 22%;"></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="breakdown-label">
-                            <span>Other</span>
-                            <strong>15%</strong>
-                        </div>
-
-                        <div class="breakdown-track">
-                            <div class="breakdown-fill other-fill" style="width: 15%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <section class="report-panel recent-report-panel">
-            <div class="report-panel-heading">
+            <div class="balance-summary-grid">
                 <div>
-                    <h2>Recent financial activity</h2>
-                    <p>Latest income and expense records.</p>
+                    <span>Collections minus expenses</span>
+                    <strong>{{ $money($netIncome) }}</strong>
+                </div>
+                <div>
+                    <span>New patients</span>
+                    <strong>{{ number_format($totalPatients) }}</strong>
+                </div>
+                <div>
+                    <span>Visits</span>
+                    <strong>{{ number_format($totalVisits) }}</strong>
                 </div>
             </div>
 
-            <div class="report-activity-list">
-                @forelse($payments->take(5) as $payment)
-                    <div class="report-activity-row">
-                        <div class="activity-icon income-activity"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></div>
+            <small class="text-muted d-block mt-3">
+                Collections minus expenses is cash flow, not accounting profit.
+                Unpaid order totals are not counted as collections.
+            </small>
 
-                        <div>
-                            <strong>Payment received</strong>
-
-                            <small>
-                                {{ \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') }}
-                                · Patient {{ $payment->patient_id ?? '—' }}
-                            </small>
-                        </div>
-
-                        <span class="activity-income">
-                            + PKR {{ number_format($payment->amount, 2) }}
-                        </span>
-                    </div>
-                @empty
-                    <div class="report-activity-row">
-                        <div>
-                            <strong>No payment activity</strong>
-                            <small>No records found for this period.</small>
-                        </div>
-                    </div>
-                @endforelse
-
-                @foreach($expenses->take(5) as $expense)
-                    <div class="report-activity-row">
-                        <div class="activity-icon expense-activity"><i class="bi bi-receipt app-icon" aria-hidden="true"></i></div>
-
-                        <div>
-                            <strong>{{ $expense->description ?? 'Expense recorded' }}</strong>
-
-                            <small>
-                                {{ \Carbon\Carbon::parse($expense->expense_date)->format('d M Y') }}
-                                · {{ $expense->category }}
-                            </small>
-                        </div>
-
-                        <span class="activity-expense">
-                            - PKR {{ number_format($expense->amount, 2) }}
-                        </span>
-                    </div>
-                @endforeach
-            </div>
+            @if($currencyTotals->keys()->contains(fn ($code) => $code !== $currency))
+                <div class="mt-3">
+                    <strong>Collections by currency</strong>
+                    @foreach($currencyTotals as $code => $amount)
+                        <p class="mb-1">{{ $money($amount, $code) }}</p>
+                    @endforeach
+                    <small class="text-muted">
+                        Different currencies are shown separately, without conversion.
+                    </small>
+                </div>
+            @endif
         </section>
 
+        {{-- Reports — Patient and Order Collections --}}
+        @if(in_array($reportType, ['summary', 'payments'], true))
+            <section class="orders-panel mb-4">
+                <h2 class="h5 mb-3">Received collections</h2>
+
+                <div class="table-responsive">
+                    <table class="table orders-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Source</th>
+                                <th>Customer/patient</th>
+                                <th>Reference</th>
+                                <th>Method</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @forelse($collections as $record)
+                                <tr>
+                                    <td>
+                                        {{ \Carbon\Carbon::parse($record['date'])->format('d M Y, h:i A') }}
+                                    </td>
+                                    <td>{{ $record['source'] }}</td>
+                                    <td>{{ $record['name'] }}</td>
+                                    <td>
+                                        <a href="{{ $record['url'] }}">
+                                            {{ $record['reference'] }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {{ $record['method'] === 'bank'
+                                            ? 'Bank transfer'
+                                            : ucfirst($record['method']) }}
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        {{ $money($record['amount'], $record['currency']) }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="6">No collections in this date range.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
+
+        {{-- Reports — Expenses --}}
+        @if(in_array($reportType, ['summary', 'expenses'], true))
+            <section class="orders-panel">
+                <h2 class="h5 mb-3">Expense records</h2>
+
+                <div class="table-responsive">
+                    <table class="table orders-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @forelse($expenses as $expense)
+                                <tr>
+                                    <td>{{ \Carbon\Carbon::parse($expense->expense_date)->format('d M Y') }}</td>
+                                    <td>
+                                        <a href="{{ route('expenses.show', $expense) }}">
+                                            {{ $expense->description }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $expense->category }}</td>
+                                    <td class="text-end text-nowrap">{{ $money($expense->amount) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4">No expenses in this date range.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
     </main>
 </div>
 @endsection

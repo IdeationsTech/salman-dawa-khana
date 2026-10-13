@@ -50,64 +50,7 @@
 <div class="app-shell">
 
     {{-- PATIENT PROFILE — Sidebar --}}
-    <aside class="app-sidebar no-print">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">+</div>
-
-            <span>
-                {{ $patient->clinic?->name ?? 'Salman Dawa Khana' }}
-            </span>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="{{ route('dashboard') }}" class="sidebar-link">
-                <span><i class="bi bi-speedometer2 app-icon" aria-hidden="true"></i></span>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('patients.index') }}" class="sidebar-link active">
-                <span><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
-                <span>Patients</span>
-            </a>
-
-            <a href="{{ route('visits.index') }}" class="sidebar-link">
-                <span><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
-                <span>Visits</span>
-            </a>
-
-            <a href="{{ route('prescriptions.index') }}" class="sidebar-link">
-                <span><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
-                <span>Prescriptions</span>
-            </a>
-
-            <a href="{{ route('payments.index') }}" class="sidebar-link">
-                <span><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
-                <span>Payments</span>
-            </a>
-
-            <a href="{{ route('expenses.index') }}" class="sidebar-link">
-                <span><i class="bi bi-receipt app-icon" aria-hidden="true"></i></span>
-                <span>Expenses</span>
-            </a>
-
-            <div class="sidebar-divider"></div>
-
-            <a href="{{ route('reports.index') }}" class="sidebar-link">
-                <span><i class="bi bi-bar-chart-line app-icon" aria-hidden="true"></i></span>
-                <span>Reports</span>
-            </a>
-
-            <a href="{{ route('settings.index') }}" class="sidebar-link">
-                <span><i class="bi bi-gear app-icon" aria-hidden="true"></i></span>
-                <span>Settings</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <span class="status-dot"></span>
-            System online
-        </div>
-    </aside>
+    @include('layouts._sidebar')
 
     <main class="dashboard-main">
 
@@ -210,12 +153,47 @@
                             <strong>{{ $patient->phone ?: 'Not recorded' }}</strong>
                         </div>
 
+                        {{-- Patient Profile — Country-Specific National ID --}}
                         <div>
-                            <span class="detail-label">Emirates ID</span>
+                            @php
+                                $profileIdCountry = $patient->national_id_country
+                                    ?: (filled($patient->emirates_id) ? 'AE' : null);
 
-                            <strong>
-                                {{ $patient->emirates_id ?: 'Not recorded' }}
-                            </strong>
+                                $profileIdNumber = $patient->national_id_number
+                                    ?: $patient->emirates_id;
+
+                                $profileIdDigits = preg_replace(
+                                    '/[\s-]+/',
+                                    '',
+                                    $profileIdNumber ?? ''
+                                );
+
+                                $profileIdLabel = match ($profileIdCountry) {
+                                    'PK' => 'CNIC',
+                                    'AE' => 'Emirates ID',
+                                    default => 'National ID',
+                                };
+
+                                $formattedProfileId = match (true) {
+                                    $profileIdCountry === 'PK'
+                                        && preg_match('/^[0-9]{13}$/', $profileIdDigits) === 1 =>
+                                            substr($profileIdDigits, 0, 5)
+                                            . '-' . substr($profileIdDigits, 5, 7)
+                                            . '-' . substr($profileIdDigits, 12, 1),
+
+                                    $profileIdCountry === 'AE'
+                                        && preg_match('/^784[0-9]{12}$/', $profileIdDigits) === 1 =>
+                                            substr($profileIdDigits, 0, 3)
+                                            . '-' . substr($profileIdDigits, 3, 4)
+                                            . '-' . substr($profileIdDigits, 7, 7)
+                                            . '-' . substr($profileIdDigits, 14, 1),
+
+                                    default => $profileIdNumber ?: 'Not recorded',
+                                };
+                            @endphp
+
+                            <span class="detail-label">{{ $profileIdLabel }}</span>
+                            <strong>{{ $formattedProfileId }}</strong>
                         </div>
 
                         <div>

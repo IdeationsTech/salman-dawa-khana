@@ -1,33 +1,92 @@
+@php
+    $sidebarUser = auth()->user();
+    $sidebarClinic = $sidebarUser->clinic;
+    $sidebarRole = $sidebarUser->role?->name;
+
+    $sidebarNavigation = [
+        ['dashboard', 'dashboard', 'speedometer2', 'Dashboard'],
+        ['patients.index', 'patients.*', 'person-vcard', 'Patients'],
+        ['visits.index', 'visits.*', 'calendar-check', 'Visits'],
+        ['prescriptions.index', 'prescriptions.*', 'prescription', 'Prescriptions'],
+        ['orders.index', 'orders.*', 'bag-check', 'Nuskha Orders'],
+        ['payments.index', 'payments.*', 'cash-coin', 'Payments'],
+        ['expenses.index', 'expenses.*', 'receipt', 'Expenses'],
+        ['reports.index', 'reports.*', 'bar-chart-line', 'Reports'],
+        ['notifications.index', 'notifications.*', 'bell', 'Notifications'],
+        ['users.index', 'users.*', 'people', 'Users'],
+        ['settings.index', 'settings.*', 'gear', 'Settings'],
+    ];
+@endphp
+
 <aside class="app-sidebar no-print">
     <div class="sidebar-brand">
-        <div class="sidebar-logo">+</div>
-        <span>Salman Dawa Khana</span>
+        <div class="sidebar-logo">
+            @if($sidebarClinic->logo_path)
+                <img
+                    src="{{ asset('storage/' . $sidebarClinic->logo_path) }}"
+                    alt="{{ $sidebarClinic->name }} logo"
+                    class="settings-logo-image"
+                >
+            @else
+                <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
+            @endif
+        </div>
+
+        <span>{{ $sidebarClinic->name }}</span>
     </div>
 
     <nav class="sidebar-nav" aria-label="Main navigation">
-        @foreach ([
-            ['dashboard', 'dashboard', 'speedometer2', 'Dashboard'],
-            ['patients.index', 'patients.*', 'person-vcard', 'Patients'],
-            ['visits.index', 'visits.*', 'calendar-check', 'Visits'],
-            ['prescriptions.index', 'prescriptions.*', 'prescription', 'Prescriptions'],
-            ['payments.index', 'payments.*', 'cash-coin', 'Payments'],
-            ['expenses.index', 'expenses.*', 'receipt', 'Expenses'],
-            ['reports.index', 'reports.*', 'bar-chart-line', 'Reports'],
-            ['users.index', 'users.*', 'people', 'Users'],
-            ['settings.index', 'settings.*', 'gear', 'Settings'],
-        ] as [$routeName, $pattern, $icon, $label])
+        @foreach($sidebarNavigation as [$routeName, $pattern, $icon, $label])
+            @if(
+                $routeName === 'users.index' &&
+                $sidebarRole !== 'Owner'
+            )
+                @continue
+            @endif
+
+            @if(
+                in_array($routeName, ['expenses.index', 'reports.index'], true) &&
+                !in_array($sidebarRole, ['Owner', 'Doctor'], true)
+            )
+                @continue
+            @endif
+
+            {{-- Sidebar — Divider Before Reports --}}
+            @if($routeName === 'reports.index')
+                <div class="sidebar-divider"></div>
+            @endif
+
             <a
                 href="{{ route($routeName) }}"
                 class="sidebar-link {{ request()->routeIs($pattern) ? 'active' : '' }}"
+                @if(request()->routeIs($pattern))
+                    aria-current="page"
+                @endif
             >
-                <i class="bi bi-{{ $icon }} app-icon" aria-hidden="true"></i>
+                <span>
+                    <i
+                        class="bi bi-{{ $icon }} app-icon"
+                        aria-hidden="true"
+                    ></i>
+                </span>
+
                 <span>{{ $label }}</span>
             </a>
         @endforeach
     </nav>
 
+    {{-- Sidebar — Sign Out and System Status --}}
     <div class="sidebar-footer">
-        <span class="status-dot"></span>
-        System online
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+
+            <button type="submit" class="sidebar-signout">
+                <i
+                    class="bi bi-box-arrow-right app-icon"
+                    aria-hidden="true"
+                ></i>
+                <span>Sign out</span>
+            </button>
+        </form>
     </div>
 </aside>

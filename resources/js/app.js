@@ -1847,3 +1847,140 @@ if (document.readyState === 'loading') {
 } else {
     initializeNationalIdFormatting();
 }
+
+/*
+|--------------------------------------------------------------------------
+| NUSKHA ORDERS — Items, Delivery and Amount Preview
+|--------------------------------------------------------------------------
+*/
+
+function initializeNuskhaOrderForm() {
+    const form = document.querySelector('[data-nuskha-order-form]');
+
+    if (!form) return;
+
+    const list = form.querySelector('[data-order-items]');
+    const source = list.querySelector('[data-order-item]').cloneNode(true);
+    const fulfillment = form.querySelector('[data-order-fulfillment]');
+    const address = form.querySelector('[data-order-address]');
+    const delivery = form.querySelector('[name="delivery_fee"]');
+    const discount = form.querySelector('[name="discount"]');
+    const received = form.querySelector('[name="payment_amount"]');
+    const currency = form.dataset.currency;
+
+    const scaled = (value, places) => {
+        const text = String(value).trim();
+
+        if (!/^\d+(?:\.\d+)?$/.test(text)) return 0n;
+
+        const [whole, fraction = ''] = text.split('.');
+
+        return BigInt(whole) * (10n ** BigInt(places))
+            + BigInt(fraction.slice(0, places).padEnd(places, '0'));
+    };
+
+    const money = (cents) =>
+        `${currency} ${Number(cents / 100n).toLocaleString('en-US')}`
+        + `.${String(cents % 100n).padStart(2, '0')}`;
+
+    const refresh = () => {
+        let subtotal = 0n;
+        const rows = list.querySelectorAll('[data-order-item]');
+
+        rows.forEach((row, index) => {
+            row.querySelector('[data-order-item-number]').textContent = index + 1;
+
+            row.querySelectorAll('[data-order-field]').forEach((field) => {
+                field.name = `items[${index}][${field.dataset.orderField}]`;
+            });
+
+            row.querySelector('[data-order-remove]').disabled = rows.length === 1;
+
+            const template = row.querySelector('[data-order-field="nuskha_template_id"]');
+            const name = row.querySelector('[data-order-field="nuskha_name"]');
+
+            name.required = !template.value;
+
+            const quantity = scaled(
+                row.querySelector('[data-order-field="quantity"]').value,
+                3
+            );
+
+            const price = scaled(
+                row.querySelector('[data-order-field="unit_price"]').value,
+                2
+            );
+
+            subtotal += (quantity * price + 500n) / 1000n;
+        });
+
+        const isDelivery = fulfillment.value === 'delivery';
+
+        address.hidden = !isDelivery;
+        address.querySelector('textarea').disabled = !isDelivery;
+        address.querySelector('textarea').required = isDelivery;
+
+        form.querySelector('[data-order-delivery-fee]').hidden = !isDelivery;
+
+        const total = subtotal - scaled(discount.value, 2)
+            + (isDelivery ? scaled(delivery.value, 2) : 0n);
+
+        const safeTotal = total > 0n ? total : 0n;
+        const due = safeTotal - scaled(received.value, 2);
+
+        form.querySelector('[data-order-subtotal]').textContent = money(subtotal);
+        form.querySelector('[data-order-total]').textContent = money(safeTotal);
+        form.querySelector('[data-order-due]').textContent = money(due > 0n ? due : 0n);
+
+        const receiving = scaled(received.value, 2) > 0n;
+        const method = form.querySelector('[name="payment_method"]');
+        const reference = form.querySelector('[name="reference_no"]');
+
+        method.required = receiving;
+        reference.required = receiving && ['bank', 'card'].includes(method.value);
+
+        form.querySelector('[data-order-total-error]').textContent =
+            total <= 0n
+                ? 'Enter charges so the order total is greater than zero.'
+                : due < 0n
+                    ? 'Amount received exceeds the order total.'
+                    : '';
+    };
+
+    form.querySelector('[data-order-add]').addEventListener('click', () => {
+        if (list.querySelectorAll('[data-order-item]').length >= 50) return;
+
+        const row = source.cloneNode(true);
+
+        row.querySelectorAll('[data-order-field]').forEach((field) => {
+            field.value = field.dataset.orderField === 'quantity'
+                ? '1'
+                : field.dataset.orderField === 'unit'
+                    ? 'pack'
+                    : '';
+        });
+
+        list.appendChild(row);
+        refresh();
+    });
+
+    list.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-order-remove]');
+
+        if (button && list.querySelectorAll('[data-order-item]').length > 1) {
+            button.closest('[data-order-item]').remove();
+            refresh();
+        }
+    });
+
+    form.addEventListener('input', refresh);
+    form.addEventListener('change', refresh);
+
+    refresh();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeNuskhaOrderForm);
+} else {
+    initializeNuskhaOrderForm();
+}

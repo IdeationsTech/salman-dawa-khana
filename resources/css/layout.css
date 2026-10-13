@@ -13,3 +13,46 @@ body:not(.clinic-can-access-expenses) .sidebar-nav a[href$="/expenses"],
 body:not(.clinic-can-access-expenses) .sidebar-nav a[href*="/expenses/"] {
     display: none !important;
 }
+
+/*
+|--------------------------------------------------------------------------
+| SHARED SIDEBAR — Sign Out
+|--------------------------------------------------------------------------
+*/
+
+.sidebar-footer:has(.sidebar-signout) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+}
+
+.sidebar-online-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar-footer form {
+    margin: 0;
+}
+
+.sidebar-signout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid rgb(255 255 255 / 18%);
+    border-radius: 8px;
+    background: transparent;
+    color: #ffffff;
+    font-size: 13px;
+    transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.sidebar-signout:hover {
+    background: rgb(255 255 255 / 10%);
+    border-color: rgb(255 255 255 / 35%);
+}

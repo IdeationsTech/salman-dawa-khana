@@ -27,54 +27,8 @@
 <div class="app-shell">
 
     {{-- Security — Application Sidebar --}}
-    <aside class="app-sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-logo">
-                @if($clinic->logo_path)
-                    <img
-                        src="{{ asset('storage/' . $clinic->logo_path) }}"
-                        alt="{{ $clinic->name }} logo"
-                        class="settings-logo-image"
-                    >
-                @else
-                    <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
-                @endif
-            </div>
-
-            <span>{{ $clinic->name }}</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            @foreach($sidebarLinks as $link)
-                @if($link['route'] === 'reports.index')
-                    <div class="sidebar-divider"></div>
-                @endif
-
-                <a
-                    href="{{ route($link['route']) }}"
-                    class="sidebar-link {{ $link['route'] === 'settings.index' ? 'active' : '' }}"
-                    @if($link['route'] === 'settings.index')
-                        aria-current="page"
-                    @endif
-                >
-                    <span>
-                        <i
-                            class="bi {{ $link['icon'] }} app-icon"
-                            aria-hidden="true"
-                        ></i>
-                    </span>
-
-                    <span>{{ $link['label'] }}</span>
-                </a>
-            @endforeach
-        </nav>
-
-        <div class="sidebar-footer">
-            <span class="status-dot"></span>
-            System online
-        </div>
-    </aside>
-
+    @include('layouts._sidebar')
+    
     {{-- Security — Main Content --}}
     <main class="dashboard-main">
         <header class="page-header">

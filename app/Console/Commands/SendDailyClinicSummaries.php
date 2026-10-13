@@ -134,11 +134,29 @@ class SendDailyClinicSummaries extends Command
                 ->where('visit_date', '<', $end)
                 ->count();
 
-            $received = DB::table('payments')
+            $summaryCurrency = strtoupper($clinic->currency ?: 'AED');
+
+            $patientReceived = DB::table('payments')
                 ->where('clinic_id', $clinic->clinic_id)
                 ->where('payment_date', '>=', $start)
                 ->where('payment_date', '<', $end)
                 ->sum('amount');
+
+            $orderReceived = DB::table('nuskha_order_payments as payments')
+                ->join(
+                    'nuskha_orders as orders',
+                    'orders.nuskha_order_id',
+                    '=',
+                    'payments.nuskha_order_id'
+                )
+                ->where('payments.clinic_id', $clinic->clinic_id)
+                ->where('orders.clinic_id', $clinic->clinic_id)
+                ->where('orders.currency', $summaryCurrency)
+                ->where('payments.paid_at', '>=', $start)
+                ->where('payments.paid_at', '<', $end)
+                ->sum('payments.amount');
+
+            $received = (float) $patientReceived + (float) $orderReceived;
 
             $expenses = DB::table('expenses')
                 ->where('clinic_id', $clinic->clinic_id)
