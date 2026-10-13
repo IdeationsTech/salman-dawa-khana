@@ -57,22 +57,44 @@
     {{-- Dashboard Main Area --}}
     <main class="dashboard-main">
 
-        {{-- Topbar --}}
+{{-- Dashboard — Dynamic User Topbar --}}
+@php
+    $signedInUser = auth()->user();
+
+    $initials = collect(
+        preg_split('/\s+/u', trim($signedInUser->name))
+    )
+        ->filter()
+        ->take(2)
+        ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
+        ->implode('');
+@endphp
+
         <header class="dashboard-topbar">
             <div>
                 <p class="dashboard-date">
-                    {{ now()->format('l, d F Y') }}
+                    {{ now('Asia/Dubai')->format('l, d F Y') }}
                 </p>
 
-                <h1>Good morning, Dr. Ahmed</h1>
+                <h1>Welcome, {{ $signedInUser->name }}</h1>
             </div>
 
             <div class="topbar-user">
-                <div class="user-avatar">AK</div>
+                <div class="user-avatar">
+                    @if($signedInUser->profile_photo_path)
+                        <img
+                            src="{{ asset('storage/' . $signedInUser->profile_photo_path) }}"
+                            alt="{{ $signedInUser->name }} profile photo"
+                            class="topbar-profile-photo"
+                        >
+                    @else
+                        {{ $initials }}
+                    @endif
+                </div>
 
                 <div>
-                    <strong>Dr. Ahmed Khan</strong>
-                    <small>Clinic Owner</small>
+                    <strong>{{ $signedInUser->name }}</strong>
+                    <small>{{ $signedInUser->role?->name ?? 'Staff' }}</small>
                 </div>
             </div>
         </header>
