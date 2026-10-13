@@ -4,6 +4,25 @@
 
 @section('content')
 @php
+    $preferences = \App\Models\Setting::query()
+        ->where('clinic_id', $clinic->clinic_id)
+        ->whereIn('setting_key', [
+            'show_previous_due',
+            'decimal_places',
+        ])
+        ->pluck('setting_value', 'setting_key');
+
+    $showPreviousDue =
+        (string) $preferences->get('show_previous_due', '1') === '1';
+
+    $decimals =
+        (string) $preferences->get('decimal_places', '2') === '0'
+            ? 0
+            : 2;
+
+    $money = fn ($value) =>
+        $currency . ' ' . number_format((float) $value, $decimals);
+
     $documentNumber = $payment
         ? 'PAY-' . $payment->payment_id
         : $bill->bill_no;
@@ -12,15 +31,13 @@
         ? $payment->payment_date
         : $bill->bill_date;
 
-    $methodValue = $payment
-        ? strtolower(trim($payment->method))
-        : '';
+    $method = strtolower(trim($payment?->method ?? ''));
 
     $methodLabel = in_array(
-        $methodValue,
+        $method,
         ['bank', 'bank transfer', 'bank_transfer'],
         true
-    ) ? 'Bank transfer' : ucfirst($methodValue);
+    ) ? 'Bank transfer' : ucfirst($method);
 
     $billStatus = $bill
         ? (in_array($bill->status, ['cancelled', 'void'], true)
@@ -29,6 +46,17 @@
                 ? 'Paid'
                 : ((float) $billPaid > 0 ? 'Partially paid' : 'Unpaid')))
         : null;
+
+    $otherBillsDue = max(
+        0,
+        (float) $patientOutstanding - (float) ($billDue ?? 0)
+    );
+
+    $dob = $patient->date_of_birth;
+
+    $ageAtDocument = $dob && $dob->lte($documentDate)
+        ? (int) floor($dob->diffInYears($documentDate))
+        : null;
 @endphp
 
 <div class="app-shell">
@@ -36,7 +64,7 @@
 
     <main class="dashboard-main">
         @if(session('success'))
-            <div class="alert alert-success no-print" role="alert">
+            <div class="alert alert-success no-print" role="status">
                 {{ session('success') }}
             </div>
         @endif
@@ -51,9 +79,11 @@
             </div>
         @endif
 
+        {{-- Receipt — Screen Actions --}}
         <div class="payment-detail-toolbar no-print">
             <a href="{{ route('payments.index') }}" class="back-link">
-                ← Back to payments
+                <i class="bi bi-arrow-left app-icon" aria-hidden="true"></i>
+                Back to payments
             </a>
 
             <div class="payment-toolbar-actions flex-wrap">
@@ -62,14 +92,15 @@
                         href="{{ route('payments.edit', $payment) }}"
                         class="btn btn-outline-secondary"
                     >
+                        <i class="bi bi-pencil-square app-icon" aria-hidden="true"></i>
                         Edit payment
                     </a>
                 @endif
 
                 @if(
-                    $bill
-                    && (float) $billDue > 0
-                    && !in_array($bill->status, ['cancelled', 'void'], true)
+                    $bill &&
+                    (float) $billDue > 0 &&
+                    !in_array($bill->status, ['cancelled', 'void'], true)
                 )
                     <a
                         href="{{ route('payments.create', [
@@ -88,296 +119,227 @@
                     class="btn btn-primary"
                     data-print-page
                 >
+                    <i class="bi bi-printer app-icon" aria-hidden="true"></i>
                     Print / Save PDF
                 </button>
             </div>
         </div>
 
-        <article class="payment-receipt">
-            {{-- BILL / PAYMENT — Header --}}
-            <header class="receipt-header">
-                <div class="receipt-brand">
-                    <div class="receipt-brand-mark">+</div>
+        <article class="payment-receipt receipt-v2">
+
+            {{-- Receipt — Clinic and Document Header --}}
+            <header class="r2-header">
+                <div class="r2-brand">
+                    <div class="r2-logo">
+                        @if($clinic->logo_path)
+                            <img
+                                src="{{ asset('storage/' . $clinic->logo_path) }}"
+                                alt="{{ $clinic->name }} logo"
+                            >
+                        @else
+                            <i class="bi bi-hospital" aria-hidden="true"></i>
+                        @endif
+                    </div>
 
                     <div>
                         <h1>{{ $clinic->name }}</h1>
 
-                        @if($clinic->phone)
-                            <p>{{ $clinic->phone }}</p>
-                        @endif
-
                         @if($clinic->address)
                             <p>{{ $clinic->address }}</p>
+                        @endif
+
+                        @if($clinic->phone)
+                            <p>{{ $clinic->phone }}</p>
                         @endif
                     </div>
                 </div>
 
-                <div class="receipt-meta">
-                    <span>
-                        {{ $payment ? 'PAYMENT RECEIPT' : 'PATIENT BILL' }}
+                <div class="r2-document">
+                    <span class="r2-eyebrow">
+                        {{ $payment ? 'Payment receipt' : 'Patient bill' }}
                     </span>
 
                     <strong>{{ $documentNumber }}</strong>
 
-                    <small>{{ $documentDate->format('d F Y') }}</small>
-
-                    <small>
-                        {{ $documentDate->format('h:i A') }} — UAE time
-                    </small>
+                    <p>{{ $documentDate->format('d M Y') }}</p>
+                    <p>{{ $documentDate->format('h:i A') }}</p>
                 </div>
             </header>
 
-            <div class="receipt-divider"></div>
-
-            <div class="receipt-status-row">
+            {{-- Receipt — Patient Details --}}
+            <section class="r2-patient">
                 <div>
-                    <span>{{ $payment ? 'Payment' : 'Current bill status' }}</span>
+                    <span>Patient name</span>
+                    <strong>{{ $patient->full_name }}</strong>
+                </div>
+
+                <div>
+                    <span>Patient code</span>
+                    <strong>{{ $patient->patient_code }}</strong>
+                </div>
+
+                <div>
+                    <span>Date of birth / Age at receipt date</span>
 
                     <strong>
-                        {{ $payment ? 'Received' : $billStatus }}
+                        @if($dob)
+                            {{ $dob->format('d M Y') }}
+                            @if($ageAtDocument !== null)
+                                / {{ $ageAtDocument }} years
+                            @endif
+                        @else
+                            —
+                        @endif
                     </strong>
                 </div>
 
                 <div>
-                    <span>{{ $payment ? 'Payment method' : 'Bill date' }}</span>
-
-                    <strong>
-                        {{ $payment
-                            ? $methodLabel
-                            : $bill->bill_date->format('d M Y') }}
-                    </strong>
+                    <span>Phone number</span>
+                    <strong>{{ $patient->phone ?: '—' }}</strong>
                 </div>
+            </section>
 
-                <div>
-                    <span>{{ $payment ? 'Received by' : 'Bill number' }}</span>
+            {{-- Receipt — Charges --}}
+            @if($bill)
+                <table class="r2-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th class="r2-number">Amount ({{ $currency }})</th>
+                        </tr>
+                    </thead>
 
-                    <strong>
-                        {{ $payment
-                            ? ($payment->receivedBy?->name ?? '—')
-                            : $bill->bill_no }}
-                    </strong>
-                </div>
-            </div>
+                    <tbody>
+                        @forelse($bill->items as $item)
+                            <tr>
+                                <td>{{ $item->description }}</td>
 
-            {{-- BILL / PAYMENT — Patient --}}
-            <section class="receipt-section">
-                <div class="receipt-section-heading">
-                    <h2>Patient information</h2>
-                </div>
+                                <td class="r2-number">
+                                    {{ number_format($item->line_total, $decimals) }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td>Bill charges</td>
+                                <td class="r2-number">
+                                    {{ number_format($bill->subtotal, $decimals) }}
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            @endif
 
-                <div class="receipt-info-grid">
+            {{-- Receipt — Payment Details and Balance Summary --}}
+            <section class="r2-bottom">
+                <div class="r2-details">
                     <div>
-                        <span>Patient name</span>
-                        <strong>{{ $patient->full_name }}</strong>
-                    </div>
-
-                    <div>
-                        <span>Patient code</span>
-                        <strong>{{ $patient->patient_code }}</strong>
-                    </div>
-
-                    <div>
-                        <span>Phone number</span>
-                        <strong>{{ $patient->phone ?: '—' }}</strong>
-                    </div>
-
-                    <div>
-                        <span>Related bill</span>
+                        <span>Bill number</span>
                         <strong>
                             {{ $bill?->bill_no ?? 'Unallocated payment' }}
                         </strong>
                     </div>
-                </div>
-            </section>
 
-            {{-- BILL — Charges --}}
-            @if($bill)
-                <section class="receipt-section">
-                    <div class="receipt-section-heading">
-                        <h2>Bill charges</h2>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Description</th>
-                                    <th class="text-end">Amount</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                @foreach($bill->items as $item)
-                                    <tr>
-                                        <td>{{ $item->description }}</td>
-
-                                        <td class="text-end">
-                                            {{ $currency }}
-                                            {{ number_format($item->line_total, 2) }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="receipt-breakdown">
+                    @if($payment)
                         <div>
-                            <span>Subtotal</span>
-                            <strong>
-                                {{ $currency }}
-                                {{ number_format($bill->subtotal, 2) }}
-                            </strong>
+                            <span>Payment method</span>
+                            <strong>{{ $methodLabel }}</strong>
                         </div>
 
                         <div>
-                            <span>Discount</span>
-                            <strong>
-                                {{ $currency }}
-                                {{ number_format($bill->discount, 2) }}
-                            </strong>
+                            <span>Received by</span>
+                            <strong>{{ $payment->receivedBy?->name ?? '—' }}</strong>
                         </div>
 
-                        <div class="receipt-total-row">
-                            <span>Bill total</span>
-                            <strong>
-                                {{ $currency }}
-                                {{ number_format($bill->total_amount, 2) }}
-                            </strong>
-                        </div>
-                    </div>
-                </section>
-            @endif
-
-            {{-- PAYMENT — This Receipt --}}
-            @if($payment)
-                <section class="receipt-section">
-                    <div class="receipt-section-heading">
-                        <h2>This payment</h2>
-                    </div>
-
-                    <div class="receipt-breakdown">
-                        <div class="receipt-paid-row">
-                            <span>Amount received</span>
-                            <strong>
-                                {{ $currency }}
-                                {{ number_format($payment->amount, 2) }}
-                            </strong>
-                        </div>
-
-                        <div>
-                            <span>Transaction reference</span>
-                            <strong>{{ $payment->reference_no ?: '—' }}</strong>
-                        </div>
-                    </div>
-
-                    @if(!$bill)
-                        <p class="text-muted small mt-2">
-                            This older payment has not been allocated to a bill.
-                        </p>
+                        @if($payment->reference_no)
+                            <div>
+                                <span>Transaction reference</span>
+                                <strong>{{ $payment->reference_no }}</strong>
+                            </div>
+                        @endif
                     @endif
-                </section>
-            @endif
 
-            {{-- BILL / PAYMENT — Current Balances --}}
-            <section class="receipt-section">
-                <div class="receipt-section-heading">
-                    <h2>Current balances</h2>
-
-                    <p class="text-muted small">
-                        These figures include subsequent payments and show
-                        the current balance, not a historical snapshot.
-                    </p>
-                </div>
-
-                <div class="receipt-breakdown">
                     @if($bill)
-                        <div>
-                            <span>Total received against this bill</span>
-                            <strong>
-                                {{ $currency }}
-                                {{ number_format($billPaid, 2) }}
-                            </strong>
-                        </div>
-
-                        <div class="receipt-balance-row">
-                            <span>This bill's remaining balance</span>
-                            <strong>
-                                {{ $currency }}
-                                {{ number_format($billDue, 2) }}
-                            </strong>
-                        </div>
-
                         <div>
                             <span>Current bill status</span>
                             <strong>{{ $billStatus }}</strong>
                         </div>
                     @endif
-
-                    <div class="receipt-total-row">
-                        <span>All outstanding bills for this patient</span>
-                        <strong>
-                            {{ $currency }}
-                            {{ number_format($patientOutstanding, 2) }}
-                        </strong>
-                    </div>
                 </div>
 
-                <small class="text-muted d-block mt-2">
-                    Unallocated payments are not deducted from bill balances.
-                </small>
+                <div class="r2-summary">
+                    @if($bill)
+                        <div>
+                            <span>Subtotal</span>
+                            <strong>{{ $money($bill->subtotal) }}</strong>
+                        </div>
+
+                        <div>
+                            <span>Discount</span>
+                            <strong>{{ $money($bill->discount) }}</strong>
+                        </div>
+
+                        <div class="r2-total">
+                            <span>Bill total</span>
+                            <strong>{{ $money($bill->total_amount) }}</strong>
+                        </div>
+                    @endif
+
+                    @if($payment)
+                        <div>
+                            <span>This payment</span>
+                            <strong>{{ $money($payment->amount) }}</strong>
+                        </div>
+                    @endif
+
+                    @if($bill)
+                        <div>
+                            <span>Total paid on this bill</span>
+                            <strong>{{ $money($billPaid) }}</strong>
+                        </div>
+
+                        <div class="r2-due">
+                            <span>This bill remaining</span>
+                            <strong>{{ $money($billDue) }}</strong>
+                        </div>
+                    @endif
+
+                    @if($showPreviousDue)
+                        @if($bill)
+                            <div>
+                                <span>Other bills outstanding</span>
+                                <strong>{{ $money($otherBillsDue) }}</strong>
+                            </div>
+                        @endif
+
+                        <div class="r2-total">
+                            <span>Patient total outstanding</span>
+                            <strong>{{ $money($patientOutstanding) }}</strong>
+                        </div>
+                    @endif
+                </div>
             </section>
 
-            {{-- BILL — Payment History --}}
-            @if($bill && $billPayments->isNotEmpty())
-                <section class="receipt-section">
-                    <div class="receipt-section-heading">
-                        <h2>Payments against this bill</h2>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Receipt</th>
-                                    <th>Date</th>
-                                    <th class="text-end">Amount</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                @foreach($billPayments as $record)
-                                    <tr>
-                                        <td>
-                                            <a href="{{ route('payments.show', $record) }}">
-                                                PAY-{{ $record->payment_id }}
-                                            </a>
-                                        </td>
-
-                                        <td>
-                                            {{ $record->payment_date->format('d M Y') }}
-                                        </td>
-
-                                        <td class="text-end">
-                                            {{ $currency }}
-                                            {{ number_format($record->amount, 2) }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            @endif
-
+            {{-- Receipt — Notes --}}
             @if($payment?->notes)
-                <section class="receipt-notes">
+                <div class="r2-notes">
                     <span>Payment notes</span>
                     <p>{{ $payment->notes }}</p>
-                </section>
+                </div>
             @endif
 
-            <footer class="receipt-footer">
+            <p class="r2-balance-note">
+                Balances shown are current when this receipt is generated,
+                including subsequent payments.
+                Unallocated payments are not deducted from bill balances.
+            </p>
+
+            <div class="r2-signature">
+                Authorized signature:
+                <span></span>
+            </div>
+
+            <footer class="r2-footer">
                 <p>Thank you for visiting {{ $clinic->name }}.</p>
 
                 <small>
@@ -386,6 +348,43 @@
                         : 'Computer-generated bill. This document alone is not proof of payment.' }}
                 </small>
             </footer>
+
+            {{-- Receipt — Payment History, Screen Only --}}
+            @if($bill && $billPayments->isNotEmpty())
+                <section class="r2-history no-print">
+                    <h2>Payments against this bill</h2>
+
+                    <table class="r2-table">
+                        <thead>
+                            <tr>
+                                <th>Receipt</th>
+                                <th>Date</th>
+                                <th class="r2-number">Amount</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach($billPayments as $record)
+                                <tr>
+                                    <td>
+                                        <a href="{{ route('payments.show', $record) }}">
+                                            PAY-{{ $record->payment_id }}
+                                        </a>
+                                    </td>
+
+                                    <td>
+                                        {{ $record->payment_date->format('d M Y') }}
+                                    </td>
+
+                                    <td class="r2-number">
+                                        {{ $money($record->amount) }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </section>
+            @endif
         </article>
     </main>
 </div>
