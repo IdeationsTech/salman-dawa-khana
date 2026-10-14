@@ -199,7 +199,9 @@ Route::middleware(['auth', EnsureClinicAccess::class])
         Route::put('/settings/payments', [
             PaymentSettingsController::class,
             'update',
-        ])->name('settings.payments.update');
+        ])
+            ->middleware(EnsureClinicRole::class . ':Owner')
+            ->name('settings.payments.update');
 
         Route::get('/settings/notifications', [
             SettingController::class,
@@ -209,7 +211,9 @@ Route::middleware(['auth', EnsureClinicAccess::class])
         Route::put('/settings/notifications', [
             NotificationSettingsController::class,
             'update',
-        ])->name('settings.notifications.update');
+        ])
+            ->middleware(EnsureClinicRole::class . ':Owner')
+            ->name('settings.notifications.update');
 
         Route::get('/settings/security', [
             SettingController::class,
@@ -221,13 +225,19 @@ Route::middleware(['auth', EnsureClinicAccess::class])
             'updatePassword',
         ])->name('settings.security.password.update');
 
-        Route::put('/settings', [SettingController::class, 'update'])
+        Route::put('/settings', [
+            SettingController::class,
+            'update',
+        ])
+            ->middleware(EnsureClinicRole::class . ':Owner')
             ->name('settings.update');
 
         Route::put('/settings/patient-id', [
             PatientIdSettingsController::class,
             'update',
-        ])->name('settings.patient-id.update');
+        ])
+            ->middleware(EnsureClinicRole::class . ':Owner')
+            ->name('settings.patient-id.update');
 
 /*
 |--------------------------------------------------------------------------

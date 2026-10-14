@@ -4,73 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Models\Clinic;
 use App\Models\Setting;
+use App\Rules\InternationalPhone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class SettingController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Settings — Clinic Profile
-    |--------------------------------------------------------------------------
-    */
-
     public function index()
     {
         $clinic = $this->clinic();
         $settings = $this->settings();
 
-        return view(
-            'settings.index',
-            compact('clinic', 'settings')
-        );
+        return view('settings.index', compact('clinic', 'settings'));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Settings — User Account
-    |--------------------------------------------------------------------------
-    */
 
     public function account()
     {
         $clinic = $this->clinic();
         $user = Auth::user();
 
-        return view(
-            'settings.account',
-            compact('clinic', 'user')
-        );
+        return view('settings.account', compact('clinic', 'user'));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Settings — Payment Preferences
-    |--------------------------------------------------------------------------
-    */
 
     public function payments()
     {
         $clinic = $this->clinic();
         $settings = $this->settings();
 
-        return view(
-            'settings.payments',
-            compact('clinic', 'settings')
-        );
+        return view('settings.payments', compact('clinic', 'settings'));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Settings — Notifications
-    |--------------------------------------------------------------------------
-    */
 
     public function notifications()
     {
@@ -83,31 +50,22 @@ class SettingController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Settings — Security
-    |--------------------------------------------------------------------------
-    */
-
     public function security()
     {
         $clinic = $this->clinic();
         $user = Auth::user();
 
-        return view(
-            'settings.security',
-            compact('clinic', 'user')
-        );
+        return view('settings.security', compact('clinic', 'user'));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Settings — Save Clinic Details, Logo and Preferences
-    |--------------------------------------------------------------------------
-    */
 
     public function update(Request $request)
     {
+        abort_unless(
+            $request->user()->role?->name === 'Owner',
+            403,
+            'Only the clinic owner can change clinic settings.'
+        );
+
         $validated = $request->validate([
             'clinic_name' => [
                 'sometimes',
@@ -122,7 +80,7 @@ class SettingController extends Controller
                 'required',
                 'string',
                 'max:16',
-                new \App\Rules\InternationalPhone(),
+                new InternationalPhone(),
             ],
 
             'clinic_address' => [
@@ -145,22 +103,27 @@ class SettingController extends Controller
                 'boolean',
             ],
 
-            'currency' => [
-                'sometimes',
-                'required',
-                Rule::in(['AED', 'PKR', 'USD']),
-            ],
-
+            // Only this preference is permitted through Clinic Profile.
             'settings' => [
                 'nullable',
-                'array',
+                'array:print_location',
             ],
 
-            'settings.*' => [
+            'settings.print_location' => [
                 'nullable',
                 'string',
-                'max:255',
+                'max:160',
             ],
+
+            // These belong to dedicated settings endpoints.
+            'currency' => ['prohibited'],
+            'patient_id_country' => ['prohibited'],
+            'decimal_places' => ['prohibited'],
+            'cash_enabled' => ['prohibited'],
+            'bank_enabled' => ['prohibited'],
+            'card_enabled' => ['prohibited'],
+            'show_previous_due' => ['prohibited'],
+            'allow_partial_payments' => ['prohibited'],
         ], [
             'clinic_logo.prohibited_if' =>
                 'Choose either a new logo or Remove current logo.',
@@ -170,26 +133,26 @@ class SettingController extends Controller
 
             'clinic_logo.dimensions' =>
                 'The clinic logo must not exceed 3000 × 3000 pixels.',
+
+            'settings.array' =>
+                'Only the print location can be changed through Clinic Profile.',
+
+            'currency.prohibited' =>
+                'Change currency through Payment settings.',
+
+            'patient_id_country.prohibited' =>
+                'Use the Patient ID country form to change this preference.',
         ]);
 
-        $clinicId = Auth::user()->clinic_id;
+        $clinicId = (int) $request->user()->clinic_id;
         $newLogoPath = null;
         $oldLogoPath = null;
 
         try {
-            /*
-            |--------------------------------------------------------------------------
-            | Store the New Logo
-            |--------------------------------------------------------------------------
-            */
-
             if ($request->hasFile('clinic_logo')) {
                 $newLogoPath = $request
                     ->file('clinic_logo')
-                    ->store(
-                        "clinics/{$clinicId}/logos",
-                        'public'
-                    );
+                    ->store("clinics/{$clinicId}/logos", 'public');
 
                 if (! $newLogoPath) {
                     throw ValidationException::withMessages([
@@ -198,12 +161,6 @@ class SettingController extends Controller
                     ]);
                 }
             }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Update Only the Signed-In User's Clinic
-            |--------------------------------------------------------------------------
-            */
 
             DB::transaction(function () use (
                 $request,
@@ -225,26 +182,17 @@ class SettingController extends Controller
                     'clinic_name' => 'name',
                     'clinic_phone' => 'phone',
                     'clinic_address' => 'address',
-                    'currency' => 'currency',
                 ] as $input => $column) {
                     if (array_key_exists($input, $validated)) {
                         $clinicData[$column] = $validated[$input];
                     }
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | Replace or Remove the Current Logo
-                |--------------------------------------------------------------------------
-                */
-
                 if (
                     $newLogoPath !== null ||
                     $request->boolean('remove_logo')
                 ) {
                     $oldLogoPath = $clinic->logo_path;
-
-                    // A removal without a new upload stores NULL.
                     $clinicData['logo_path'] = $newLogoPath;
                 }
 
@@ -256,34 +204,26 @@ class SettingController extends Controller
                         ->update($clinicData);
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | Save Clinic Preferences
-                |--------------------------------------------------------------------------
-                */
+                $preferences = $validated['settings'] ?? [];
 
-                foreach (
-                    ($validated['settings'] ?? [])
-                    as $key => $value
-                ) {
+                if (array_key_exists('print_location', $preferences)) {
+                    $location = trim(
+                        (string) ($preferences['print_location'] ?? '')
+                    );
+
                     Setting::updateOrCreate(
                         [
                             'clinic_id' => $clinicId,
-                            'setting_key' => $key,
+                            'setting_key' => 'print_location',
                         ],
                         [
-                            'setting_value' => $value,
+                            'setting_value' =>
+                                $location !== '' ? $location : null,
                         ]
                     );
                 }
             });
         } catch (Throwable $exception) {
-            /*
-            |--------------------------------------------------------------------------
-            | Remove the New File If Database Saving Fails
-            |--------------------------------------------------------------------------
-            */
-
             if ($newLogoPath) {
                 try {
                     Storage::disk('public')->delete($newLogoPath);
@@ -294,12 +234,6 @@ class SettingController extends Controller
 
             throw $exception;
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Delete the Previous Logo After a Successful Save
-        |--------------------------------------------------------------------------
-        */
 
         if (
             $oldLogoPath &&
@@ -322,32 +256,17 @@ class SettingController extends Controller
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Retrieve the Current Clinic
-    |--------------------------------------------------------------------------
-    */
-
     private function clinic()
     {
-        return Clinic::where(
-            'clinic_id',
-            Auth::user()->clinic_id
-        )->firstOrFail();
+        return Clinic::query()
+            ->where('clinic_id', Auth::user()->clinic_id)
+            ->firstOrFail();
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Retrieve the Current Clinic's Preferences
-    |--------------------------------------------------------------------------
-    */
 
     private function settings()
     {
-        return Setting::where(
-            'clinic_id',
-            Auth::user()->clinic_id
-        )
+        return Setting::query()
+            ->where('clinic_id', Auth::user()->clinic_id)
             ->get()
             ->keyBy('setting_key');
     }

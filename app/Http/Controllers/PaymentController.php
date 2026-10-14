@@ -189,6 +189,11 @@ class PaymentController extends Controller
         $data = $this->validateForm($request);
 
         [$bill, $payment] = DB::transaction(function () use ($data) {
+            $clinic = Clinic::query()
+                ->where('clinic_id', $this->clinicId())
+                ->lockForUpdate()
+                ->firstOrFail();
+
             $this->lockPatient((int) $data['patient_id']);
 
             if ($data['mode'] === 'new_bill') {
@@ -198,6 +203,7 @@ class PaymentController extends Controller
 
                 $bill = Bill::create([
                     'clinic_id' => $this->clinicId(),
+                    'currency' => strtoupper($clinic->currency ?: 'AED'),
                     'patient_id' => $data['patient_id'],
                     'visit_id' => null,
                     'created_by_user_id' => auth()->id(),
@@ -239,18 +245,36 @@ class PaymentController extends Controller
                 );
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Payment Always Uses Its Bill's Currency
+            |--------------------------------------------------------------------------
+            */
+
+            $billCurrency = strtoupper(trim(
+                (string) $bill->currency
+            ));
+
+            if (! in_array($billCurrency, ['AED', 'PKR', 'USD'], true)) {
+                throw ValidationException::withMessages([
+                    'bill_id' =>
+                        'This older bill has no confirmed currency. '
+                        . 'Confirm its original currency before recording payment.',
+                ]);
+            }
+
             $this->checkAmount($bill, $data['amount']);
 
             $payment = null;
 
-            // Zero received saves an unpaid bill without a payment alert.
             if ($this->cents($data['amount']) > 0) {
                 $payment = Payment::create([
+                    ...$this->paymentValues($data),
                     'clinic_id' => $this->clinicId(),
+                    'currency' => $billCurrency,
                     'patient_id' => $data['patient_id'],
                     'bill_id' => $bill->bill_id,
                     'received_by_user_id' => auth()->id(),
-                    ...$this->paymentValues($data),
                 ]);
 
                 $this->writePaymentLedger($payment);
@@ -282,7 +306,6 @@ class PaymentController extends Controller
                 'Bill saved. The full amount remains outstanding.'
             );
     }
-
     /*
     |--------------------------------------------------------------------------
     | Payment Receipt / Bill Receipt

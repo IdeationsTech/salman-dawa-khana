@@ -21,6 +21,7 @@ class Expense extends Model
 
     protected $fillable = [
         'clinic_id',
+        'currency',
         'recorded_by_user_id',
         'expense_date',
         'category',

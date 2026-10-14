@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        foreach (['bills', 'payments', 'expenses'] as $tableName) {
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->char('currency', 3)
+                    ->nullable()
+                    ->after('clinic_id');
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        foreach (['expenses', 'payments', 'bills'] as $tableName) {
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->dropColumn('currency');
+            });
+        }
+    }
+};

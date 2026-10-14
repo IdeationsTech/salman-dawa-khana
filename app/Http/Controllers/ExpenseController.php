@@ -8,16 +8,11 @@ use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ExpenseController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | EXPENSES — Shared Category List
-    |--------------------------------------------------------------------------
-    */
-
     private const CATEGORIES = [
         'Utilities',
         'Rent',
@@ -31,15 +26,11 @@ class ExpenseController extends Controller
         'Other',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | EXPENSES — List and Filters
-    |--------------------------------------------------------------------------
-    */
-
     public function index(Request $request)
     {
         $clinicId = (int) Auth::user()->clinic_id;
+        $clinic = Clinic::findOrFail($clinicId);
+        $currency = strtoupper($clinic->currency ?: 'AED');
 
         if (
             is_string($request->input('category'))
@@ -54,10 +45,12 @@ class ExpenseController extends Controller
 
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:160'],
+
             'category' => [
                 'nullable',
                 Rule::in(['all', ...self::CATEGORIES]),
             ],
+
             'date_range' => [
                 'nullable',
                 Rule::in([
@@ -69,7 +62,8 @@ class ExpenseController extends Controller
             ],
         ]);
 
-        $query = Expense::query()->where('clinic_id', $clinicId);
+        $query = Expense::query()
+            ->where('clinic_id', $clinicId);
 
         $search = trim($filters['search'] ?? '');
 
@@ -101,7 +95,10 @@ class ExpenseController extends Controller
                 default => [strtolower($category)],
             };
 
-            $placeholders = implode(',', array_fill(0, count($values), '?'));
+            $placeholders = implode(
+                ',',
+                array_fill(0, count($values), '?')
+            );
 
             $query->whereRaw(
                 "LOWER(TRIM(category)) IN ({$placeholders})",
@@ -121,10 +118,14 @@ class ExpenseController extends Controller
                     $today->copy(),
                     $today->copy()->addDay(),
                 ],
+
                 'this week' => [
                     $today->copy()->startOfWeek(Carbon::MONDAY),
-                    $today->copy()->startOfWeek(Carbon::MONDAY)->addWeek(),
+                    $today->copy()
+                        ->startOfWeek(Carbon::MONDAY)
+                        ->addWeek(),
                 ],
+
                 'this month' => [
                     $monthStart->copy(),
                     $nextMonth->copy(),
@@ -132,8 +133,16 @@ class ExpenseController extends Controller
             };
 
             $query
-                ->where('expense_date', '>=', $start->format('Y-m-d H:i:s'))
-                ->where('expense_date', '<', $end->format('Y-m-d H:i:s'));
+                ->where(
+                    'expense_date',
+                    '>=',
+                    $start->format('Y-m-d H:i:s')
+                )
+                ->where(
+                    'expense_date',
+                    '<',
+                    $end->format('Y-m-d H:i:s')
+                );
         }
 
         $expenses = $query
@@ -142,18 +151,21 @@ class ExpenseController extends Controller
             ->paginate(100)
             ->withQueryString();
 
-        // Display legacy Transport records as Travel.
-        // This does not rewrite historical database rows.
         $expenses->getCollection()->each(function ($expense) {
-            $expense->category = $this->categoryLabel($expense->category);
+            $expense->category = $this->categoryLabel(
+                $expense->category
+            );
         });
 
-        // All categories appear even before their first expense is entered.
         $categories = collect(self::CATEGORIES);
 
         $todayQuery = Expense::query()
             ->where('clinic_id', $clinicId)
-            ->where('expense_date', '>=', $today->format('Y-m-d H:i:s'))
+            ->where(
+                'expense_date',
+                '>=',
+                $today->format('Y-m-d H:i:s')
+            )
             ->where(
                 'expense_date',
                 '<',
@@ -163,10 +175,13 @@ class ExpenseController extends Controller
         $todayExpenses = (clone $todayQuery)->sum('amount');
         $todayExpenseCount = (clone $todayQuery)->count();
 
+        $monthFrom = $monthStart->format('Y-m-d H:i:s');
+        $monthUntil = $nextMonth->format('Y-m-d H:i:s');
+
         $monthQuery = Expense::query()
             ->where('clinic_id', $clinicId)
-            ->where('expense_date', '>=', $monthStart->format('Y-m-d H:i:s'))
-            ->where('expense_date', '<', $nextMonth->format('Y-m-d H:i:s'));
+            ->where('expense_date', '>=', $monthFrom)
+            ->where('expense_date', '<', $monthUntil);
 
         $monthExpenses = (clone $monthQuery)->sum('amount');
 
@@ -182,23 +197,56 @@ class ExpenseController extends Controller
 
             $categoryTotals[$label] =
                 ($categoryTotals[$label] ?? 0)
-                + (float) $row->category_total;
+                + $this->toCents($row->category_total);
         }
 
         arsort($categoryTotals);
 
         $highestExpenseCategory = array_key_first($categoryTotals);
+
         $highestCategoryAmount = $highestExpenseCategory !== null
-            ? $categoryTotals[$highestExpenseCategory]
+            ? $categoryTotals[$highestExpenseCategory] / 100
             : 0;
 
-        $monthIncome = Payment::query()
+        /*
+        |--------------------------------------------------------------------------
+        | Monthly Received Payments
+        |--------------------------------------------------------------------------
+        */
+
+        $patientIncome = Payment::query()
             ->where('clinic_id', $clinicId)
-            ->where('payment_date', '>=', $monthStart->format('Y-m-d H:i:s'))
-            ->where('payment_date', '<', $nextMonth->format('Y-m-d H:i:s'))
+            ->where('payment_date', '>=', $monthFrom)
+            ->where('payment_date', '<', $monthUntil)
             ->sum('amount');
 
-        $netIncome = $monthIncome - $monthExpenses;
+        $orderIncome = DB::table('nuskha_order_payments as payments')
+            ->join(
+                'nuskha_orders as orders',
+                'orders.nuskha_order_id',
+                '=',
+                'payments.nuskha_order_id'
+            )
+            ->where('payments.clinic_id', $clinicId)
+            ->where('orders.clinic_id', $clinicId)
+            ->where('orders.currency', $currency)
+            ->where('payments.paid_at', '>=', $monthFrom)
+            ->where('payments.paid_at', '<', $monthUntil)
+            ->sum('payments.amount');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Calculate Using Integer Minor Units
+        |--------------------------------------------------------------------------
+        */
+
+        $monthIncomeCents =
+            $this->toCents($patientIncome)
+            + $this->toCents($orderIncome);
+
+        $netIncome = (
+            $monthIncomeCents - $this->toCents($monthExpenses)
+        ) / 100;
 
         return view('expenses.index', compact(
             'expenses',
@@ -208,15 +256,10 @@ class ExpenseController extends Controller
             'monthExpenses',
             'highestExpenseCategory',
             'highestCategoryAmount',
-            'netIncome'
+            'netIncome',
+            'currency'
         ));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | EXPENSES — Create and Save
-    |--------------------------------------------------------------------------
-    */
 
     public function create()
     {
@@ -226,29 +269,34 @@ class ExpenseController extends Controller
     public function store(Request $request)
     {
         $validated = $this->validateExpense($request);
+        $clinicId = (int) Auth::user()->clinic_id;
 
-        Expense::create([
-            ...$validated,
-            'clinic_id' => Auth::user()->clinic_id,
-            'recorded_by_user_id' => Auth::id(),
-        ]);
+        DB::transaction(function () use ($validated, $clinicId) {
+            $clinic = Clinic::query()
+                ->where('clinic_id', $clinicId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            Expense::create([
+                ...$validated,
+                'clinic_id' => $clinicId,
+                'currency' => strtoupper($clinic->currency ?: 'AED'),
+                'recorded_by_user_id' => Auth::id(),
+            ]);
+        });
 
         return redirect()
             ->route('expenses.index')
             ->with('success', 'Expense recorded successfully.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | EXPENSES — View and Edit
-    |--------------------------------------------------------------------------
-    */
-
     public function show(Expense $expense)
     {
         $this->ensureClinicAccess($expense);
 
-        $expense->category = $this->categoryLabel($expense->category);
+        $expense->category = $this->categoryLabel(
+            $expense->category
+        );
 
         return view('expenses.show', compact('expense'));
     }
@@ -267,7 +315,23 @@ class ExpenseController extends Controller
     {
         $this->ensureClinicAccess($expense);
 
-        $expense->update($this->validateExpense($request));
+        $validated = $this->validateExpense($request);
+        $clinicId = (int) Auth::user()->clinic_id;
+
+        DB::transaction(function () use (
+            $expense,
+            $validated,
+            $clinicId
+        ) {
+            $locked = Expense::query()
+                ->where('clinic_id', $clinicId)
+                ->whereKey($expense->expense_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            // Preserve the expense's original currency.
+            $locked->update($validated);
+        });
 
         return redirect()
             ->route('expenses.index')
@@ -284,12 +348,6 @@ class ExpenseController extends Controller
             ->route('expenses.index')
             ->with('success', 'Expense deleted successfully.');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | EXPENSES — Required Fields
-    |--------------------------------------------------------------------------
-    */
 
     private function validateExpense(Request $request): array
     {
@@ -328,24 +386,28 @@ class ExpenseController extends Controller
                 Rule::in(['cash', 'bank', 'card']),
             ],
         ], [
-            'description.required' => 'Please enter the expense description.',
-            'category.required' => 'Please select an expense category.',
-            'category.in' => 'Please select a category from the list.',
-            'expense_date.required' => 'Please enter the expense date.',
-            'expense_date.date_format' => 'Please enter a valid expense date.',
-            'amount.required' => 'Please enter the expense amount.',
-            'amount.min' => 'The expense amount must be greater than zero.',
-            'amount.regex' => 'Use no more than two decimal places.',
-            'payment_method.required' => 'Please select the payment method.',
-            'payment_method.in' => 'Please select Cash, Bank transfer or Card.',
+            'description.required' =>
+                'Please enter the expense description.',
+            'category.required' =>
+                'Please select an expense category.',
+            'category.in' =>
+                'Please select a category from the list.',
+            'expense_date.required' =>
+                'Please enter the expense date.',
+            'expense_date.date_format' =>
+                'Please enter a valid expense date.',
+            'amount.required' =>
+                'Please enter the expense amount.',
+            'amount.min' =>
+                'The expense amount must be greater than zero.',
+            'amount.regex' =>
+                'Use no more than two decimal places.',
+            'payment_method.required' =>
+                'Please select the payment method.',
+            'payment_method.in' =>
+                'Please select Cash, Bank transfer or Card.',
         ]);
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | EXPENSES — Shared Form Data and Helpers
-    |--------------------------------------------------------------------------
-    */
 
     private function formData(): array
     {
@@ -377,6 +439,23 @@ class ExpenseController extends Controller
         }
 
         return trim($category ?? '');
+    }
+
+    private function toCents($amount): int
+    {
+        [$whole, $fraction] = array_pad(
+            explode('.', (string) $amount, 2),
+            2,
+            ''
+        );
+
+        return ((int) $whole * 100)
+            + (int) str_pad(
+                substr($fraction, 0, 2),
+                2,
+                '0',
+                STR_PAD_RIGHT
+            );
     }
 
     private function ensureClinicAccess(Expense $expense): void

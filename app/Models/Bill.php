@@ -21,6 +21,7 @@ class Bill extends Model
 
     protected $fillable = [
         'clinic_id',
+        'currency',
         'patient_id',
         'visit_id',
         'created_by_user_id',
