@@ -335,7 +335,69 @@ class UserController extends Controller
             'You cannot delete your own account.'
         );
 
-        $user->delete();
+        $clinicId = (int) Auth::user()->clinic_id;
+
+        try {
+            $deleted = \Illuminate\Support\Facades\DB::transaction(
+                function () use ($user, $clinicId) {
+                    $locked = User::query()
+                        ->where('clinic_id', $clinicId)
+                        ->whereKey($user->user_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Preserve Users Referenced by Historical Records
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $references = [
+                        'visits' => 'recorded_by_user_id',
+                        'prescriptions' => 'created_by_user_id',
+                        'bills' => 'created_by_user_id',
+                        'payments' => 'received_by_user_id',
+                        'expenses' => 'recorded_by_user_id',
+                        'ledger_entries' => 'created_by_user_id',
+                        'audit_logs' => 'user_id',
+                        'nuskha_orders' => 'created_by_user_id',
+                        'nuskha_order_payments' => 'received_by_user_id',
+                    ];
+
+                    foreach ($references as $table => $column) {
+                        $hasRecords = \Illuminate\Support\Facades\DB::table($table)
+                            ->where($column, $locked->user_id)
+                            ->exists();
+
+                        if ($hasRecords) {
+                            return false;
+                        }
+                    }
+
+                    $locked->delete();
+
+                    return true;
+                },
+                3
+            );
+        } catch (\Illuminate\Database\QueryException $exception) {
+            // Handle an additional/concurrent foreign-key reference safely.
+            if ((int) ($exception->errorInfo[1] ?? 0) !== 1451) {
+                throw $exception;
+            }
+
+            $deleted = false;
+        }
+
+        if (! $deleted) {
+            return redirect()
+                ->route('users.edit', $user)
+                ->withErrors([
+                    'user' =>
+                        'This user has linked records and cannot be deleted. '
+                        . 'Turn off Active account and save to deactivate them instead.',
+                ]);
+        }
 
         return redirect()
             ->route('users.index')
