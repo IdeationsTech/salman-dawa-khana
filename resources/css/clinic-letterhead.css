@@ -1,0 +1,480 @@
+/*
+|--------------------------------------------------------------------------
+| Patient Slip and Prescription — Shared Letterhead
+|--------------------------------------------------------------------------
+*/
+
+.clh-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    max-width: 760px;
+    margin: 0 auto 22px;
+}
+
+.clh-toolbar-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.clinic-letterhead {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 760px;
+    min-height: 960px;
+    margin: 0 auto;
+    overflow: hidden;
+    background: #fff;
+    color: #33464f;
+    box-shadow: 0 10px 40px rgb(23 60 72 / 12%);
+    font: 13px/1.5 Arial, sans-serif;
+}
+
+.clh-header {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 34px;
+    min-height: 170px;
+    padding: 33px 30px 29px;
+    border-bottom: 2px solid #199bb4;
+    background: #fff;
+}
+
+.clh-header-curve {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.clh-practitioner,
+.clh-clinic {
+    min-width: 0;
+}
+
+.clh-practitioner h2 {
+    margin: 0 0 9px;
+    color: #fff;
+    font: 500 25px/1.2 Arial, sans-serif;
+    overflow-wrap: anywhere;
+}
+
+.clh-practitioner p {
+    margin: 0;
+    color: #e3f6fa;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.clh-clinic {
+    text-align: right;
+}
+
+.clh-clinic h1 {
+    margin: 0 0 7px;
+    color: #116d72;
+    font: 600 24px/1.2 Arial, sans-serif;
+    overflow-wrap: anywhere;
+}
+
+.clh-clinic p {
+    margin: 0;
+    color: #7b8d92;
+    font-size: 11px;
+}
+
+.clh-logo {
+    display: block;
+    width: 42px;
+    height: 42px;
+    margin: 0 0 8px auto;
+    object-fit: contain;
+}
+
+.clh-document-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 15px 30px;
+    color: #70858b;
+    font-size: 11px;
+}
+
+.clh-document-meta > span {
+    color: #42636f;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.clh-document-meta > strong {
+    font-weight: 500;
+    overflow-wrap: anywhere;
+    text-align: right;
+}
+
+.clh-frame {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    margin: 0 24px;
+    border: 1px solid #bcced0;
+    border-radius: 13px;
+}
+
+.clh-patient-info {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 18px;
+    padding: 19px 18px 16px;
+}
+
+.clh-patient-info > div {
+    min-width: 0;
+}
+
+.clh-patient-info span {
+    display: block;
+    margin-bottom: 5px;
+    color: #758c91;
+    font-size: 10px;
+}
+
+.clh-patient-info strong {
+    display: block;
+    color: #28454d;
+    font-size: 12px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.clh-content {
+    flex: 1;
+    padding: 0 18px 20px;
+}
+
+.clh-section-title {
+    margin: 15px 0 8px;
+    color: #52727c;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.clh-diagnosis {
+    margin: 0;
+    padding-bottom: 13px;
+    border-bottom: 1px solid #c7e2e1;
+    overflow-wrap: anywhere;
+}
+
+.clh-notes {
+    min-height: 65px;
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.clh-prescription-area {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    min-height: 190px;
+    padding-top: 8px;
+}
+
+.clh-rx {
+    flex: 0 0 auto;
+    color: #199bb4;
+    font: 32px/1 Georgia, serif;
+}
+
+.clh-nuskha {
+    min-width: 0;
+    padding-top: 3px;
+}
+
+.clh-nuskha h3 {
+    margin: 0 0 12px;
+    color: #28454d;
+    font-size: 17px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.clh-instructions {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.clh-follow-up {
+    margin: 20px 0 0;
+    color: #74838a;
+    font-size: 11px;
+}
+
+.clh-signatures {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 18px 24px;
+    color: #839097;
+    font-size: 10px;
+}
+
+.clh-signatures strong {
+    display: block;
+    margin-top: 6px;
+    color: #33464f;
+    font-size: 12px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.clh-signature-line {
+    flex: 0 0 165px;
+    padding-top: 8px;
+    border-top: 1px solid #a9bcc4;
+    text-align: center;
+}
+
+.clh-footer {
+    margin-top: 15px;
+    border-bottom: 8px solid #199bb4;
+}
+
+.clh-contact-label {
+    display: inline-block;
+    padding: 4px 24px 4px 29px;
+    border-radius: 0 12px 0 0;
+    background: #199bb4;
+    color: #fff;
+    font-size: 13px;
+}
+
+.clh-contact-details {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 16px 29px 20px;
+    color: #70858b;
+    font-size: 11px;
+}
+
+.clh-contact-details > div {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    min-width: 0;
+}
+
+.clh-contact-details > div:last-child {
+    max-width: 60%;
+}
+
+.clh-contact-details span {
+    overflow-wrap: anywhere;
+}
+
+.clh-contact-details .bi {
+    flex: 0 0 18px;
+    color: #16899b;
+    font-size: 17px;
+    line-height: 1.2;
+}
+
+.clh-screen-details {
+    max-width: 760px;
+    margin: 24px auto 0;
+}
+
+@media screen and (max-width: 540px) {
+    .clh-header {
+        gap: 24px;
+        min-height: 155px;
+        padding: 27px 19px 25px;
+    }
+
+    .clh-practitioner h2,
+    .clh-clinic h1 {
+        font-size: 19px;
+    }
+
+    .clh-logo {
+        width: 34px;
+        height: 34px;
+    }
+
+    .clh-document-meta {
+        padding: 13px 18px;
+    }
+
+    .clh-frame {
+        margin: 0 13px;
+    }
+
+    .clh-patient-info {
+        gap: 14px 9px;
+        padding: 15px 11px;
+    }
+
+    .clh-patient-info strong {
+        font-size: 10px;
+    }
+
+    .clh-content {
+        padding-right: 11px;
+        padding-left: 11px;
+    }
+
+    .clh-signatures {
+        padding-right: 11px;
+        padding-left: 11px;
+    }
+
+    .clh-signature-line {
+        flex-basis: 125px;
+    }
+
+    .clh-contact-details {
+        gap: 12px;
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+}
+
+@page clinic-letterhead {
+    size: A4 portrait;
+    margin: 10mm;
+}
+
+@media print {
+    .app-shell:has(.clinic-letterhead),
+    .dashboard-main:has(.clinic-letterhead) {
+        display: block !important;
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+        height: auto !important;
+    }
+
+    .app-shell:has(.clinic-letterhead) > .app-sidebar,
+    .dashboard-main:has(.clinic-letterhead) > .no-print {
+        display: none !important;
+    }
+
+    .clinic-letterhead {
+        page: clinic-letterhead;
+        width: 100%;
+        max-width: none;
+        min-height: 270mm;
+        margin: 0;
+        border: 0;
+        box-shadow: none;
+        font-size: 12px;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .clh-header {
+        min-height: 42mm;
+        padding: 8mm 7mm 7mm;
+        break-inside: avoid;
+    }
+
+    .clh-document-meta {
+        padding: 4mm 7mm;
+        break-inside: avoid;
+    }
+
+    .clh-frame {
+        margin: 0 6mm;
+    }
+
+    .clh-patient-info {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4mm;
+        padding: 5mm 4mm 4mm;
+        break-inside: avoid;
+    }
+
+    .clh-content {
+        padding: 0 4mm 5mm;
+    }
+
+    .clh-prescription-area {
+        min-height: 48mm;
+    }
+
+    .clh-signatures {
+        padding: 5mm 4mm 6mm;
+        break-inside: avoid;
+    }
+
+    .clh-footer {
+        margin-top: 4mm;
+        break-inside: avoid;
+    }
+
+    .clh-contact-details {
+        padding: 4mm 7mm 5mm;
+    }
+}
+
+/* Clinic logo beside name, with short location below tagline */
+
+.clinic-letterhead .clh-clinic {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    text-align: right;
+}
+
+.clinic-letterhead .clh-clinic-text {
+    min-width: 0;
+}
+
+.clinic-letterhead .clh-logo {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    margin: 0;
+    object-fit: contain;
+}
+
+.clinic-letterhead .clh-location {
+    margin-top: 6px;
+    color: #647e86;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+@media screen and (max-width: 540px) {
+    .clinic-letterhead .clh-clinic {
+        gap: 8px;
+    }
+
+    .clinic-letterhead .clh-logo {
+        flex-basis: 34px;
+        width: 34px;
+        height: 34px;
+    }
+}

@@ -1,8 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Prescription Details — Salman Dawa Khana')
+@section('title', 'Prescription Details')
 
 @section('content')
+@php
+    $prescription->loadMissing([
+        'clinic',
+        'patient',
+        'visit',
+        'createdBy.role',
+    ]);
+@endphp
+
 <div class="app-shell">
     @include('layouts._sidebar')
 
@@ -13,123 +22,86 @@
             </div>
         @endif
 
-        <div class="prescription-detail-toolbar no-print">
-            <a href="{{ route('prescriptions.index') }}" class="back-link">
-                ← Back to prescriptions
+        <div class="clh-toolbar no-print">
+            <a
+                href="{{ route('prescriptions.index') }}"
+                class="back-link"
+            >
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Back to prescriptions
             </a>
 
-            <div class="prescription-toolbar-actions">
+            <div class="clh-toolbar-actions">
                 <a
                     href="{{ route('prescriptions.edit', $prescription) }}"
                     class="btn btn-outline-secondary"
                 >
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
                     Edit prescription
                 </a>
 
-                <button type="button" class="btn btn-primary" data-print-page>
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-print-page
+                >
+                    <i class="bi bi-printer" aria-hidden="true"></i>
                     Print / Save PDF
                 </button>
             </div>
         </div>
 
-        <article class="prescription-document">
-            <header class="prescription-document-header">
-                <div class="prescription-brand">
-                    <div class="prescription-brand-mark">+</div>
+        <x-clinic-letterhead
+            :clinic="$prescription->clinic"
+            :patient="$prescription->patient"
+            :practitioner="$prescription->createdBy"
+            :date="$prescription->prescribed_at"
+            document-title="Prescription"
+            :reference="$prescription->prescription_no"
+            :visit-type="$prescription->visit?->visit_reason"
+        >
+            <h3 class="clh-section-title">Tashkhees / Diagnosis</h3>
 
-                    <div>
-                        <h1>
-                            {{ $prescription->clinic?->name ?? 'Salman Dawa Khana' }}
-                        </h1>
-                        <p>Patient Care &amp; Herbal Wellness</p>
-                    </div>
-                </div>
+            <p class="clh-diagnosis">
+                {{ $prescription->visit?->diagnosis_name ?: '—' }}
+            </p>
 
-                <div class="prescription-document-meta">
-                    <span>PRESCRIPTION</span>
-                    <strong>{{ $prescription->prescription_no }}</strong>
-                    <small>
-                        {{ $prescription->prescribed_at->format('d F Y, h:i A') }}
-                    </small>
-                    <small>Status: {{ ucfirst($prescription->status) }}</small>
-                </div>
-            </header>
+            <h3 class="clh-section-title">Prescribed nuskha</h3>
 
-            <div class="prescription-document-divider"></div>
+            <div class="clh-prescription-area">
+                <span class="clh-rx" aria-label="Prescription">℞</span>
 
-            <section class="prescription-patient-info">
-                <div>
-                    <span>Patient name</span>
-                    <strong>{{ $prescription->patient?->full_name ?? '—' }}</strong>
-                </div>
-
-                <div>
-                    <span>Patient ID</span>
-                    <strong>{{ $prescription->patient?->patient_code ?? '—' }}</strong>
-                </div>
-
-                <div>
-                    <span>Phone</span>
-                    <strong>{{ $prescription->patient?->phone ?: '—' }}</strong>
-                </div>
-
-                <div>
-                    <span>Visit</span>
-                    <strong>
-                        @if ($prescription->visit)
-                            #{{ $prescription->visit->visit_id }}
-                            — {{ $prescription->visit->visit_reason }}
-                        @else
-                            No linked visit
-                        @endif
-                    </strong>
-                </div>
-            </section>
-
-            @if ($prescription->visit?->diagnosis_name)
-                <section class="prescription-instructions">
-                    <h2>Tashkhees</h2>
-                    <p>{{ $prescription->visit->diagnosis_name }}</p>
-                </section>
-            @endif
-
-            <section class="prescription-document-section">
-                <div class="document-section-heading">
-                    <span class="document-section-number">Rx</span>
-                    <h2>Prescribed nuskha</h2>
-                </div>
-
-                <div class="prescription-items-table p-3">
-                    <p class="mb-0 fw-semibold fs-5">
+                <div class="clh-nuskha">
+                    <h3>
                         {{ $prescription->nuskha_name ?: 'Custom nuskha' }}
-                    </p>
+                    </h3>
                 </div>
-            </section>
-
-            <section class="prescription-instructions">
-                <h2>Patient instructions</h2>
-                <p>{!! nl2br(e(
-                    $prescription->general_instructions
-                        ?: 'No additional instructions.'
-                )) !!}</p>
-            </section>
-
-            <footer class="prescription-document-footer">
-                <div>
-                    <span>Prepared by</span>
-                    <strong>{{ $prescription->createdBy?->name ?? '—' }}</strong>
-                </div>
-
-                <div class="signature-area">
-                    <span>Signature</span>
-                    <div></div>
-                </div>
-            </footer>
-
-            <div class="prescription-print-note">
-                Prescription status: {{ ucfirst($prescription->status) }}.
             </div>
-        </article>
+
+            <h3 class="clh-section-title">Patient instructions</h3>
+
+            <p class="clh-instructions">{{ $prescription->general_instructions }}</p>
+
+            <p class="clh-follow-up">
+                Follow-up: ____________________
+            </p>
+        </x-clinic-letterhead>
+
+        <div class="clh-screen-details no-print">
+            <p class="text-muted mb-0">
+                Prescription status:
+                <strong>{{ ucfirst($prescription->status) }}</strong>
+
+                @if ($prescription->visit)
+                    · Linked visit:
+                    <a
+                        href="{{ route('visits.show', $prescription->visit) }}"
+                    >
+                        #{{ $prescription->visit->visit_id }}
+                    </a>
+                @endif
+            </p>
+        </div>
     </main>
 </div>
 @endsection

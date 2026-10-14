@@ -129,31 +129,40 @@ class PrescriptionController extends Controller
 
     public function store(Request $request)
     {
-    $data = $this->validatePrescription($request);
-    $nuskhaName = $this->resolveNuskhaName($data);
+        $data = $this->validatePrescription($request);
+        $nuskhaName = $this->resolveNuskhaName($data);
 
-    $prescription = DB::transaction(function () use ($data, $nuskhaName) {
-        $prescription = Prescription::create([
-            'clinic_id' => Auth::user()->clinic_id,
-            'patient_id' => $data['patient_id'],
-            'visit_id' => $data['visit_id'] ?? null,
-            'created_by_user_id' => Auth::id(),
-            'prescription_no' => 'RX-' . (string) Str::ulid(),
-            'nuskha_name' => $nuskhaName,
-            'prescribed_at' => $data['prescribed_at'],
-            'general_instructions' =>
-                $data['general_instructions'] ?? null,
-            'status' => $data['status'],
-        ]);
+        $prescription = DB::transaction(function () use ($data, $nuskhaName) {
+            $prescription = Prescription::create([
+                'clinic_id' => Auth::user()->clinic_id,
+                'patient_id' => $data['patient_id'],
+                'visit_id' => $data['visit_id'] ?? null,
+                'created_by_user_id' => Auth::id(),
+                'prescription_no' => 'TMP-' . (string) Str::ulid(),
+                'nuskha_name' => $nuskhaName,
+                'prescribed_at' => $data['prescribed_at'],
+                'general_instructions' =>
+                    $data['general_instructions'] ?? null,
+                'status' => $data['status'],
+            ]);
 
-        $this->saveItems($prescription, $data['items']);
+            $prescription->update([
+                'prescription_no' => 'RX' . str_pad(
+                    (string) $prescription->prescription_id,
+                    2,
+                    '0',
+                    STR_PAD_LEFT
+                ),
+            ]);
 
-        return $prescription;
-    });
+            $this->saveItems($prescription, $data['items']);
 
-    return redirect()
-        ->route('prescriptions.show', $prescription)
-        ->with('success', 'Prescription created successfully.');
+            return $prescription;
+        });
+
+        return redirect()
+            ->route('prescriptions.show', $prescription)
+            ->with('success', 'Prescription created successfully.');
     }
     /*
     |--------------------------------------------------------------------------

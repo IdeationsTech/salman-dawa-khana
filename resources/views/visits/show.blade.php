@@ -1,9 +1,15 @@
 @extends('layouts.app')
 
-@section('title', 'Visit Details — Salman Dawa Khana')
+@section('title', 'Visit Details')
 
 @section('content')
 @php
+    $visit->loadMissing([
+        'clinic',
+        'patient',
+        'recordedBy.role',
+    ]);
+
     $statusLabels = [
         'in_progress' => 'In progress',
         'completed' => 'Completed',
@@ -13,101 +19,104 @@
 @endphp
 
 <div class="app-shell">
-
-    {{-- VISIT DETAILS — Sidebar --}}
     @include('layouts._sidebar')
-    
+
     <main class="dashboard-main">
-
-        <div class="form-page-header">
-            <a href="{{ route('visits.index') }}" class="back-link">
-                ← Back to visits
-            </a>
-            <h1>Visit #{{ $visit->visit_id }}</h1>
-            <p>Patient information and consultation details.</p>
-        </div>
-
         @if (session('success'))
-            <div class="alert alert-success" role="alert">
+            <div class="alert alert-success no-print" role="alert">
                 {{ session('success') }}
             </div>
         @endif
 
-        {{-- VISIT DETAILS — Patient --}}
-        <section class="visit-form-panel">
-            <div class="visit-form-heading">
-                <div class="form-section-number">01</div>
-                <div>
-                    <h2>Patient information</h2>
-                    <p>Patient linked to this visit.</p>
-                </div>
-            </div>
+        <div class="clh-toolbar no-print">
+            <a href="{{ route('visits.index') }}" class="back-link">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Back to visits
+            </a>
 
-            <div class="visit-form-grid">
-                <div class="form-field">
-                    <span class="form-label d-block">Full Name</span>
-                    <strong>
-                        {{ $visit->patient?->full_name ?? 'Patient unavailable' }}
-                    </strong>
-                </div>
-
-                <div class="form-field">
-                    <span class="form-label d-block">Patient Code</span>
-                    <strong>
-                        {{ $visit->patient?->patient_code ?? '—' }}
-                    </strong>
-                </div>
-
-                <div class="form-field">
-                    <span class="form-label d-block">Phone Number</span>
-                    <strong>{{ $visit->patient?->phone ?: '—' }}</strong>
-                </div>
-
-                <div class="form-field">
-                    <span class="form-label d-block">Gender</span>
-                    <strong>{{ $visit->patient?->gender ?: '—' }}</strong>
-                </div>
-
-                <div class="form-field">
-                    <span class="form-label d-block">Emirates ID</span>
-                    <strong>{{ $visit->patient?->emirates_id ?: '—' }}</strong>
-                </div>
-
-                <div class="form-field">
-                    <span class="form-label d-block">Date of Birth</span>
-                    <strong>
-                        {{ $visit->patient?->date_of_birth?->format('d M Y') ?? '—' }}
-                    </strong>
-                </div>
-            </div>
-
-            @if ($visit->patient)
-                <div class="mt-3">
+            <div class="clh-toolbar-actions">
+                @if ($visit->patient)
                     <a
                         href="{{ route('patients.show', $visit->patient) }}"
-                        class="btn btn-outline-primary"
+                        class="btn btn-outline-secondary"
                     >
-                        Open patient profile
+                        Patient profile
                     </a>
-                </div>
-            @endif
-        </section>
+                @endif
 
-        {{-- VISIT DETAILS — Date, Time and Status --}}
-        <section class="visit-form-panel" data-visit-calendar-form>
+                <a
+                    href="{{ route('visits.edit', $visit) }}"
+                    class="btn btn-outline-secondary"
+                >
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                    Edit visit
+                </a>
+
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-print-page
+                >
+                    <i class="bi bi-printer" aria-hidden="true"></i>
+                    Print patient slip
+                </button>
+            </div>
+        </div>
+
+        <x-clinic-letterhead
+            :clinic="$visit->clinic"
+            :patient="$visit->patient"
+            :practitioner="$visit->recordedBy"
+            :date="$visit->visit_date"
+            document-title="Patient / visit slip"
+            :reference="'Visit #' . $visit->visit_id"
+            :visit-type="$visit->visit_reason"
+        >
+            <h3 class="clh-section-title">Tashkhees / Diagnosis</h3>
+
+            <p class="clh-diagnosis">
+                {{ $visit->diagnosis_name ?: '—' }}
+            </p>
+
+            <h3 class="clh-section-title">Clinical notes</h3>
+
+            <p class="clh-notes">{{ $visit->general_notes }}</p>
+
+            <h3 class="clh-section-title">Prescription</h3>
+
+            <div class="clh-prescription-area">
+                <span class="clh-rx" aria-label="Prescription">℞</span>
+            </div>
+
+            <p class="clh-follow-up">
+                Next visit / follow-up: ____________________
+            </p>
+        </x-clinic-letterhead>
+
+        <section
+            class="visit-form-panel clh-screen-details no-print"
+            data-visit-calendar-form
+        >
             <div class="visit-form-heading">
-                <div class="form-section-number">02</div>
                 <div>
-                    <h2>Visit details</h2>
-                    <p>Date, time and recorded visit information.</p>
+                    <h2>Visit information</h2>
+                    <p>Calendar and record status.</p>
                 </div>
             </div>
 
             <div class="visit-form-grid">
                 <div class="form-field">
+                    <span class="form-label d-block">Status</span>
+                    <strong>
+                        {{ $statusLabels[$visit->status] ?? 'Not recorded' }}
+                    </strong>
+                </div>
+
+                <div class="form-field">
                     <label for="detail_visit_date" class="form-label">
-                        Gregorian Date
+                        Gregorian date
                     </label>
+
                     <input
                         type="date"
                         id="detail_visit_date"
@@ -119,7 +128,10 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="detail_visit_day" class="form-label">Day</label>
+                    <label for="detail_visit_day" class="form-label">
+                        Day
+                    </label>
+
                     <input
                         type="text"
                         id="detail_visit_day"
@@ -132,91 +144,25 @@
 
                 <div class="form-field">
                     <label for="detail_hijri_date" class="form-label">
-                        Hijri Date — Umm al-Qura
+                        Hijri date — Umm al-Qura
                     </label>
+
                     <input
                         type="text"
                         id="detail_hijri_date"
                         class="form-control"
-                        placeholder="Calculated from visit date"
                         data-visit-hijri
                         readonly
                     >
+
                     <small
                         class="form-help"
                         data-visit-calendar-message
                         aria-live="polite"
-                    >
-                        Calculated from the Gregorian date.
-                    </small>
-                </div>
-
-                <div class="form-field">
-                    <span class="form-label d-block">Visit Time — UAE</span>
-                    <strong>{{ $visit->visit_date->format('h:i A') }}</strong>
-                </div>
-
-                <div class="form-field">
-                    <span class="form-label d-block">Visit Type</span>
-                    <strong>{{ $visit->visit_reason ?: '—' }}</strong>
-                </div>
-
-                <div class="form-field">
-                    <span class="form-label d-block">Status</span>
-                    <strong>
-                        {{ $statusLabels[$visit->status] ?? 'Not recorded' }}
-                    </strong>
-                </div>
-
-                <div class="form-field">
-                    <span class="form-label d-block">Recorded By</span>
-                    <strong>{{ $visit->recordedBy?->name ?? '—' }}</strong>
+                    ></small>
                 </div>
             </div>
         </section>
-
-        {{-- VISIT DETAILS — Tashkhees --}}
-        <section class="visit-form-panel">
-            <div class="visit-form-heading">
-                <div class="form-section-number">03</div>
-                <div>
-                    <h2>Tashkhees and notes</h2>
-                    <p>Information recorded for this visit.</p>
-                </div>
-            </div>
-
-            <div class="visit-form-grid">
-                <div class="form-field visit-field-wide">
-                    <span class="form-label d-block">
-                        Tashkhees / Illness Name
-                    </span>
-                    <strong>
-                        {{ $visit->diagnosis_name ?: 'Not recorded' }}
-                    </strong>
-                </div>
-
-                <div class="form-field visit-field-wide">
-                    <label for="detail_notes" class="form-label">
-                        Visit Notes
-                    </label>
-                    <textarea
-                        id="detail_notes"
-                        class="form-control"
-                        rows="5"
-                        readonly
-                    >{{ $visit->general_notes ?: 'No notes recorded.' }}</textarea>
-                </div>
-            </div>
-        </section>
-
-        <div class="visit-form-actions">
-            <a href="{{ route('visits.index') }}" class="btn btn-light">
-                Back to visits
-            </a>
-            <a href="{{ route('visits.edit', $visit) }}" class="btn btn-primary">
-                Edit visit
-            </a>
-        </div>
     </main>
 </div>
 @endsection
