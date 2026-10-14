@@ -2028,3 +2028,335 @@ if (document.readyState === 'loading') {
 } else {
     initializeServerPatientFilters();
 }
+
+/*
+|--------------------------------------------------------------------------
+| PAYMENTS — Saved Currency and Bill Balances
+|--------------------------------------------------------------------------
+*/
+
+function initializeCurrencyPaymentForm() {
+    const form = document.querySelector('[data-currency-payment-form]');
+
+    if (!form || form.dataset.currencyPaymentInitialized === '1') {
+        return;
+    }
+
+    form.dataset.currencyPaymentInitialized = '1';
+
+    const get = (name) => form.querySelector(`[data-cp-${name}]`);
+
+    const mode = get('mode');
+    const patient = get('patient');
+    const bill = get('bill');
+    const subtotal = get('subtotal');
+    const discount = get('discount');
+    const amount = get('amount');
+    const method = get('method');
+    const reference = get('reference');
+    const notes = get('notes');
+    const submit = get('submit');
+    const help = get('help');
+
+    const editing = form.dataset.editing === '1';
+    const clinicCurrency = form.dataset.clinicCurrency;
+    const savedCurrency = form.dataset.savedCurrency;
+    const allowPartial = form.dataset.allowPartial === '1';
+    const decimals = form.dataset.moneyDecimals === '0' ? 0 : 2;
+
+    let bills;
+
+    try {
+        bills = JSON.parse(get('bills').textContent);
+
+        if (!Array.isArray(bills)) {
+            throw new Error('Invalid bill data.');
+        }
+    } catch {
+        help.textContent = 'Bill details could not load. Reload the page.';
+        submit.disabled = true;
+        return;
+    }
+
+    const validCurrency = (code) =>
+        ['AED', 'PKR', 'USD'].includes(code);
+
+    const cents = (input) => {
+        const text = input.value.trim();
+
+        if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(text)) {
+            return null;
+        }
+
+        const [whole, fraction = ''] = text.split('.');
+
+        return BigInt(whole) * 100n
+            + BigInt(fraction.padEnd(2, '0'));
+    };
+
+    const decimal = (value) =>
+        `${value / 100n}.${String(value % 100n).padStart(2, '0')}`;
+
+    const money = (value, code) => {
+        if (!validCurrency(code)) return '—';
+
+        if (decimals === 0) {
+            return `${code} ${((value + 50n) / 100n).toLocaleString('en-US')}`;
+        }
+
+        return `${code} ${(value / 100n).toLocaleString('en-US')}`
+            + `.${String(value % 100n).padStart(2, '0')}`;
+    };
+
+    const relatedBills = () => bills.filter(
+        (item) => String(item.patient_id) === patient.value
+    );
+
+    const update = () => {
+        const isNew = mode.value === 'new_bill';
+        const isExisting = mode.value === 'existing_bill';
+        const isUnallocated = mode.value === 'unallocated';
+
+        get('new-section').hidden = !isNew;
+        get('new-fields').disabled = !isNew;
+        get('existing-section').hidden = !isExisting;
+
+        bill.disabled = editing || !isExisting;
+        bill.required = isExisting && !editing;
+        amount.min = isNew ? '0' : '0.01';
+
+        [subtotal, discount, amount, bill].forEach((input) =>
+            input.setCustomValidity('')
+        );
+
+        const records = relatedBills();
+
+        const selected = records.find(
+            (item) => String(item.bill_id) === bill.value
+        );
+
+        const currency = isNew
+            ? clinicCurrency
+            : (isExisting ? selected?.currency : savedCurrency);
+
+        form.querySelectorAll('[data-cp-currency]').forEach((element) => {
+            element.textContent = currency || 'Select bill';
+        });
+
+        const outstanding = records
+            .filter((item) => item.currency === currency)
+            .reduce((sum, item) => sum + BigInt(item.due_cents), 0n);
+
+        const charges = cents(subtotal);
+        const reduction = cents(discount);
+        const received = cents(amount);
+
+        let current = 0n;
+        let others = outstanding;
+        let validBill = validCurrency(currency);
+
+        if (isNew) {
+            validBill = validBill
+                && charges !== null
+                && charges > 0n
+                && reduction !== null
+                && reduction < charges;
+
+            if (
+                charges !== null &&
+                reduction !== null &&
+                reduction >= charges
+            ) {
+                discount.setCustomValidity(
+                    'Discount must be less than the charges amount.'
+                );
+            }
+
+            current = validBill ? charges - reduction : 0n;
+        } else if (isExisting) {
+            validBill = validBill && Boolean(selected);
+            current = selected ? BigInt(selected.due_cents) : 0n;
+            others = outstanding >= current ? outstanding - current : 0n;
+
+            if (bill.value && !validBill) {
+                bill.setCustomValidity(
+                    'Select a bill with a confirmed currency.'
+                );
+            }
+        }
+
+        let error = '';
+
+        if (isExisting && !validBill) {
+            error = 'Select a bill with a confirmed currency.';
+        }
+
+        if (
+            !isUnallocated &&
+            validBill &&
+            received !== null &&
+            received > current
+        ) {
+            error = 'Received amount exceeds this bill’s remaining balance.';
+            amount.setCustomValidity(error);
+        } else if (
+            !isUnallocated &&
+            validBill &&
+            !allowPartial &&
+            received !== null &&
+            received > 0n &&
+            received < current
+        ) {
+            error = 'Partial payments are disabled. Enter the full bill balance.';
+            amount.setCustomValidity(error);
+        }
+
+        amount.max = !isUnallocated && validBill
+            ? decimal(current)
+            : '9999999999.99';
+
+        get('other').textContent = patient.value
+            ? money(others, currency)
+            : '—';
+
+        get('current').textContent = !isUnallocated && validBill
+            ? money(current, currency)
+            : '—';
+
+        get('total').textContent = patient.value
+            ? money(isNew ? outstanding + current : outstanding, currency)
+            : '—';
+
+        const receivedForPreview = received ?? 0n;
+
+        if (isUnallocated) {
+            get('remaining').textContent = 'Not applied to a bill';
+            get('patient-remaining').textContent = money(outstanding, currency);
+        } else if (validBill && !error) {
+            const remaining = current >= receivedForPreview
+                ? current - receivedForPreview
+                : 0n;
+
+            get('remaining').textContent = money(remaining, currency);
+            get('patient-remaining').textContent = patient.value
+                ? money(others + remaining, currency)
+                : '—';
+        } else {
+            get('remaining').textContent = '—';
+            get('patient-remaining').textContent = '—';
+        }
+
+        help.textContent = error || (
+            isUnallocated
+                ? 'This payment is not applied to any bill.'
+                : `Only ${currency || 'the selected currency'} balances are included. `
+                    + 'Other currencies remain separate.'
+        );
+
+        const receiving = received !== null && received > 0n;
+        method.disabled = !receiving;
+        method.required = receiving;
+        reference.disabled = !receiving;
+        notes.disabled = !receiving;
+
+        const needsReference = receiving
+            && ['bank', 'card'].includes(method.value);
+
+        reference.required = needsReference;
+        get('reference-star').hidden = !needsReference;
+
+        get('empty').hidden = !(
+            isExisting &&
+            patient.value &&
+            records.every((item) =>
+                BigInt(item.due_cents) <= 0n
+                && String(item.bill_id) !== bill.value
+            )
+        );
+
+        const receipt = get('receipt');
+        receipt.hidden = !(isExisting && selected);
+
+        if (isExisting && selected) {
+            receipt.href = selected.receipt_url;
+        } else {
+            receipt.removeAttribute('href');
+        }
+
+        submit.textContent = editing
+            ? 'Update payment'
+            : (isNew
+                ? (receiving ? 'Save bill and payment' : 'Save unpaid bill')
+                : 'Save payment');
+    };
+
+    const rebuildBills = (keep = '') => {
+        bill.replaceChildren(new Option('Select bill', ''));
+
+        relatedBills()
+            .filter((item) =>
+                BigInt(item.due_cents) > 0n
+                || String(item.bill_id) === String(keep)
+            )
+            .forEach((item) => {
+                const label = validCurrency(item.currency)
+                    ? money(BigInt(item.due_cents), item.currency)
+                    : 'Currency not recorded';
+
+                const option = new Option(
+                    `${item.bill_no} — ${label} due`,
+                    String(item.bill_id)
+                );
+
+                option.disabled = !validCurrency(item.currency);
+                bill.add(option);
+            });
+
+        bill.value = String(keep);
+
+        if (bill.selectedIndex < 0) {
+            bill.value = '';
+        }
+
+        update();
+    };
+
+    patient.addEventListener('change', () => rebuildBills(''));
+
+    [mode, bill, method].forEach((element) => {
+        element.addEventListener('change', update);
+    });
+
+    [subtotal, discount, amount].forEach((element) => {
+        element.addEventListener('input', update);
+    });
+
+    form.addEventListener('submit', (event) => {
+        update();
+
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+            return;
+        }
+
+        submit.disabled = true;
+        submit.textContent = 'Saving…';
+    });
+
+    window.addEventListener('pageshow', () => {
+        submit.disabled = false;
+        update();
+    });
+
+    rebuildBills(bill.dataset.selectedBill || '');
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeCurrencyPaymentForm
+    );
+} else {
+    initializeCurrencyPaymentForm();
+}
