@@ -109,6 +109,230 @@ class NuskhaOrderController extends Controller
         ]);
     }
 
+
+    /*
+|--------------------------------------------------------------------------
+| Orders — Edit Existing Order
+|--------------------------------------------------------------------------
+*/
+
+    public function edit(NuskhaOrder $order)
+    {
+        $this->ensureClinic($order);
+
+        if (in_array($order->status, ['completed', 'cancelled'], true)) {
+            return redirect()
+                ->route('orders.show', $order)
+                ->withErrors([
+                    'order' => 'Completed or cancelled orders cannot be edited.',
+                ]);
+        }
+
+        $order->load([
+            'items' => fn ($query) => $query->orderBy('sort_order'),
+        ]);
+
+        $paidCents = 0;
+
+        foreach (
+            $order->payments()
+                ->where('clinic_id', $this->clinicId())
+                ->get(['amount']) as $payment
+        ) {
+            $paidCents += $this->scaled($payment->amount, 2);
+        }
+
+        return view('orders.edit', [
+            'order' => $order,
+            'clinic' => auth()->user()->clinic,
+            'units' => self::UNITS,
+            'paidAmount' => $this->decimal($paidCents),
+        ]);
+    }
+
+    public function update(Request $request, NuskhaOrder $order)
+    {
+        $this->ensureClinic($order);
+
+        $data = $request->validate([
+            'customer_name' => ['required', 'string', 'max:160'],
+
+            'customer_phone' => [
+                'bail',
+                'required',
+                'string',
+                'max:16',
+                new InternationalPhone(),
+            ],
+
+            'ordered_at' => [
+                'bail',
+                'required',
+                'date_format:Y-m-d\TH:i',
+                'after_or_equal:1000-01-01',
+                'before_or_equal:9999-12-31 23:59:59',
+            ],
+
+            'order_source' => ['required', 'in:walk_in,phone'],
+            'fulfillment_method' => ['required', 'in:pickup,delivery'],
+
+            'delivery_address' => [
+                'exclude_unless:fulfillment_method,delivery',
+                'required',
+                'string',
+                'max:500',
+            ],
+
+            'discount' => $this->moneyRules(),
+            'delivery_fee' => $this->moneyRules(),
+            'notes' => ['nullable', 'string', 'max:5000'],
+
+            'items' => ['required', 'array', 'min:1', 'max:50'],
+
+            'items.*.item_id' => [
+                'required',
+                'integer',
+                'distinct',
+                Rule::exists('nuskha_order_items', 'nuskha_order_item_id')
+                    ->where('nuskha_order_id', $order->nuskha_order_id),
+            ],
+
+            'items.*.quantity' => [
+                'required',
+                'numeric',
+                'min:0.001',
+                'max:1000',
+                'regex:/^\d{1,4}(?:\.\d{1,3})?$/',
+            ],
+
+            'items.*.unit' => ['required', Rule::in(self::UNITS)],
+            'items.*.unit_price' => $this->moneyRules(),
+            'items.*.instructions' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        DB::transaction(function () use ($order, $data) {
+            $locked = NuskhaOrder::query()
+                ->where('clinic_id', $this->clinicId())
+                ->whereKey($order->nuskha_order_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (in_array($locked->status, ['completed', 'cancelled'], true)) {
+                throw ValidationException::withMessages([
+                    'order' => 'Completed or cancelled orders cannot be edited.',
+                ]);
+            }
+
+            $existingItems = $locked->items()
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('nuskha_order_item_id');
+
+            $submittedIds = collect($data['items'])
+                ->pluck('item_id')
+                ->map(fn ($id) => (int) $id)
+                ->sort()
+                ->values()
+                ->all();
+
+            $existingIds = $existingItems->keys()
+                ->map(fn ($id) => (int) $id)
+                ->sort()
+                ->values()
+                ->all();
+
+            if ($submittedIds !== $existingIds) {
+                throw ValidationException::withMessages([
+                    'items' => 'The order items changed. Reload the edit page.',
+                ]);
+            }
+
+            $subtotal = 0;
+
+            foreach ($data['items'] as $item) {
+                $quantity = $this->scaled($item['quantity'], 3);
+                $unitPrice = $this->scaled($item['unit_price'], 2);
+
+                $lineTotal = intdiv(
+                    ($quantity * $unitPrice) + 500,
+                    1000
+                );
+
+                $subtotal += $lineTotal;
+
+                if ($subtotal > 999999999999) {
+                    throw ValidationException::withMessages([
+                        'items' => 'The order amount exceeds the supported limit.',
+                    ]);
+                }
+
+                $existingItems->get((int) $item['item_id'])->update([
+                    'quantity' => $this->decimal($quantity, 3),
+                    'unit' => $item['unit'],
+                    'unit_price' => $this->decimal($unitPrice),
+                    'line_total' => $this->decimal($lineTotal),
+                    'instructions' => $item['instructions'] ?? null,
+                ]);
+            }
+
+            $discount = $this->scaled($data['discount'], 2);
+
+            if ($discount > $subtotal) {
+                throw ValidationException::withMessages([
+                    'discount' => 'Discount cannot exceed the item subtotal.',
+                ]);
+            }
+
+            $deliveryFee = $data['fulfillment_method'] === 'delivery'
+                ? $this->scaled($data['delivery_fee'], 2)
+                : 0;
+
+            $total = $subtotal - $discount + $deliveryFee;
+
+            if ($total <= 0 || $total > 999999999999) {
+                throw ValidationException::withMessages([
+                    'discount' => 'The order total must be positive and within the supported limit.',
+                ]);
+            }
+
+            $paidCents = 0;
+
+            foreach (
+                $locked->payments()
+                    ->where('clinic_id', $this->clinicId())
+                    ->get(['amount']) as $payment
+            ) {
+                $paidCents += $this->scaled($payment->amount, 2);
+            }
+
+            if ($total < $paidCents) {
+                throw ValidationException::withMessages([
+                    'items' => 'The revised total cannot be less than the amount already received. Refund handling is required first.',
+                ]);
+            }
+
+            $locked->update([
+                'customer_name' => $data['customer_name'],
+                'customer_phone' => $data['customer_phone'],
+                'ordered_at' => str_replace('T', ' ', $data['ordered_at']) . ':00',
+                'order_source' => $data['order_source'],
+                'fulfillment_method' => $data['fulfillment_method'],
+                'delivery_address' => $data['fulfillment_method'] === 'delivery'
+                    ? $data['delivery_address']
+                    : null,
+                'subtotal' => $this->decimal($subtotal),
+                'discount' => $this->decimal($discount),
+                'delivery_fee' => $this->decimal($deliveryFee),
+                'total_amount' => $this->decimal($total),
+                'notes' => $data['notes'] ?? null,
+            ]);
+        }, 3);
+
+        return redirect()
+            ->route('orders.show', $order)
+            ->with('success', 'Nuskha order updated successfully.');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Orders — Create Form

@@ -149,6 +149,16 @@ Route::middleware(['auth', EnsureClinicAccess::class])
             'store',
         ])->name('orders.store');
 
+        Route::get('/orders/{order}/edit', [
+            NuskhaOrderController::class,
+            'edit',
+        ])->whereNumber('order')->name('orders.edit');
+
+        Route::put('/orders/{order}', [
+            NuskhaOrderController::class,
+            'update',
+        ])->whereNumber('order')->name('orders.update');
+
         Route::get('/orders/{order}', [
             NuskhaOrderController::class,
             'show',
