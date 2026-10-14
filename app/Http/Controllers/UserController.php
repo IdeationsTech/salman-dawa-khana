@@ -19,29 +19,39 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $clinicId = Auth::user()->clinic_id;
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:160'],
+            'status' => [
+                'nullable',
+                Rule::in(['all', 'active', 'inactive']),
+            ],
+        ]);
 
-        $query = User::where('clinic_id', $clinicId)
+        $clinicId = (int) Auth::user()->clinic_id;
+
+        $query = User::query()
+            ->where('clinic_id', $clinicId)
             ->with('role');
 
-        if ($request->filled('search')) {
-            $search = trim((string) $request->input('search'));
+        $search = trim($filters['search'] ?? '');
 
+        if ($search !== '') {
             $query->where(function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                $query
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+
+                if (ctype_digit($search)) {
+                    $query->orWhere('user_id', (int) $search);
+                }
             });
         }
 
-        if (in_array(
-            $request->input('status'),
-            ['active', 'inactive'],
-            true
-        )) {
-            $query->where(
-                'is_active',
-                $request->input('status') === 'active'
-            );
+        $status = $filters['status'] ?? 'all';
+
+        if ($status !== 'all') {
+            $query->where('is_active', $status === 'active');
         }
 
         $users = $query
@@ -50,20 +60,23 @@ class UserController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        $totalUsers = User::where('clinic_id', $clinicId)
-            ->count();
+        $base = User::query()->where('clinic_id', $clinicId);
 
-        $activeUsers = User::where('clinic_id', $clinicId)
+        $totalUsers = (clone $base)->count();
+
+        $activeUsers = (clone $base)
             ->where('is_active', true)
             ->count();
 
-        $doctorUsers = User::where('clinic_id', $clinicId)
+        $doctorUsers = (clone $base)
             ->whereHas('role', function ($query) {
                 $query->where('name', 'Doctor');
             })
             ->count();
 
-        $roleCount = Role::count();
+        $roleCount = Role::query()
+            ->whereIn('name', ['Owner', 'Doctor', 'Receptionist'])
+            ->count();
 
         return view('users.index', compact(
             'users',

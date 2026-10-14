@@ -2360,3 +2360,45 @@ if (document.readyState === 'loading') {
 } else {
     initializeCurrencyPaymentForm();
 }
+
+/*
+|--------------------------------------------------------------------------
+| USERS — Server Search and Status Filters
+|--------------------------------------------------------------------------
+*/
+
+function initializeServerUserFilters() {
+    const form = document.querySelector('[data-server-user-filters]');
+
+    if (!form || form.dataset.serverUsersInitialized === '1') {
+        return;
+    }
+
+    form.dataset.serverUsersInitialized = '1';
+
+    const search = form.elements.namedItem('search');
+    const status = form.elements.namedItem('status');
+
+    // Prevent the old handler from hiding only the currently loaded rows.
+    search?.addEventListener('input', (event) => {
+        event.stopImmediatePropagation();
+    }, true);
+
+    search?.addEventListener('change', (event) => {
+        event.stopImmediatePropagation();
+    }, true);
+
+    status?.addEventListener('change', (event) => {
+        event.stopImmediatePropagation();
+        form.requestSubmit();
+    }, true);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeServerUserFilters
+    );
+} else {
+    initializeServerUserFilters();
+}
