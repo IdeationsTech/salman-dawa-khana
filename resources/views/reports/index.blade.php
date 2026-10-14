@@ -4,9 +4,16 @@
 
 @section('content')
 @php
-    $money = fn ($value, $code = null) =>
-        ($code ?? $currency) . ' '
-        . number_format((float) $value, $decimalPlaces);
+    $money = fn ($value, $code) =>
+        ($code ? strtoupper($code) : 'Currency not recorded')
+        . ' ' . number_format((float) $value, $decimalPlaces);
+
+    $methodLabel = fn ($value) => match (strtolower(trim($value ?? ''))) {
+        'bank', 'bank transfer', 'bank_transfer' => 'Bank transfer',
+        'cash' => 'Cash',
+        'card' => 'Card',
+        default => ucfirst($value ?? ''),
+    };
 @endphp
 
 <div class="app-shell">
@@ -18,7 +25,7 @@
                 <p class="dashboard-date">Clinic performance</p>
                 <h1>Reports</h1>
                 <p class="page-subtitle">
-                    Patient and nuskha-order collections, expenses and activity.
+                    Patient and order collections, expenses and activity.
                 </p>
             </div>
 
@@ -28,23 +35,26 @@
             </button>
         </header>
 
-        @if($errors->any())
-            <div class="alert alert-danger no-print">
+        @if ($errors->any())
+            <div class="alert alert-danger no-print" role="alert">
                 <ul class="mb-0">
-                    @foreach($errors->all() as $error)
+                    @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
             </div>
         @endif
 
-        {{-- Reports — Actual Date and Type Filters --}}
         <section class="orders-panel mb-4 no-print">
-            <form method="GET" action="{{ route('reports.index') }}" class="orders-filter-grid">
+            <form
+                method="GET"
+                action="{{ route('reports.index') }}"
+                class="orders-filter-grid"
+            >
                 <label class="form-field">
                     <span class="form-label">Report type</span>
                     <select name="report_type" class="form-select">
-                        @foreach([
+                        @foreach ([
                             'summary' => 'Summary',
                             'payments' => 'Collections',
                             'expenses' => 'Expenses',
@@ -85,42 +95,53 @@
             </form>
         </section>
 
+        @if ($unconfirmedCurrencyCount > 0)
+            <div class="alert alert-warning" role="status">
+                {{ $unconfirmedCurrencyCount }} records have no confirmed currency.
+                They appear below but are excluded from financial totals.
+            </div>
+        @endif
+
         <section class="orders-panel mb-4">
             <h2 class="h5">{{ $clinic->name }}</h2>
             <p class="text-muted">
                 {{ $from->format('d M Y') }} — {{ $to->format('d M Y') }}
             </p>
 
+            <p class="text-muted small">
+                Summary cards show {{ $currency }} only.
+            </p>
+
             <div class="payment-summary-grid">
                 <article class="payment-summary-card">
                     <span>Patient collections</span>
-                    <strong>{{ $money($patientIncome) }}</strong>
+                    <strong>{{ $money($patientIncome, $currency) }}</strong>
                     <small>Received patient payments</small>
                 </article>
 
                 <article class="payment-summary-card">
                     <span>Nuskha order collections</span>
-                    <strong>{{ $money($orderIncome) }}</strong>
-                    <small>Received in {{ $currency }}</small>
+                    <strong>{{ $money($orderIncome, $currency) }}</strong>
+                    <small>Received order payments</small>
                 </article>
 
                 <article class="payment-summary-card">
                     <span>Total collections</span>
-                    <strong>{{ $money($totalIncome) }}</strong>
+                    <strong>{{ $money($totalIncome, $currency) }}</strong>
                     <small>Patient + order payments</small>
                 </article>
 
                 <article class="payment-summary-card">
                     <span>Expenses</span>
-                    <strong>{{ $money($totalExpenses) }}</strong>
-                    <small>Recorded clinic expenses</small>
+                    <strong>{{ $money($totalExpenses, $currency) }}</strong>
+                    <small>Recorded expenses in {{ $currency }}</small>
                 </article>
             </div>
 
             <div class="balance-summary-grid">
                 <div>
                     <span>Collections minus expenses</span>
-                    <strong>{{ $money($netIncome) }}</strong>
+                    <strong>{{ $money($netIncome, $currency) }}</strong>
                 </div>
                 <div>
                     <span>New patients</span>
@@ -134,24 +155,46 @@
 
             <small class="text-muted d-block mt-3">
                 Collections minus expenses is cash flow, not accounting profit.
-                Unpaid order totals are not counted as collections.
+                Unpaid bills and orders are not counted as collections.
             </small>
 
-            @if($currencyTotals->keys()->contains(fn ($code) => $code !== $currency))
-                <div class="mt-3">
-                    <strong>Collections by currency</strong>
-                    @foreach($currencyTotals as $code => $amount)
-                        <p class="mb-1">{{ $money($amount, $code) }}</p>
-                    @endforeach
-                    <small class="text-muted">
-                        Different currencies are shown separately, without conversion.
-                    </small>
-                </div>
-            @endif
+            <h3 class="h6 mt-4">Totals by original currency</h3>
+
+            <div class="table-responsive">
+                <table class="table orders-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Currency</th>
+                            <th class="text-end">Received</th>
+                            <th class="text-end">Expenses</th>
+                            <th class="text-end">Net cash flow</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($currencySummary as $summary)
+                            <tr>
+                                <td>{{ $summary['currency'] }}</td>
+                                <td class="text-end">
+                                    {{ $money($summary['received'], $summary['currency']) }}
+                                </td>
+                                <td class="text-end">
+                                    {{ $money($summary['expenses'], $summary['currency']) }}
+                                </td>
+                                <td class="text-end">
+                                    {{ $money($summary['net'], $summary['currency']) }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <small class="text-muted">
+                Currencies are reported separately without conversion.
+            </small>
         </section>
 
-        {{-- Reports — Patient and Order Collections --}}
-        @if(in_array($reportType, ['summary', 'payments'], true))
+        @if (in_array($reportType, ['summary', 'payments'], true))
             <section class="orders-panel mb-4">
                 <h2 class="h5 mb-3">Received collections</h2>
 
@@ -169,7 +212,7 @@
                         </thead>
 
                         <tbody>
-                            @forelse($collections as $record)
+                            @forelse ($collections as $record)
                                 <tr>
                                     <td>
                                         {{ \Carbon\Carbon::parse($record['date'])->format('d M Y, h:i A') }}
@@ -181,17 +224,15 @@
                                             {{ $record['reference'] }}
                                         </a>
                                     </td>
-                                    <td>
-                                        {{ $record['method'] === 'bank'
-                                            ? 'Bank transfer'
-                                            : ucfirst($record['method']) }}
-                                    </td>
-                                    <td class="text-end text-nowrap">
+                                    <td>{{ $methodLabel($record['method']) }}</td>
+                                    <td class="text-end">
                                         {{ $money($record['amount'], $record['currency']) }}
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6">No collections in this date range.</td></tr>
+                                <tr>
+                                    <td colspan="6">No collections in this date range.</td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -199,8 +240,7 @@
             </section>
         @endif
 
-        {{-- Reports — Expenses --}}
-        @if(in_array($reportType, ['summary', 'expenses'], true))
+        @if (in_array($reportType, ['summary', 'expenses'], true))
             <section class="orders-panel">
                 <h2 class="h5 mb-3">Expense records</h2>
 
@@ -216,19 +256,23 @@
                         </thead>
 
                         <tbody>
-                            @forelse($expenses as $expense)
+                            @forelse ($expenses as $expense)
                                 <tr>
-                                    <td>{{ \Carbon\Carbon::parse($expense->expense_date)->format('d M Y') }}</td>
+                                    <td>{{ $expense->expense_date->format('d M Y') }}</td>
                                     <td>
                                         <a href="{{ route('expenses.show', $expense) }}">
                                             {{ $expense->description }}
                                         </a>
                                     </td>
                                     <td>{{ $expense->category }}</td>
-                                    <td class="text-end text-nowrap">{{ $money($expense->amount) }}</td>
+                                    <td class="text-end">
+                                        {{ $money($expense->amount, $expense->currency) }}
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4">No expenses in this date range.</td></tr>
+                                <tr>
+                                    <td colspan="4">No expenses in this date range.</td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
