@@ -8,7 +8,8 @@
         'clinic',
         'patient',
         'visit',
-        'createdBy.role',
+        'doctor',
+        'createdBy',
     ]);
 @endphp
 
@@ -51,28 +52,37 @@
             </div>
         </div>
 
+        @if (!$prescription->doctor)
+            <div class="alert alert-warning clh-screen-notice no-print">
+                No doctor is assigned to this prescription.
+                Open Edit prescription to select the treating Doctor / Hakeem.
+            </div>
+        @endif
+
         <x-clinic-letterhead
             :clinic="$prescription->clinic"
             :patient="$prescription->patient"
-            :practitioner="$prescription->createdBy"
+            :practitioner="$prescription->doctor"
             :date="$prescription->prescribed_at"
             document-title="Prescription"
             :reference="$prescription->prescription_no"
             :visit-type="$prescription->visit?->visit_reason"
         >
-            <h3 class="clh-section-title">Tashkhees / Diagnosis</h3>
+            <div class="clh-diagnosis-block">
+                <h3 class="clh-section-title">Tashkhees / Diagnosis</h3>
 
-            <p class="clh-diagnosis">
-                {{ $prescription->visit?->diagnosis_name ?: '—' }}
-            </p>
-
-            <h3 class="clh-section-title">Prescribed nuskha</h3>
+                <p class="clh-diagnosis">
+                    {{ $prescription->visit?->diagnosis_name ?: '—' }}
+                </p>
+            </div>
 
             <div class="clh-prescription-area">
                 <span class="clh-rx" aria-label="Prescription">℞</span>
 
                 <div class="clh-nuskha">
-                    <h3>
+                    <h3 class="clh-section-title">Prescribed nuskha</h3>
+
+                    <h3 class="clh-nuskha-name">
                         {{ $prescription->nuskha_name ?: 'Custom nuskha' }}
                     </h3>
                 </div>
@@ -87,21 +97,49 @@
             </p>
         </x-clinic-letterhead>
 
-        <div class="clh-screen-details no-print">
-            <p class="text-muted mb-0">
-                Prescription status:
-                <strong>{{ ucfirst($prescription->status) }}</strong>
+        <section class="clh-screen-details no-print">
+            <div class="visit-form-panel">
+                <div class="visit-form-heading">
+                    <div>
+                        <h2>Prescription information</h2>
+                        <p>Practitioner and record details.</p>
+                    </div>
+                </div>
 
-                @if ($prescription->visit)
-                    · Linked visit:
-                    <a
-                        href="{{ route('visits.show', $prescription->visit) }}"
-                    >
-                        #{{ $prescription->visit->visit_id }}
-                    </a>
-                @endif
-            </p>
-        </div>
+                <div class="visit-form-grid">
+                    <div class="form-field">
+                        <span class="form-label d-block">Doctor / Hakeem</span>
+                        <strong>
+                            {{ $prescription->doctor?->name ?: 'Not assigned' }}
+                        </strong>
+                    </div>
+
+                    <div class="form-field">
+                        <span class="form-label d-block">Recorded by</span>
+                        <strong>
+                            {{ $prescription->createdBy?->name ?: '—' }}
+                        </strong>
+                    </div>
+
+                    <div class="form-field">
+                        <span class="form-label d-block">Status</span>
+                        <strong>
+                            {{ ucfirst($prescription->status ?? '—') }}
+                        </strong>
+                    </div>
+
+                    @if ($prescription->visit)
+                        <div class="form-field">
+                            <span class="form-label d-block">Linked visit</span>
+
+                            <a href="{{ route('visits.show', $prescription->visit) }}">
+                                Visit #{{ $prescription->visit->visit_id }}
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </section>
     </main>
 </div>
 @endsection

@@ -7,7 +7,8 @@
     $visit->loadMissing([
         'clinic',
         'patient',
-        'recordedBy.role',
+        'doctor',
+        'recordedBy',
     ]);
 
     $statusLabels = [
@@ -40,6 +41,7 @@
                         href="{{ route('patients.show', $visit->patient) }}"
                         class="btn btn-outline-secondary"
                     >
+                        <i class="bi bi-person" aria-hidden="true"></i>
                         Patient profile
                     </a>
                 @endif
@@ -63,29 +65,38 @@
             </div>
         </div>
 
+        @if (!$visit->doctor)
+            <div class="alert alert-warning clh-screen-notice no-print">
+                No doctor is assigned to this visit.
+                Open Edit visit to select the treating Doctor / Hakeem.
+            </div>
+        @endif
+
         <x-clinic-letterhead
             :clinic="$visit->clinic"
             :patient="$visit->patient"
-            :practitioner="$visit->recordedBy"
+            :practitioner="$visit->doctor"
             :date="$visit->visit_date"
             document-title="Patient / visit slip"
             :reference="'Visit #' . $visit->visit_id"
             :visit-type="$visit->visit_reason"
         >
-            <h3 class="clh-section-title">Tashkhees / Diagnosis</h3>
-
-            <p class="clh-diagnosis">
-                {{ $visit->diagnosis_name ?: '—' }}
-            </p>
+            <div class="clh-diagnosis-block">
+                <h3 class="clh-section-title">Tashkhees / Diagnosis</h3>
+                <p class="clh-diagnosis">
+                    {{ $visit->diagnosis_name ?: '—' }}
+                </p>
+            </div>
 
             <h3 class="clh-section-title">Clinical notes</h3>
-
             <p class="clh-notes">{{ $visit->general_notes }}</p>
-
-            <h3 class="clh-section-title">Prescription</h3>
 
             <div class="clh-prescription-area">
                 <span class="clh-rx" aria-label="Prescription">℞</span>
+
+                <div class="clh-nuskha">
+                    <h3 class="clh-section-title">Prescription</h3>
+                </div>
             </div>
 
             <p class="clh-follow-up">
@@ -100,11 +111,21 @@
             <div class="visit-form-heading">
                 <div>
                     <h2>Visit information</h2>
-                    <p>Calendar and record status.</p>
+                    <p>Practitioner, calendar and record status.</p>
                 </div>
             </div>
 
             <div class="visit-form-grid">
+                <div class="form-field">
+                    <span class="form-label d-block">Doctor / Hakeem</span>
+                    <strong>{{ $visit->doctor?->name ?: 'Not assigned' }}</strong>
+                </div>
+
+                <div class="form-field">
+                    <span class="form-label d-block">Recorded by</span>
+                    <strong>{{ $visit->recordedBy?->name ?: '—' }}</strong>
+                </div>
+
                 <div class="form-field">
                     <span class="form-label d-block">Status</span>
                     <strong>
@@ -121,7 +142,7 @@
                         type="date"
                         id="detail_visit_date"
                         class="form-control"
-                        value="{{ $visit->visit_date->format('Y-m-d') }}"
+                        value="{{ $visit->visit_date?->format('Y-m-d') }}"
                         data-visit-date
                         readonly
                     >
@@ -136,7 +157,7 @@
                         type="text"
                         id="detail_visit_day"
                         class="form-control"
-                        value="{{ $visit->visit_date->format('l') }}"
+                        value="{{ $visit->visit_date?->format('l') }}"
                         data-visit-weekday
                         readonly
                     >
