@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Patient;
+use App\Models\Role;
+use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,17 +12,24 @@ use Illuminate\Validation\Rule;
 
 class VisitController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — List, Search and Combined Filters
-    |--------------------------------------------------------------------------
-    */
+    private const VISIT_REASONS = [
+        'General visit',
+        'Follow-up',
+        'New consultation',
+        'Prescription refill',
+    ];
+
+    private const STATUSES = [
+        'in_progress',
+        'completed',
+        'follow_up_required',
+        'cancelled',
+    ];
 
     public function index(Request $request)
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
-
             'date_range' => [
                 'nullable',
                 Rule::in([
@@ -30,50 +39,49 @@ class VisitController extends Controller
                     'this month',
                 ]),
             ],
-
             'visit_type' => [
                 'nullable',
-                Rule::in([
-                    'all',
-                    'General visit',
-                    'Follow-up',
-                    'New consultation',
-                    'Prescription refill',
-                ]),
+                Rule::in(['all', ...self::VISIT_REASONS]),
             ],
-
             'status' => [
                 'nullable',
-                Rule::in([
-                    'all',
-                    'not_recorded',
-                    'in_progress',
-                    'completed',
-                    'follow_up_required',
-                    'cancelled',
-                ]),
+                Rule::in(['all', 'not_recorded', ...self::STATUSES]),
             ],
         ]);
 
-        $clinicId = Auth::user()->clinic_id;
+        $clinicId = (int) Auth::user()->clinic_id;
         $today = now('Asia/Dubai');
 
         $query = Visit::query()
             ->where('clinic_id', $clinicId)
-            ->with(['patient', 'recordedBy']);
+            ->with([
+                'patient' => fn ($query) =>
+                    $query->where('clinic_id', $clinicId),
+                'recordedBy' => fn ($query) =>
+                    $query->where('clinic_id', $clinicId),
+                'doctor' => fn ($query) =>
+                    $query->where('clinic_id', $clinicId),
+            ]);
 
-        // Search by patient, phone, reference, diagnosis or visit ID.
         $search = trim($filters['search'] ?? '');
 
         if ($search !== '') {
-            $query->where(function ($query) use ($search) {
-                $query->where('visit_reason', 'like', "%{$search}%")
+            $query->where(function ($query) use ($search, $clinicId) {
+                $query
+                    ->where('visit_reason', 'like', "%{$search}%")
                     ->orWhere('diagnosis_name', 'like', "%{$search}%")
-                    ->orWhereHas('patient', function ($patientQuery) use ($search) {
+                    ->orWhereHas('patient', function ($patientQuery) use (
+                        $search,
+                        $clinicId
+                    ) {
                         $patientQuery
-                            ->where('full_name', 'like', "%{$search}%")
-                            ->orWhere('patient_code', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%");
+                            ->where('clinic_id', $clinicId)
+                            ->where(function ($patientQuery) use ($search) {
+                                $patientQuery
+                                    ->where('full_name', 'like', "%{$search}%")
+                                    ->orWhere('patient_code', 'like', "%{$search}%")
+                                    ->orWhere('phone', 'like', "%{$search}%");
+                            });
                     });
 
                 if (ctype_digit($search)) {
@@ -82,7 +90,6 @@ class VisitController extends Controller
             });
         }
 
-        // Date filters use the existing UAE-local visit_date values.
         $range = $filters['date_range'] ?? 'all dates';
         $start = null;
         $end = null;
@@ -91,7 +98,6 @@ class VisitController extends Controller
             $start = $today->copy()->startOfDay();
             $end = $start->copy()->addDay();
         } elseif ($range === 'this week') {
-            // Monday through Sunday.
             $start = $today->copy()->startOfWeek(1);
             $end = $start->copy()->addWeek();
         } elseif ($range === 'this month') {
@@ -101,19 +107,10 @@ class VisitController extends Controller
 
         if ($start !== null) {
             $query
-                ->where(
-                    'visit_date',
-                    '>=',
-                    $start->format('Y-m-d H:i:s')
-                )
-                ->where(
-                    'visit_date',
-                    '<',
-                    $end->format('Y-m-d H:i:s')
-                );
+                ->where('visit_date', '>=', $start->format('Y-m-d H:i:s'))
+                ->where('visit_date', '<', $end->format('Y-m-d H:i:s'));
         }
 
-        // Visit type and status are separate filters.
         $type = $filters['visit_type'] ?? 'all';
 
         if ($type !== 'all') {
@@ -128,29 +125,26 @@ class VisitController extends Controller
             $query->where('status', $status);
         }
 
-        // Filter before pagination so every matching record is included.
         $visits = $query
             ->orderByDesc('visit_date')
             ->orderByDesc('visit_id')
             ->paginate(100)
             ->withQueryString();
 
-        // Summary cards show clinic-wide totals.
-        $totalVisits = Visit::where('clinic_id', $clinicId)
-            ->count();
+        $base = Visit::query()->where('clinic_id', $clinicId);
 
-        $todayVisits = Visit::where('clinic_id', $clinicId)
+        $totalVisits = (clone $base)->count();
+
+        $todayVisits = (clone $base)
             ->whereDate('visit_date', $today->toDateString())
             ->count();
 
-        $monthVisits = Visit::where('clinic_id', $clinicId)
-            ->whereBetween('visit_date', [
-                $today->copy()->startOfMonth()->format('Y-m-d H:i:s'),
-                $today->copy()->endOfMonth()->format('Y-m-d H:i:s'),
-            ])
+        $monthVisits = (clone $base)
+            ->where('visit_date', '>=', $today->copy()->startOfMonth()->format('Y-m-d H:i:s'))
+            ->where('visit_date', '<', $today->copy()->startOfMonth()->addMonth()->format('Y-m-d H:i:s'))
             ->count();
 
-        $followUpVisits = Visit::where('clinic_id', $clinicId)
+        $followUpVisits = (clone $base)
             ->where('visit_reason', 'Follow-up')
             ->count();
 
@@ -163,81 +157,72 @@ class VisitController extends Controller
         ));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — Create
-    |--------------------------------------------------------------------------
-    */
-
     public function create()
     {
         $patients = $this->patientOptions();
+        $doctors = $this->doctorOptions();
 
-        return view('visits.create', compact('patients'));
+        return view('visits.create', compact('patients', 'doctors'));
     }
 
     public function store(Request $request)
     {
         $data = $this->validatedVisit($request);
 
-        $data['clinic_id'] = Auth::user()->clinic_id;
-        $data['recorded_by_user_id'] = Auth::id();
-
-        Visit::create($data);
+        Visit::create([
+            ...$data,
+            'clinic_id' => Auth::user()->clinic_id,
+            'recorded_by_user_id' => Auth::id(),
+        ]);
 
         return redirect()
             ->route('visits.index')
             ->with('success', 'Visit created successfully.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — Show
-    |--------------------------------------------------------------------------
-    */
-
     public function show(Visit $visit)
     {
         $this->ensureClinicAccess($visit);
 
-        $visit->load(['patient', 'recordedBy']);
+        $clinicId = (int) Auth::user()->clinic_id;
+
+        $visit->load([
+            'clinic',
+            'patient' => fn ($query) =>
+                $query->where('clinic_id', $clinicId),
+            'recordedBy' => fn ($query) =>
+                $query->where('clinic_id', $clinicId),
+            'doctor' => fn ($query) =>
+                $query->where('clinic_id', $clinicId)->with('role'),
+        ]);
 
         return view('visits.show', compact('visit'));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — Edit and Update
-    |--------------------------------------------------------------------------
-    */
 
     public function edit(Visit $visit)
     {
         $this->ensureClinicAccess($visit);
 
         $patients = $this->patientOptions();
+        $doctors = $this->doctorOptions($visit);
 
-        return view('visits.create', compact('visit', 'patients'));
+        return view('visits.create', compact(
+            'visit',
+            'patients',
+            'doctors'
+        ));
     }
 
     public function update(Request $request, Visit $visit)
     {
         $this->ensureClinicAccess($visit);
 
-        $data = $this->validatedVisit($request, $visit);
-
-        $visit->update($data);
+        $visit->update($this->validatedVisit($request, $visit));
 
         return redirect()
             ->route('visits.index')
             ->with('success', 'Visit updated successfully.');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — Delete
-    |--------------------------------------------------------------------------
-    */
 
     public function destroy(Visit $visit)
     {
@@ -259,56 +244,92 @@ class VisitController extends Controller
             ->with('success', 'Visit deleted successfully.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — Patient Options and Access
-    |--------------------------------------------------------------------------
-    */
-
     private function patientOptions()
     {
         return Patient::query()
             ->where('clinic_id', Auth::user()->clinic_id)
             ->orderBy('full_name')
+            ->get(['patient_id', 'patient_code', 'full_name']);
+    }
+
+    private function doctorOptions(?Visit $visit = null)
+    {
+        $roleIds = Role::query()
+            ->whereIn('name', ['Owner', 'Doctor'])
+            ->pluck('role_id')
+            ->all();
+
+        return User::query()
+            ->where('clinic_id', Auth::user()->clinic_id)
+            ->where(function ($query) use ($roleIds, $visit) {
+                $query->where(function ($eligible) use ($roleIds) {
+                    $eligible
+                        ->where('is_active', true)
+                        ->whereIn('role_id', $roleIds);
+                });
+
+                if ($visit?->doctor_user_id) {
+                    $query->orWhere('user_id', $visit->doctor_user_id);
+                }
+            })
+            ->with('role')
+            ->orderBy('name')
             ->get([
-                'patient_id',
-                'patient_code',
-                'full_name',
+                'user_id',
+                'clinic_id',
+                'role_id',
+                'name',
+                'is_active',
             ]);
     }
 
     private function ensureClinicAccess(Visit $visit): void
     {
         abort_unless(
-            (int) $visit->clinic_id ===
-                (int) Auth::user()->clinic_id,
+            (int) $visit->clinic_id === (int) Auth::user()->clinic_id,
             404
         );
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | VISITS — Validation
-    |--------------------------------------------------------------------------
-    */
 
     private function validatedVisit(
         Request $request,
         ?Visit $visit = null
     ): array {
+        $clinicId = (int) Auth::user()->clinic_id;
+
         $patientRules = [
             'required',
             'integer',
             Rule::exists('patients', 'patient_id')
-                ->where('clinic_id', Auth::user()->clinic_id),
+                ->where('clinic_id', $clinicId),
         ];
 
         if ($visit !== null) {
             $patientRules[] = Rule::in([$visit->patient_id]);
         }
 
+        $roleIds = Role::query()
+            ->whereIn('name', ['Owner', 'Doctor'])
+            ->pluck('role_id')
+            ->all();
+
+        $doctorRule = Rule::exists('users', 'user_id')
+            ->where('clinic_id', $clinicId)
+            ->where(function ($query) use ($roleIds, $visit) {
+                $query->where(function ($eligible) use ($roleIds) {
+                    $eligible
+                        ->where('is_active', true)
+                        ->whereIn('role_id', $roleIds);
+                });
+
+                if ($visit?->doctor_user_id) {
+                    $query->orWhere('user_id', $visit->doctor_user_id);
+                }
+            });
+
         $data = $request->validate([
             'patient_id' => $patientRules,
+            'doctor_user_id' => ['required', 'integer', $doctorRule],
 
             'visit_date' => [
                 'required',
@@ -317,69 +338,41 @@ class VisitController extends Controller
                 'before_or_equal:9999-12-31',
             ],
 
-            'visit_time' => [
-                'required',
-                'date_format:H:i',
-            ],
+            'visit_time' => ['required', 'date_format:H:i'],
 
             'visit_reason' => [
                 'required',
-                Rule::in([
-                    'General visit',
-                    'Follow-up',
-                    'New consultation',
-                    'Prescription refill',
-                ]),
+                Rule::in(self::VISIT_REASONS),
             ],
 
             'status' => [
                 'required',
-                Rule::in([
-                    'in_progress',
-                    'completed',
-                    'follow_up_required',
-                    'cancelled',
-                ]),
+                Rule::in(self::STATUSES),
             ],
 
-            'diagnosis_name' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'general_notes' => [
-                'nullable',
-                'string',
-            ],
+            'diagnosis_name' => ['nullable', 'string', 'max:255'],
+            'general_notes' => ['nullable', 'string'],
         ], [
-            'patient_id.required' =>
-                'Please select a patient.',
-
-            'patient_id.exists' =>
-                'Please select a patient registered in your clinic.',
-
+            'patient_id.required' => 'Please select a patient.',
+            'patient_id.exists' => 'Select a patient from your clinic.',
             'patient_id.in' =>
                 'The patient cannot be changed for an existing visit.',
 
-            'visit_date.required' =>
-                'Please select the visit date.',
+            'doctor_user_id.required' =>
+                'Please select the treating Doctor/Hakeem.',
+            'doctor_user_id.exists' =>
+                'Select an active Owner or Doctor from your clinic.',
 
-            'visit_time.required' =>
-                'Please enter the visit time.',
-
-            'visit_reason.required' =>
-                'Please select the visit type.',
-
-            'status.required' =>
-                'Please select the visit status.',
-
-            'status.in' =>
-                'Please select a valid visit status.',
-
+            'visit_date.required' => 'Please select the visit date.',
+            'visit_time.required' => 'Please enter the visit time.',
+            'visit_reason.required' => 'Please select the visit type.',
+            'status.required' => 'Please select the visit status.',
+            'status.in' => 'Please select a valid visit status.',
             'diagnosis_name.max' =>
                 'The diagnosis name must not exceed 255 characters.',
         ]);
+
+        $data['doctor_user_id'] = (int) $data['doctor_user_id'];
 
         $data['visit_date'] =
             $data['visit_date'] . ' ' . $data['visit_time'] . ':00';

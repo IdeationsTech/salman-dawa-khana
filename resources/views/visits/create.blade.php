@@ -1,11 +1,6 @@
 @extends('layouts.app')
 
-@section(
-    'title',
-    isset($visit)
-        ? 'Edit Visit — Salman Dawa Khana'
-        : 'Create Visit — Salman Dawa Khana'
-)
+@section('title', isset($visit) ? 'Edit Visit' : 'Create Visit')
 
 @section('content')
 @php
@@ -25,6 +20,14 @@
         $visit->patient_id ?? request('patient_id')
     );
 
+    $defaultDoctor = $editing
+        ? $visit->doctor_user_id
+        : ($doctors->contains('user_id', auth()->id())
+            ? auth()->id()
+            : ($doctors->count() === 1 ? $doctors->first()->user_id : null));
+
+    $selectedDoctor = old('doctor_user_id', $defaultDoctor);
+
     $visitReasons = [
         'General visit',
         'Follow-up',
@@ -41,20 +44,16 @@
 @endphp
 
 <div class="app-shell">
-
-    {{-- VISITS — Sidebar --}}
     @include('layouts._sidebar')
-    
-    {{-- VISITS — Main Content --}}
-    <main class="dashboard-main">
 
+    <main class="dashboard-main">
         <div class="form-page-header">
             <a href="{{ route('visits.index') }}" class="back-link">
-                ← Back to visits
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Back to visits
             </a>
-
             <h1>{{ $editing ? 'Edit visit' : 'Create new visit' }}</h1>
-            <p>Record the visit date, time, status and diagnosis.</p>
+            <p>Record the patient, treating practitioner and consultation details.</p>
         </div>
 
         @if ($errors->any())
@@ -68,6 +67,13 @@
             </div>
         @endif
 
+        @if ($doctors->isEmpty())
+            <div class="alert alert-warning" role="status">
+                No active Owner/Doctor is available.
+                The clinic owner must activate or add a practitioner first.
+            </div>
+        @endif
+
         <form
             action="{{ $editing
                 ? route('visits.update', $visit)
@@ -76,26 +82,22 @@
             data-visit-calendar-form
         >
             @csrf
-
             @if ($editing)
                 @method('PUT')
             @endif
 
-            {{-- VISITS — Patient --}}
             <section class="visit-form-panel">
                 <div class="visit-form-heading">
                     <div class="form-section-number">01</div>
                     <div>
-                        <h2>Patient information</h2>
-                        <p>Select the patient for this visit.</p>
+                        <h2>Patient and practitioner</h2>
+                        <p>Select who is receiving and providing the consultation.</p>
                     </div>
                 </div>
 
                 <div class="visit-form-grid">
-                    <div class="form-field visit-field-wide">
-                        <label for="patient" class="form-label">
-                            Patient <span>*</span>
-                        </label>
+                    <div class="form-field">
+                        <label for="patient" class="form-label">Patient *</label>
 
                         @if ($editing)
                             <input
@@ -107,13 +109,12 @@
 
                         <select
                             id="patient"
-                            name="patient_id"
+                            name="{{ $editing ? 'patient_display' : 'patient_id' }}"
                             class="form-select @error('patient_id') is-invalid @enderror"
                             required
                             @disabled($editing)
                         >
                             <option value="">Select patient</option>
-
                             @foreach ($patients as $patient)
                                 <option
                                     value="{{ $patient->patient_id }}"
@@ -134,16 +135,48 @@
                         @if (!$editing)
                             <small class="form-help">
                                 Patient not registered?
-                                <a href="{{ route('patients.create') }}">
-                                    Add new patient
-                                </a>
+                                <a href="{{ route('patients.create') }}">Add new patient</a>
                             </small>
                         @endif
+                    </div>
+
+                    <div class="form-field">
+                        <label for="doctor_user_id" class="form-label">
+                            Treating Doctor / Hakeem *
+                        </label>
+
+                        <select
+                            id="doctor_user_id"
+                            name="doctor_user_id"
+                            class="form-select @error('doctor_user_id') is-invalid @enderror"
+                            required
+                        >
+                            <option value="">Select Doctor / Hakeem</option>
+
+                            @foreach ($doctors as $doctor)
+                                <option
+                                    value="{{ $doctor->user_id }}"
+                                    @selected((string) $selectedDoctor === (string) $doctor->user_id)
+                                >
+                                    {{ $doctor->name }}
+                                    @if (!$doctor->is_active)
+                                        — Inactive, previously assigned
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @error('doctor_user_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+
+                        <small class="form-help">
+                            The person recording this visit is saved separately.
+                        </small>
                     </div>
                 </div>
             </section>
 
-            {{-- VISITS — Date and Time --}}
             <section class="visit-form-panel">
                 <div class="visit-form-heading">
                     <div class="form-section-number">02</div>
@@ -155,10 +188,7 @@
 
                 <div class="visit-form-grid">
                     <div class="form-field">
-                        <label for="visit_date" class="form-label">
-                            Gregorian Date <span>*</span>
-                        </label>
-
+                        <label for="visit_date" class="form-label">Gregorian date *</label>
                         <input
                             type="date"
                             id="visit_date"
@@ -170,7 +200,6 @@
                             data-visit-date
                             required
                         >
-
                         @error('visit_date')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -178,12 +207,10 @@
 
                     <div class="form-field">
                         <label for="visit_day" class="form-label">Day</label>
-
                         <input
                             type="text"
                             id="visit_day"
                             class="form-control"
-                            placeholder="Calculated from date"
                             data-visit-weekday
                             readonly
                         >
@@ -191,32 +218,24 @@
 
                     <div class="form-field">
                         <label for="visit_hijri_date" class="form-label">
-                            Hijri Date — Umm al-Qura
+                            Hijri date — Umm al-Qura
                         </label>
-
                         <input
                             type="text"
                             id="visit_hijri_date"
                             class="form-control"
-                            placeholder="Calculated from date"
                             data-visit-hijri
                             readonly
                         >
-
                         <small
                             class="form-help"
                             data-visit-calendar-message
                             aria-live="polite"
-                        >
-                            Calculated from the selected Gregorian date.
-                        </small>
+                        ></small>
                     </div>
 
                     <div class="form-field">
-                        <label for="visit_time" class="form-label">
-                            Visit Time — UAE <span>*</span>
-                        </label>
-
+                        <label for="visit_time" class="form-label">Visit time — UAE *</label>
                         <input
                             type="time"
                             id="visit_time"
@@ -225,38 +244,28 @@
                             value="{{ old('visit_time', $defaultTime) }}"
                             required
                         >
-
                         @error('visit_time')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="form-field">
-                        <label for="visit_type" class="form-label">
-                            Visit Type <span>*</span>
-                        </label>
-
+                        <label for="visit_type" class="form-label">Visit type *</label>
                         <select
                             id="visit_type"
                             name="visit_reason"
                             class="form-select @error('visit_reason') is-invalid @enderror"
                             required
                         >
-                            <option value="">Select visit type</option>
-
                             @foreach ($visitReasons as $reason)
                                 <option
                                     value="{{ $reason }}"
-                                    @selected(
-                                        old('visit_reason', $visit->visit_reason ?? 'General visit')
-                                        === $reason
-                                    )
+                                    @selected(old('visit_reason', $visit->visit_reason ?? 'General visit') === $reason)
                                 >
                                     {{ $reason }}
                                 </option>
                             @endforeach
                         </select>
-
                         @error('visit_reason')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -264,7 +273,6 @@
                 </div>
             </section>
 
-            {{-- VISITS — Status --}}
             <section class="visit-form-panel">
                 <div class="visit-form-heading">
                     <div class="form-section-number">03</div>
@@ -276,10 +284,7 @@
 
                 <div class="visit-form-grid">
                     <div class="form-field">
-                        <label for="visit_status" class="form-label">
-                            Status <span>*</span>
-                        </label>
-
+                        <label for="visit_status" class="form-label">Status *</label>
                         <select
                             id="visit_status"
                             name="status"
@@ -287,35 +292,22 @@
                             required
                         >
                             <option value="">Select status</option>
-
                             @foreach ($statusOptions as $value => $label)
                                 <option
                                     value="{{ $value }}"
-                                    @selected(
-                                        old('status', $editing ? $visit->status : 'in_progress')
-                                        === $value
-                                    )
+                                    @selected(old('status', $editing ? $visit->status : 'in_progress') === $value)
                                 >
                                     {{ $label }}
                                 </option>
                             @endforeach
                         </select>
-
                         @error('status')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-
-                        @if ($editing && $visit->status === null)
-                            <small class="form-help">
-                                This older visit has no recorded status.
-                                Select its actual status before saving.
-                            </small>
-                        @endif
                     </div>
                 </div>
             </section>
 
-            {{-- VISITS — Tashkhees and Notes --}}
             <section class="visit-form-panel">
                 <div class="visit-form-heading">
                     <div class="form-section-number">04</div>
@@ -328,37 +320,29 @@
                 <div class="visit-form-grid">
                     <div class="form-field visit-field-wide">
                         <label for="diagnosis_name" class="form-label">
-                            Tashkhees / Illness Name
+                            Tashkhees / Illness name
                         </label>
-
                         <input
                             type="text"
                             id="diagnosis_name"
                             name="diagnosis_name"
                             class="form-control @error('diagnosis_name') is-invalid @enderror"
                             value="{{ old('diagnosis_name', $visit->diagnosis_name ?? '') }}"
-                            placeholder="e.g. Heart problem / Pait mein dard"
                             maxlength="255"
                         >
-
                         @error('diagnosis_name')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="form-field visit-field-wide">
-                        <label for="notes" class="form-label">
-                            Visit Notes
-                        </label>
-
+                        <label for="notes" class="form-label">Visit notes</label>
                         <textarea
                             id="notes"
                             name="general_notes"
                             class="form-control @error('general_notes') is-invalid @enderror"
                             rows="5"
-                            placeholder="Write visit notes here..."
                         >{{ old('general_notes', $visit->general_notes ?? '') }}</textarea>
-
                         @error('general_notes')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -367,11 +351,8 @@
             </section>
 
             <div class="visit-form-actions">
-                <a href="{{ route('visits.index') }}" class="btn btn-light">
-                    Cancel
-                </a>
-
-                <button type="submit" class="btn btn-primary">
+                <a href="{{ route('visits.index') }}" class="btn btn-light">Cancel</a>
+                <button type="submit" class="btn btn-primary" @disabled($doctors->isEmpty())>
                     {{ $editing ? 'Update visit' : 'Save visit' }}
                 </button>
             </div>
