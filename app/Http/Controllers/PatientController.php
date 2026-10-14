@@ -371,6 +371,10 @@ class PatientController extends Controller
 
         $patient->load('clinic');
 
+        $currency = strtoupper(
+            $patient->clinic?->currency ?: 'AED'
+        );
+
         $recentVisits = $patient->visits()
             ->where('clinic_id', $clinicId)
             ->orderByDesc('visit_date')
@@ -392,16 +396,10 @@ class PatientController extends Controller
                     ->whereNull('status')
                     ->orWhereNotIn('status', ['cancelled', 'void']);
             })
-            ->withSum([
-                'payments as recorded_paid' => function ($query) use (
-                    $clinicId,
-                    $patient
-                ) {
-                    $query
-                        ->where('clinic_id', $clinicId)
-                        ->where('patient_id', $patient->patient_id);
-                },
-            ], 'amount')
+            ->get();
+
+        $payments = $patient->payments()
+            ->where('clinic_id', $clinicId)
             ->get();
 
         $toCents = static function ($amount): int {
@@ -412,42 +410,119 @@ class PatientController extends Controller
             );
 
             return ((int) $whole * 100)
-                + (int) str_pad(substr($fraction, 0, 2), 2, '0');
+                + (int) str_pad(
+                    substr($fraction, 0, 2),
+                    2,
+                    '0',
+                    STR_PAD_RIGHT
+                );
         };
 
-        $billedCents = 0;
-        $paidCents = 0;
-        $dueCents = 0;
+        $toDecimal = static function (int $cents): string {
+            return intdiv($cents, 100)
+                . '.'
+                . str_pad(
+                    (string) ($cents % 100),
+                    2,
+                    '0',
+                    STR_PAD_LEFT
+                );
+        };
 
-        foreach ($bills as $bill) {
-            $total = $toCents($bill->total_amount);
-            $paid = $toCents($bill->recorded_paid ?? '0');
+        $currencyCode = static function ($value): ?string {
+            $code = strtoupper(trim((string) $value));
 
-            $billedCents += $total;
-            $paidCents += $paid;
-            $dueCents += max(0, $total - $paid);
+            return in_array($code, ['AED', 'PKR', 'USD'], true)
+                ? $code
+                : null;
+        };
+
+        $emptyAccount = [
+            'billed' => 0,
+            'paid' => 0,
+            'outstanding' => 0,
+            'unallocated' => 0,
+        ];
+
+        $totals = [$currency => $emptyAccount];
+
+        $paymentsByBill = [];
+        $unconfirmedFinancialRecords = 0;
+
+        foreach ($payments as $payment) {
+            $code = $currencyCode($payment->currency);
+
+            if ($code === null) {
+                $unconfirmedFinancialRecords++;
+                continue;
+            }
+
+            $amount = $toCents($payment->amount);
+
+            if ($payment->bill_id === null) {
+                $totals[$code] ??= $emptyAccount;
+                $totals[$code]['unallocated'] += $amount;
+            } else {
+                $billId = (int) $payment->bill_id;
+
+                $paymentsByBill[$billId][$code] =
+                    ($paymentsByBill[$billId][$code] ?? 0) + $amount;
+            }
         }
 
-        $totalBilled = $billedCents / 100;
-        $paidAgainstBills = $paidCents / 100;
-        $outstandingBalance = $dueCents / 100;
+        foreach ($bills as $bill) {
+            $code = $currencyCode($bill->currency);
 
-        $unallocatedPayments = $patient->payments()
+            if ($code === null) {
+                $unconfirmedFinancialRecords++;
+                continue;
+            }
+
+            $totals[$code] ??= $emptyAccount;
+
+            $total = $toCents($bill->total_amount);
+            $paid = $paymentsByBill[(int) $bill->bill_id][$code] ?? 0;
+
+            $totals[$code]['billed'] += $total;
+            $totals[$code]['paid'] += $paid;
+            $totals[$code]['outstanding'] += max(0, $total - $paid);
+        }
+
+        ksort($totals);
+
+        $accounts = [];
+        $hasOutstanding = false;
+
+        foreach ($totals as $code => $values) {
+            if ($values['outstanding'] > 0) {
+                $hasOutstanding = true;
+            }
+
+            $accounts[] = [
+                'currency' => $code,
+                'billed' => $toDecimal($values['billed']),
+                'paid' => $toDecimal($values['paid']),
+                'outstanding' => $toDecimal($values['outstanding']),
+                'unallocated' => $toDecimal($values['unallocated']),
+            ];
+        }
+
+        $decimalSetting = Setting::query()
             ->where('clinic_id', $clinicId)
-            ->whereNull('bill_id')
-            ->sum('amount');
+            ->where('setting_key', 'decimal_places')
+            ->value('setting_value');
 
-        $currency = strtoupper($patient->clinic?->currency ?: 'AED');
+        $moneyDecimals = (string) $decimalSetting === '0' ? 0 : 2;
 
         return view('patients.show', compact(
             'patient',
             'recentVisits',
             'recentPrescriptions',
-            'totalBilled',
-            'paidAgainstBills',
-            'outstandingBalance',
-            'unallocatedPayments',
-            'currency'
+            'currency',
+            'accounts',
+            'moneyDecimals',
+            'hasOutstanding',
+            'unconfirmedFinancialRecords'
         ));
     }
 

@@ -11,12 +11,12 @@
         PREG_SPLIT_NO_EMPTY
     );
 
-    $initials = collect($nameParts)
-        ->take(2)
-        ->map(fn ($part) => mb_substr($part, 0, 1))
-        ->implode('');
-
-    $initials = mb_strtoupper($initials);
+    $initials = mb_strtoupper(
+        collect($nameParts)
+            ->take(2)
+            ->map(fn ($part) => mb_substr($part, 0, 1))
+            ->implode('')
+    );
 
     $age = $patient->date_of_birth
         ? (int) $patient->date_of_birth->diffInYears(now('Asia/Dubai'))
@@ -45,33 +45,73 @@
     } elseif ($patient->marital_status === 'unmarried') {
         $childrenLabel = 'Not applicable';
     }
+
+    $profileIdCountry = $patient->national_id_country
+        ?: (filled($patient->emirates_id) ? 'AE' : null);
+
+    $profileIdNumber = $patient->national_id_number
+        ?: $patient->emirates_id;
+
+    $profileIdDigits = preg_replace(
+        '/[\s-]+/',
+        '',
+        $profileIdNumber ?? ''
+    );
+
+    $profileIdLabel = match ($profileIdCountry) {
+        'PK' => 'CNIC',
+        'AE' => 'Emirates ID',
+        default => 'National ID',
+    };
+
+    $formattedProfileId = match (true) {
+        $profileIdCountry === 'PK'
+            && preg_match('/^[0-9]{13}$/', $profileIdDigits) === 1 =>
+                substr($profileIdDigits, 0, 5)
+                . '-' . substr($profileIdDigits, 5, 7)
+                . '-' . substr($profileIdDigits, 12, 1),
+
+        $profileIdCountry === 'AE'
+            && preg_match('/^784[0-9]{12}$/', $profileIdDigits) === 1 =>
+                substr($profileIdDigits, 0, 3)
+                . '-' . substr($profileIdDigits, 3, 4)
+                . '-' . substr($profileIdDigits, 7, 7)
+                . '-' . substr($profileIdDigits, 14, 1),
+
+        default => $profileIdNumber ?: 'Not recorded',
+    };
+
+    $money = fn ($value, $code) =>
+        $code . ' ' . number_format((float) $value, $moneyDecimals);
 @endphp
 
 <div class="app-shell">
-
-    {{-- PATIENT PROFILE — Sidebar --}}
     @include('layouts._sidebar')
 
     <main class="dashboard-main">
-
         <div class="form-page-header no-print">
             <a href="{{ route('patients.index') }}" class="back-link">
-                ← Back to patients
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Back to patients
             </a>
         </div>
 
-        @if(session('success'))
-            <div class="alert alert-success no-print" role="alert">
+        @if (session('success'))
+            <div class="alert alert-success no-print" role="status">
                 {{ session('success') }}
             </div>
         @endif
 
-        {{-- PATIENT PROFILE — Identity --}}
+        @if ($unconfirmedFinancialRecords > 0)
+            <div class="alert alert-warning" role="status">
+                {{ $unconfirmedFinancialRecords }} financial records have no
+                confirmed currency and are excluded from account totals.
+            </div>
+        @endif
+
         <section class="patient-profile-header">
             <div class="patient-profile-identity">
-                <div class="large-patient-avatar">
-                    {{ $initials ?: '?' }}
-                </div>
+                <div class="large-patient-avatar">{{ $initials ?: '?' }}</div>
 
                 <div>
                     <div class="patient-id-label">
@@ -82,12 +122,10 @@
 
                     <p>
                         {{ $patient->gender ?: 'Gender not recorded' }}
-
-                        @if($age !== null)
+                        @if ($age !== null)
                             · {{ $age }} years
                         @endif
-
-                        @if($patient->phone)
+                        @if ($patient->phone)
                             · {{ $patient->phone }}
                         @endif
                     </p>
@@ -99,6 +137,7 @@
                     href="{{ route('patients.edit', $patient) }}"
                     class="btn btn-outline-secondary"
                 >
+                    <i class="bi bi-pencil-square" aria-hidden="true"></i>
                     Edit patient
                 </a>
 
@@ -108,15 +147,14 @@
                     ]) }}"
                     class="btn btn-primary"
                 >
-                    + New visit
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                    New visit
                 </a>
             </div>
         </section>
 
         <section class="patient-profile-grid">
             <div class="patient-profile-main">
-
-                {{-- PATIENT PROFILE — Personal Information --}}
                 <div class="patient-detail-panel">
                     <div class="profile-panel-heading">
                         <div>
@@ -142,7 +180,6 @@
 
                         <div>
                             <span class="detail-label">Father / husband name</span>
-
                             <strong>
                                 {{ $patient->father_or_husband_name ?: 'Not recorded' }}
                             </strong>
@@ -153,52 +190,13 @@
                             <strong>{{ $patient->phone ?: 'Not recorded' }}</strong>
                         </div>
 
-                        {{-- Patient Profile — Country-Specific National ID --}}
                         <div>
-                            @php
-                                $profileIdCountry = $patient->national_id_country
-                                    ?: (filled($patient->emirates_id) ? 'AE' : null);
-
-                                $profileIdNumber = $patient->national_id_number
-                                    ?: $patient->emirates_id;
-
-                                $profileIdDigits = preg_replace(
-                                    '/[\s-]+/',
-                                    '',
-                                    $profileIdNumber ?? ''
-                                );
-
-                                $profileIdLabel = match ($profileIdCountry) {
-                                    'PK' => 'CNIC',
-                                    'AE' => 'Emirates ID',
-                                    default => 'National ID',
-                                };
-
-                                $formattedProfileId = match (true) {
-                                    $profileIdCountry === 'PK'
-                                        && preg_match('/^[0-9]{13}$/', $profileIdDigits) === 1 =>
-                                            substr($profileIdDigits, 0, 5)
-                                            . '-' . substr($profileIdDigits, 5, 7)
-                                            . '-' . substr($profileIdDigits, 12, 1),
-
-                                    $profileIdCountry === 'AE'
-                                        && preg_match('/^784[0-9]{12}$/', $profileIdDigits) === 1 =>
-                                            substr($profileIdDigits, 0, 3)
-                                            . '-' . substr($profileIdDigits, 3, 4)
-                                            . '-' . substr($profileIdDigits, 7, 7)
-                                            . '-' . substr($profileIdDigits, 14, 1),
-
-                                    default => $profileIdNumber ?: 'Not recorded',
-                                };
-                            @endphp
-
                             <span class="detail-label">{{ $profileIdLabel }}</span>
                             <strong>{{ $formattedProfileId }}</strong>
                         </div>
 
                         <div>
                             <span class="detail-label">Date of birth</span>
-
                             <strong>
                                 {{ $patient->date_of_birth?->format('d F Y') ?? 'Not recorded' }}
                             </strong>
@@ -221,7 +219,6 @@
 
                         <div>
                             <span class="detail-label">Registered on</span>
-
                             <strong>
                                 {{ $patient->created_at?->format('d F Y') ?? 'Not recorded' }}
                             </strong>
@@ -229,30 +226,20 @@
 
                         <div>
                             <span class="detail-label">Address</span>
-
-                            <strong>
-                                {{ $patient->address ?: 'Not recorded' }}
-                            </strong>
+                            <strong>{{ $patient->address ?: 'Not recorded' }}</strong>
                         </div>
                     </div>
                 </div>
 
-                {{-- PATIENT PROFILE — Notes --}}
-                @if($patient->notes)
+                @if ($patient->notes)
                     <div class="patient-detail-panel">
                         <div class="profile-panel-heading">
-                            <div>
-                                <h2>Patient notes</h2>
-                            </div>
+                            <div><h2>Patient notes</h2></div>
                         </div>
-
-                        <p class="mb-0">
-                            {!! nl2br(e($patient->notes)) !!}
-                        </p>
+                        <p class="mb-0">{!! nl2br(e($patient->notes)) !!}</p>
                     </div>
                 @endif
 
-                {{-- PATIENT PROFILE — Visit History --}}
                 <div class="patient-detail-panel" id="patient-visits">
                     <div class="profile-panel-heading">
                         <div>
@@ -262,44 +249,30 @@
                     </div>
 
                     <div class="visit-history-list">
-                        @forelse($recentVisits as $visit)
-                            @php
-                                $visitDate = $visit->visit_date
-                                    ? \Carbon\Carbon::parse($visit->visit_date)
-                                    : null;
-
-                                $visitStatus = $visit->status
-                                    ? ucfirst(str_replace('_', ' ', $visit->status))
-                                    : 'Status not recorded';
-                            @endphp
-
+                        @forelse ($recentVisits as $visit)
                             <div class="visit-history-item">
                                 <div class="visit-date">
-                                    <strong>
-                                        {{ $visitDate?->format('d') ?? '—' }}
-                                    </strong>
-
+                                    <strong>{{ $visit->visit_date?->format('d') ?? '—' }}</strong>
                                     <span>
-                                        {{ $visitDate ? strtoupper($visitDate->format('M')) : '—' }}
+                                        {{ $visit->visit_date
+                                            ? strtoupper($visit->visit_date->format('M'))
+                                            : '—' }}
                                     </span>
                                 </div>
 
                                 <div class="visit-info">
-                                    <strong>
-                                        {{ $visit->visit_reason ?: 'Visit' }}
-                                    </strong>
-
+                                    <strong>{{ $visit->visit_reason ?: 'Visit' }}</strong>
                                     <span>
-                                        {{ $visitDate?->format('d M Y, h:i A') ?? 'Date not recorded' }}
+                                        {{ $visit->visit_date?->format('d M Y, h:i A') ?? 'Date not recorded' }}
                                     </span>
-
-                                    @if($visit->diagnosis_name)
-                                        <span>
-                                            Diagnosis: {{ $visit->diagnosis_name }}
-                                        </span>
+                                    @if ($visit->diagnosis_name)
+                                        <span>Diagnosis: {{ $visit->diagnosis_name }}</span>
                                     @endif
-
-                                    <span>{{ $visitStatus }}</span>
+                                    <span>
+                                        {{ $visit->status
+                                            ? ucfirst(str_replace('_', ' ', $visit->status))
+                                            : 'Status not recorded' }}
+                                    </span>
                                 </div>
 
                                 <a
@@ -310,14 +283,11 @@
                                 </a>
                             </div>
                         @empty
-                            <p class="text-muted mb-0">
-                                No visits recorded for this patient.
-                            </p>
+                            <p class="text-muted mb-0">No visits recorded.</p>
                         @endforelse
                     </div>
                 </div>
 
-                {{-- PATIENT PROFILE — Prescriptions --}}
                 <div class="patient-detail-panel" id="patient-prescriptions">
                     <div class="profile-panel-heading">
                         <div>
@@ -327,33 +297,27 @@
                     </div>
 
                     <div class="visit-history-list">
-                        @forelse($recentPrescriptions as $prescription)
-                            @php
-                                $prescriptionDate = $prescription->prescribed_at
-                                    ? \Carbon\Carbon::parse($prescription->prescribed_at)
-                                    : null;
-                            @endphp
-
+                        @forelse ($recentPrescriptions as $prescription)
                             <div class="visit-history-item">
                                 <div class="visit-date">
                                     <strong>
-                                        {{ $prescriptionDate?->format('d') ?? '—' }}
+                                        {{ $prescription->prescribed_at?->format('d') ?? '—' }}
                                     </strong>
-
                                     <span>
-                                        {{ $prescriptionDate
-                                            ? strtoupper($prescriptionDate->format('M'))
+                                        {{ $prescription->prescribed_at
+                                            ? strtoupper($prescription->prescribed_at->format('M'))
                                             : '—' }}
                                     </span>
                                 </div>
 
                                 <div class="visit-info">
                                     <strong>{{ $prescription->prescription_no }}</strong>
-
                                     <span>
-                                        {{ $prescriptionDate?->format('d M Y') ?? 'Date not recorded' }}
+                                        {{ $prescription->prescribed_at?->format('d M Y') ?? 'Date not recorded' }}
                                     </span>
-
+                                    @if ($prescription->nuskha_name)
+                                        <span>{{ $prescription->nuskha_name }}</span>
+                                    @endif
                                     <span>
                                         {{ ucfirst($prescription->status ?: 'Not recorded') }}
                                     </span>
@@ -367,66 +331,63 @@
                                 </a>
                             </div>
                         @empty
-                            <p class="text-muted mb-0">
-                                No prescriptions recorded for this patient.
-                            </p>
+                            <p class="text-muted mb-0">No prescriptions recorded.</p>
                         @endforelse
                     </div>
                 </div>
             </div>
 
-            {{-- PATIENT PROFILE — Account Summary --}}
             <aside class="patient-profile-side">
                 <div class="patient-detail-panel account-summary-panel">
                     <div class="profile-panel-heading">
                         <div>
                             <h2>Account summary</h2>
-                            <p>This patient's current bill balances</p>
+                            <p>Original currencies shown separately</p>
                         </div>
                     </div>
 
-                    <div class="account-total">
-                        <span>Outstanding bills</span>
+                    @foreach ($accounts as $account)
+                        @if (!$loop->first)
+                            <hr>
+                        @endif
 
-                        <strong>
-                            {{ $currency }}
-                            {{ number_format($outstandingBalance, 2) }}
-                        </strong>
-                    </div>
+                        <h3 class="h6">{{ $account['currency'] }}</h3>
 
-                    <div class="account-row">
-                        <span>Total billed</span>
-
-                        <strong>
-                            {{ $currency }}
-                            {{ number_format($totalBilled, 2) }}
-                        </strong>
-                    </div>
-
-                    <div class="account-row">
-                        <span>Paid against bills</span>
-
-                        <strong>
-                            {{ $currency }}
-                            {{ number_format($paidAgainstBills, 2) }}
-                        </strong>
-                    </div>
-
-                    @if((float) $unallocatedPayments > 0)
-                        <div class="account-row">
-                            <span>Unallocated payments</span>
-
+                        <div class="account-total">
+                            <span>Outstanding bills</span>
                             <strong>
-                                {{ $currency }}
-                                {{ number_format($unallocatedPayments, 2) }}
+                                {{ $money($account['outstanding'], $account['currency']) }}
                             </strong>
                         </div>
 
-                        <small class="text-muted d-block mt-2">
-                            Unallocated payments have not been deducted
-                            from outstanding bills.
-                        </small>
-                    @endif
+                        <div class="account-row">
+                            <span>Total billed</span>
+                            <strong>
+                                {{ $money($account['billed'], $account['currency']) }}
+                            </strong>
+                        </div>
+
+                        <div class="account-row">
+                            <span>Paid against bills</span>
+                            <strong>
+                                {{ $money($account['paid'], $account['currency']) }}
+                            </strong>
+                        </div>
+
+                        @if ((float) $account['unallocated'] > 0)
+                            <div class="account-row">
+                                <span>Unallocated payments</span>
+                                <strong>
+                                    {{ $money($account['unallocated'], $account['currency']) }}
+                                </strong>
+                            </div>
+                        @endif
+                    @endforeach
+
+                    <small class="text-muted d-block mt-3">
+                        Currencies are not converted or combined.
+                        Unallocated payments are not deducted from bills.
+                    </small>
 
                     <a
                         href="{{ route('payments.create', [
@@ -438,7 +399,7 @@
                         New bill + payment
                     </a>
 
-                    @if($outstandingBalance > 0)
+                    @if ($hasOutstanding)
                         <a
                             href="{{ route('payments.create', [
                                 'mode' => 'existing_bill',
@@ -451,19 +412,15 @@
                     @endif
                 </div>
 
-                {{-- PATIENT PROFILE — Quick Actions --}}
                 <div class="patient-detail-panel no-print">
                     <div class="profile-panel-heading">
-                        <div>
-                            <h2>Quick actions</h2>
-                        </div>
+                        <div><h2>Quick actions</h2></div>
                     </div>
 
                     <div class="profile-quick-actions">
                         <a href="#patient-prescriptions">
                             Recent prescriptions <span>›</span>
                         </a>
-
                         <a href="{{ route('visits.create', [
                             'patient_id' => $patient->patient_id,
                         ]) }}">
