@@ -11,7 +11,6 @@
             <div>
                 <p class="dashboard-date">Non-patient sales</p>
                 <h1>Nuskha Orders</h1>
-
                 <p class="page-subtitle">
                     Manage walk-in and phone orders without a patient record.
                 </p>
@@ -64,11 +63,7 @@
                 <div class="form-field">
                     <label for="order_status" class="form-label">Status</label>
 
-                    <select
-                        id="order_status"
-                        name="status"
-                        class="form-select"
-                    >
+                    <select id="order_status" name="status" class="form-select">
                         <option value="all">All statuses</option>
 
                         @foreach ($statuses as $status)
@@ -93,14 +88,12 @@
                         class="form-select"
                     >
                         <option value="all">All types</option>
-
                         <option
                             value="pickup"
                             @selected(request('fulfillment') === 'pickup')
                         >
                             Pickup
                         </option>
-
                         <option
                             value="delivery"
                             @selected(request('fulfillment') === 'delivery')
@@ -112,7 +105,6 @@
 
                 <div class="form-field">
                     <label for="order_from" class="form-label">From date</label>
-
                     <input
                         type="date"
                         id="order_from"
@@ -124,7 +116,6 @@
 
                 <div class="form-field">
                     <label for="order_to" class="form-label">To date</label>
-
                     <input
                         type="date"
                         id="order_to"
@@ -136,7 +127,6 @@
 
                 <div class="orders-filter-actions">
                     <button type="submit" class="btn btn-primary">Apply</button>
-
                     <a href="{{ route('orders.index') }}" class="btn btn-light">
                         Reset
                     </a>
@@ -165,12 +155,6 @@
                                 $paid = (float) ($order->payments_sum_amount ?? 0);
                                 $due = max(0, (float) $order->total_amount - $paid);
 
-                                $terminal = in_array(
-                                    $order->status,
-                                    ['completed', 'cancelled'],
-                                    true
-                                );
-
                                 $statusClass = match ($order->status) {
                                     'completed' => 'active-badge',
                                     'cancelled' => 'due-badge',
@@ -181,7 +165,6 @@
                             <tr>
                                 <td>
                                     <strong>{{ $order->order_no }}</strong>
-
                                     <small>
                                         {{ $order->order_source === 'phone'
                                             ? 'Phone order'
@@ -233,21 +216,21 @@
                                             View
                                         </a>
 
-                                        @if (!$terminal)
+                                        @if ($order->status !== 'cancelled')
                                             <a
                                                 href="{{ route('orders.edit', $order) }}"
                                                 class="table-action"
                                             >
-                                                <i
-                                                    class="bi bi-pencil"
-                                                    aria-hidden="true"
-                                                ></i>
+                                                <i class="bi bi-pencil" aria-hidden="true"></i>
                                                 Edit
                                             </a>
                                         @else
-                                            <span class="text-muted small">
-                                                Closed
-                                            </span>
+                                            <a
+                                                href="{{ route('orders.show', $order) }}#order-status-panel"
+                                                class="table-action"
+                                            >
+                                                Restore
+                                            </a>
                                         @endif
                                     </div>
                                 </td>

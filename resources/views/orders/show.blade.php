@@ -13,7 +13,7 @@
         'card' => 'Card',
     ];
 
-    $terminal = in_array($order->status, ['completed', 'cancelled'], true);
+    $cancelled = $order->status === 'cancelled';
 @endphp
 
 <div class="app-shell">
@@ -43,7 +43,7 @@
             </a>
 
             <div class="d-flex flex-wrap gap-2">
-                @if (!$terminal)
+                @if (!$cancelled)
                     <a
                         href="{{ route('orders.edit', $order) }}"
                         class="btn btn-outline-secondary"
@@ -98,19 +98,16 @@
                     <span>Customer name</span>
                     <strong>{{ $order->customer_name }}</strong>
                 </div>
-
                 <div>
                     <span>Customer phone</span>
                     <strong>{{ $order->customer_phone }}</strong>
                 </div>
-
                 <div>
                     <span>Order source</span>
                     <strong>
                         {{ $order->order_source === 'phone' ? 'Phone order' : 'Walk-in' }}
                     </strong>
                 </div>
-
                 <div>
                     <span>Fulfillment</span>
                     <strong>{{ ucfirst($order->fulfillment_method) }}</strong>
@@ -126,25 +123,19 @@
                         <th class="r2-number">Amount</th>
                     </tr>
                 </thead>
-
                 <tbody>
                     @foreach ($order->items as $item)
                         <tr>
                             <td>
                                 {{ $item->nuskha_name }}
-
                                 @if ($item->instructions)
-                                    <small class="d-block">
-                                        {{ $item->instructions }}
-                                    </small>
+                                    <small class="d-block">{{ $item->instructions }}</small>
                                 @endif
                             </td>
-
                             <td class="r2-number">
                                 {{ rtrim(rtrim((string) $item->quantity, '0'), '.') }}
                                 {{ $item->unit }}
                             </td>
-
                             <td class="r2-number">{{ $money($item->unit_price) }}</td>
                             <td class="r2-number">{{ $money($item->line_total) }}</td>
                         </tr>
@@ -213,10 +204,33 @@
             </footer>
         </article>
 
-        <section class="payment-form-panel mt-4 no-print">
-            <h2 class="h5">Order status</h2>
+        <section
+            class="payment-form-panel mt-4 no-print"
+            id="order-status-panel"
+        >
+            @if ($cancelled)
+                <h2 class="h5">Restore cancelled order</h2>
+                <p>Restore this order to Confirmed to resume editing and preparation.</p>
 
-            @if (!$terminal)
+                <form
+                    method="POST"
+                    action="{{ route('orders.status.update', $order) }}"
+                >
+                    @csrf
+                    @method('PATCH')
+
+                    <input type="hidden" name="status" value="confirmed">
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                        Restore order
+                    </button>
+                </form>
+            @else
+                <h2 class="h5">
+                    {{ $order->status === 'completed' ? 'Reopen / change status' : 'Order status' }}
+                </h2>
+
                 <form
                     method="POST"
                     action="{{ route('orders.status.update', $order) }}"
@@ -240,12 +254,10 @@
                         Update status
                     </button>
                 </form>
-            @else
-                <p class="mb-0">{{ ucfirst($order->status) }}</p>
             @endif
         </section>
 
-        @if ((float) $dueAmount > 0 && $order->status !== 'cancelled')
+        @if ((float) $dueAmount > 0 && !$cancelled)
             <section class="payment-form-panel no-print">
                 <h2 class="h5 mb-3">Receive remaining payment</h2>
 
@@ -258,7 +270,6 @@
                     <div class="payment-form-grid">
                         <label class="form-field">
                             <span class="form-label">Amount *</span>
-
                             <input
                                 type="number"
                                 name="amount"
@@ -273,7 +284,6 @@
 
                         <label class="form-field">
                             <span class="form-label">Payment date/time *</span>
-
                             <input
                                 type="datetime-local"
                                 name="paid_at"
@@ -287,10 +297,8 @@
 
                         <label class="form-field">
                             <span class="form-label">Method *</span>
-
                             <select name="method" class="form-select" required>
                                 <option value="">Select method</option>
-
                                 @foreach ($enabledMethods as $method)
                                     <option
                                         value="{{ $method }}"
@@ -303,10 +311,7 @@
                         </label>
 
                         <label class="form-field">
-                            <span class="form-label">
-                                Bank/card transaction reference
-                            </span>
-
+                            <span class="form-label">Bank/card transaction reference</span>
                             <input
                                 type="text"
                                 name="reference_no"
@@ -318,7 +323,6 @@
 
                         <label class="form-field payment-field-wide">
                             <span class="form-label">Payment notes</span>
-
                             <input
                                 type="text"
                                 name="notes"
@@ -356,7 +360,6 @@
                             <th>Amount</th>
                         </tr>
                     </thead>
-
                     <tbody>
                         @forelse ($order->payments as $record)
                             <tr>

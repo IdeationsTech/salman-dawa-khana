@@ -739,36 +739,61 @@ class NuskhaOrderController extends Controller
             'status' => ['required', Rule::in(self::STATUSES)],
         ]);
 
-        DB::transaction(function () use ($order, $data) {
+        $message = DB::transaction(function () use ($order, $data) {
             $locked = NuskhaOrder::query()
                 ->where('clinic_id', $this->clinicId())
                 ->whereKey($order->nuskha_order_id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($locked->status === $data['status']) {
-                return;
+            $previousStatus = $locked->status;
+            $newStatus = $data['status'];
+
+            if ($previousStatus === $newStatus) {
+                return 'Order status is already selected.';
             }
 
-            if ($locked->status === 'cancelled') {
+            $hasPayments = $locked->payments()
+                ->where('clinic_id', $this->clinicId())
+                ->exists();
+
+            if ($previousStatus === 'cancelled') {
+                if ($newStatus !== 'confirmed') {
+                    throw ValidationException::withMessages([
+                        'status' => 'Restore the cancelled order to Confirmed first.',
+                    ]);
+                }
+
+                if ($hasPayments) {
+                    throw ValidationException::withMessages([
+                        'status' => 'This cancelled order has payment records. Payment/refund reconciliation is required before restoring it.',
+                    ]);
+                }
+
+                $locked->update(['status' => 'confirmed']);
+
+                return 'Order restored successfully.';
+            }
+
+            if ($newStatus === 'cancelled' && $hasPayments) {
                 throw ValidationException::withMessages([
-                    'order' => 'Restore this cancelled order before editing it.',
+                    'status' => 'This order has received payments. Record the refund before cancelling it.',
                 ]);
             }
+
+            $locked->update(['status' => $newStatus]);
 
             if (
-                $data['status'] === 'cancelled' &&
-                $locked->payments()->exists()
+                $previousStatus === 'completed'
+                && in_array($newStatus, ['confirmed', 'preparing', 'ready'], true)
             ) {
-                throw ValidationException::withMessages([
-                    'status' => 'This order has payments. Refund handling is required before cancellation.',
-                ]);
+                return 'Order reopened successfully.';
             }
 
-            $locked->update(['status' => $data['status']]);
+            return 'Order status updated successfully.';
         }, 3);
 
-        return back()->with('success', 'Order status updated.');
+        return back()->with('success', $message);
     }
 
     /*
