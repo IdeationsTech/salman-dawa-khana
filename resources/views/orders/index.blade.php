@@ -6,7 +6,6 @@
 <div class="app-shell">
     @include('layouts._sidebar')
 
-    {{-- Nuskha Orders — Main Content --}}
     <main class="dashboard-main">
         <header class="page-header">
             <div>
@@ -24,16 +23,16 @@
             </a>
         </header>
 
-        @if(session('success'))
+        @if (session('success'))
             <div class="alert alert-success" role="status">
                 {{ session('success') }}
             </div>
         @endif
 
-        @if($errors->any())
+        @if ($errors->any())
             <div class="alert alert-danger" role="alert">
                 <ul class="mb-0">
-                    @foreach($errors->all() as $error)
+                    @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
@@ -41,8 +40,6 @@
         @endif
 
         <section class="orders-panel">
-
-            {{-- Nuskha Orders — Filters --}}
             <form
                 method="GET"
                 action="{{ route('orders.index') }}"
@@ -65,9 +62,7 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="order_status" class="form-label">
-                        Status
-                    </label>
+                    <label for="order_status" class="form-label">Status</label>
 
                     <select
                         id="order_status"
@@ -76,7 +71,7 @@
                     >
                         <option value="all">All statuses</option>
 
-                        @foreach($statuses as $status)
+                        @foreach ($statuses as $status)
                             <option
                                 value="{{ $status }}"
                                 @selected(request('status') === $status)
@@ -140,9 +135,7 @@
                 </div>
 
                 <div class="orders-filter-actions">
-                    <button type="submit" class="btn btn-primary">
-                        Apply
-                    </button>
+                    <button type="submit" class="btn btn-primary">Apply</button>
 
                     <a href="{{ route('orders.index') }}" class="btn btn-light">
                         Reset
@@ -150,7 +143,6 @@
                 </div>
             </form>
 
-            {{-- Nuskha Orders — Records --}}
             <div class="table-responsive">
                 <table class="table orders-table align-middle">
                     <thead>
@@ -168,12 +160,18 @@
                     </thead>
 
                     <tbody>
-                        @forelse($orders as $order)
+                        @forelse ($orders as $order)
                             @php
                                 $paid = (float) ($order->payments_sum_amount ?? 0);
                                 $due = max(0, (float) $order->total_amount - $paid);
 
-                                $statusClass = match($order->status) {
+                                $terminal = in_array(
+                                    $order->status,
+                                    ['completed', 'cancelled'],
+                                    true
+                                );
+
+                                $statusClass = match ($order->status) {
                                     'completed' => 'active-badge',
                                     'cancelled' => 'due-badge',
                                     default => '',
@@ -183,6 +181,7 @@
                             <tr>
                                 <td>
                                     <strong>{{ $order->order_no }}</strong>
+
                                     <small>
                                         {{ $order->order_source === 'phone'
                                             ? 'Phone order'
@@ -197,7 +196,9 @@
 
                                 <td>
                                     {{ $order->ordered_at->format('d M Y') }}
-                                    <small>{{ $order->ordered_at->format('h:i A') }}</small>
+                                    <small>
+                                        {{ $order->ordered_at->format('h:i A') }}
+                                    </small>
                                 </td>
 
                                 <td>{{ ucfirst($order->fulfillment_method) }}</td>
@@ -223,13 +224,32 @@
                                     </span>
                                 </td>
 
-                                <td class="text-end">
-                                    <a
-                                        href="{{ route('orders.show', $order) }}"
-                                        class="table-action"
-                                    >
-                                        View
-                                    </a>
+                                <td class="text-end text-nowrap">
+                                    <div class="d-flex justify-content-end align-items-center gap-3">
+                                        <a
+                                            href="{{ route('orders.show', $order) }}"
+                                            class="table-action"
+                                        >
+                                            View
+                                        </a>
+
+                                        @if (!$terminal)
+                                            <a
+                                                href="{{ route('orders.edit', $order) }}"
+                                                class="table-action"
+                                            >
+                                                <i
+                                                    class="bi bi-pencil"
+                                                    aria-hidden="true"
+                                                ></i>
+                                                Edit
+                                            </a>
+                                        @else
+                                            <span class="text-muted small">
+                                                Closed
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty

@@ -120,11 +120,11 @@ class NuskhaOrderController extends Controller
     {
         $this->ensureClinic($order);
 
-        if (in_array($order->status, ['completed', 'cancelled'], true)) {
+        if ($order->status === 'cancelled') {
             return redirect()
                 ->route('orders.show', $order)
                 ->withErrors([
-                    'order' => 'Completed or cancelled orders cannot be edited.',
+                    'order' => 'Restore this cancelled order before editing it.',
                 ]);
         }
 
@@ -750,9 +750,9 @@ class NuskhaOrderController extends Controller
                 return;
             }
 
-            if (in_array($locked->status, ['completed', 'cancelled'], true)) {
+            if ($locked->status === 'cancelled') {
                 throw ValidationException::withMessages([
-                    'status' => 'Completed or cancelled orders cannot be reopened here.',
+                    'order' => 'Restore this cancelled order before editing it.',
                 ]);
             }
 
