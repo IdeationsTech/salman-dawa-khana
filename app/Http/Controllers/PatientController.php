@@ -264,8 +264,13 @@ class PatientController extends Controller
 
     private function patientBalancesQuery(int $clinicId): Builder
     {
+        $currency = strtoupper(
+            Auth::user()->clinic->currency ?: 'AED'
+        );
+
         $payments = DB::table('payments')
             ->where('clinic_id', $clinicId)
+            ->where('currency', $currency)
             ->whereNotNull('bill_id')
             ->select('bill_id', 'patient_id')
             ->selectRaw('SUM(amount) AS received_amount')
@@ -299,6 +304,7 @@ class PatientController extends Controller
                     );
             })
             ->where('balance_bills.clinic_id', $clinicId)
+            ->where('balance_bills.currency', $currency)
             ->where(function ($query) {
                 $query
                     ->whereNull('balance_bills.status')

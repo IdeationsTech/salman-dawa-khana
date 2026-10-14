@@ -63,7 +63,9 @@
                     {{ $currency }}
                     {{ number_format($outstandingBalance, $moneyDecimals) }}
                 </strong>
-                <small class="stat-warning">Outstanding patient bills</small>
+                <small class="stat-warning">
+                    Outstanding {{ $currency }} patient bills
+                </small>
             </article>
         </section>
 
@@ -71,7 +73,10 @@
             <div class="patients-toolbar">
                 <div>
                     <h2>All patients</h2>
-                    <p>Search across all your clinic’s patient records.</p>
+                    <p>
+                        Balances and CSV amounts show {{ $currency }} bills only.
+                        Other currencies are not added to these balances.
+                    </p>
                 </div>
 
                 <div class="patients-toolbar-actions">
@@ -123,52 +128,35 @@
                     class="form-select"
                     aria-label="Patient status"
                 >
-                    <option
-                        value="all"
-                        @selected(request('status', 'all') === 'all')
-                    >
+                    <option value="all" @selected(request('status', 'all') === 'all')>
                         All statuses
                     </option>
 
-                    <option
-                        value="active"
-                        @selected(request('status') === 'active')
-                    >
+                    <option value="active" @selected(request('status') === 'active')>
                         Active
                     </option>
 
-                    <option
-                        value="inactive"
-                        @selected(request('status') === 'inactive')
-                    >
+                    <option value="inactive" @selected(request('status') === 'inactive')>
                         Inactive
                     </option>
                 </select>
 
-                <button type="submit" class="btn btn-primary">
-                    Search
-                </button>
+                <button type="submit" class="btn btn-primary">Search</button>
 
-                <a
-                    href="{{ route('patients.index') }}"
-                    class="btn btn-light"
-                >
+                <a href="{{ route('patients.index') }}" class="btn btn-light">
                     Clear
                 </a>
             </form>
 
             <div class="table-responsive">
-                <table
-                    class="table patients-table align-middle"
-                    id="patients-table"
-                >
+                <table class="table patients-table align-middle" id="patients-table">
                     <thead>
                         <tr>
                             <th>Patient ID</th>
                             <th>Patient name</th>
                             <th>Phone number</th>
                             <th>Last visit</th>
-                            <th>Balance</th>
+                            <th>Balance ({{ $currency }})</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
                         </tr>
@@ -190,14 +178,9 @@
                                     {{ $patient->last_visit_at?->format('d M Y') ?? '—' }}
                                 </td>
 
-                                <td
-                                    class="{{ $patient->balance_due > 0 ? 'balance-due' : '' }}"
-                                >
+                                <td class="{{ $patient->balance_due > 0 ? 'balance-due' : '' }}">
                                     {{ $currency }}
-                                    {{ number_format(
-                                        $patient->balance_due,
-                                        $moneyDecimals
-                                    ) }}
+                                    {{ number_format($patient->balance_due, $moneyDecimals) }}
                                 </td>
 
                                 <td>
@@ -238,7 +221,6 @@
                     to {{ $patients->lastItem() ?? 0 }}
                     of {{ $patients->total() }} patients
                 </span>
-
                 <div>{{ $patients->links() }}</div>
             </div>
         </section>
