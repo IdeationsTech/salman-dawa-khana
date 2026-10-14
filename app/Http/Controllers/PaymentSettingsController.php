@@ -10,19 +10,13 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentSettingsController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Payment Settings — Save Clinic Preferences
-    |--------------------------------------------------------------------------
-    */
-
     public function update(Request $request)
     {
-        $validated = $request->validate([
-            'currency' => [
-                'required',
-                Rule::in(['AED', 'PKR', 'USD']),
-            ],
+        abort_unless($request->user()->role?->name === 'Owner', 403);
+
+        $data = $request->validate([
+            'currency' => ['prohibited'],
+            'country_code' => ['prohibited'],
 
             'decimal_places' => [
                 'required',
@@ -35,25 +29,26 @@ class PaymentSettingsController extends Controller
             'card_enabled' => ['required', 'boolean'],
             'show_previous_due' => ['required', 'boolean'],
             'allow_partial_payments' => ['required', 'boolean'],
+        ], [
+            'currency.prohibited' =>
+                'Only the platform administrator can change clinic currency.',
+            'country_code.prohibited' =>
+                'Only the platform administrator can change clinic country.',
         ]);
 
         if (
-            ! $request->boolean('cash_enabled') &&
-            ! $request->boolean('bank_enabled') &&
-            ! $request->boolean('card_enabled')
+            !$data['cash_enabled']
+            && !$data['bank_enabled']
+            && !$data['card_enabled']
         ) {
             throw ValidationException::withMessages([
-                'cash_enabled' =>
-                    'Keep at least one payment method enabled.',
+                'cash_enabled' => 'Keep at least one payment method enabled.',
             ]);
         }
 
         $clinicId = (int) $request->user()->clinic_id;
 
-        DB::transaction(function () use (
-            $validated,
-            $clinicId
-        ) {
+        DB::transaction(function () use ($data, $clinicId) {
             $clinic = DB::table('clinics')
                 ->where('clinic_id', $clinicId)
                 ->lockForUpdate()
@@ -61,39 +56,22 @@ class PaymentSettingsController extends Controller
 
             abort_unless($clinic, 404);
 
-            DB::table('clinics')
-                ->where('clinic_id', $clinicId)
-                ->update([
-                    'currency' => $validated['currency'],
-                    'updated_at' => now(),
-                ]);
+            foreach ($data as $key => $value) {
+                if (in_array($key, ['currency', 'country_code'], true)) {
+                    continue;
+                }
 
-            foreach ([
-                'decimal_places',
-                'cash_enabled',
-                'bank_enabled',
-                'card_enabled',
-                'show_previous_due',
-                'allow_partial_payments',
-            ] as $key) {
-                Setting::updateOrCreate(
-                    [
-                        'clinic_id' => $clinicId,
-                        'setting_key' => $key,
-                    ],
-                    [
-                        'setting_value' =>
-                            (string) (int) $validated[$key],
-                    ]
-                );
+                Setting::updateOrCreate([
+                    'clinic_id' => $clinicId,
+                    'setting_key' => $key,
+                ], [
+                    'setting_value' => (string) (int) $value,
+                ]);
             }
-        });
+        }, 3);
 
         return redirect()
             ->route('settings.payments')
-            ->with(
-                'success',
-                'Payment settings updated successfully.'
-            );
+            ->with('success', 'Payment settings updated successfully.');
     }
 }

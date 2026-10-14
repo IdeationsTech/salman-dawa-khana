@@ -7,6 +7,7 @@ use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Visit;
+use App\Support\ClinicLocaleCatalog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,11 +19,7 @@ class ReportController extends Controller
         $data = $request->validate([
             'report_type' => ['nullable', 'in:summary,payments,expenses'],
             'from' => ['nullable', 'date_format:Y-m-d'],
-            'to' => [
-                'nullable',
-                'date_format:Y-m-d',
-                'after_or_equal:from',
-            ],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
 
         $clinic = $request->user()->clinic;
@@ -37,33 +34,17 @@ class ReportController extends Controller
             ? Carbon::parse($data['to'], 'Asia/Dubai')->endOfDay()
             : Carbon::now('Asia/Dubai')->endOfDay();
 
-        abort_if(
-            $from->gt($to),
-            422,
-            'From date must not exceed To date.'
-        );
+        abort_if($from->gt($to), 422, 'From date must not exceed To date.');
 
-        $range = [
-            $from->format('Y-m-d H:i:s'),
-            $to->format('Y-m-d H:i:s'),
-        ];
+        $range = [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')];
 
-        $patientPayments = Payment::query()
-            ->where('clinic_id', $clinicId)
+        $patientPayments = Payment::where('clinic_id', $clinicId)
             ->whereBetween('payment_date', $range)
-            ->with([
-                'patient' => fn ($query) =>
-                    $query->where('clinic_id', $clinicId),
-            ])
+            ->with(['patient' => fn ($query) => $query->where('clinic_id', $clinicId)])
             ->get();
 
         $orderPayments = DB::table('nuskha_order_payments as payments')
-            ->join(
-                'nuskha_orders as orders',
-                'orders.nuskha_order_id',
-                '=',
-                'payments.nuskha_order_id'
-            )
+            ->join('nuskha_orders as orders', 'orders.nuskha_order_id', '=', 'payments.nuskha_order_id')
             ->where('payments.clinic_id', $clinicId)
             ->where('orders.clinic_id', $clinicId)
             ->whereBetween('payments.paid_at', $range)
@@ -76,8 +57,7 @@ class ReportController extends Controller
                 'orders.customer_name',
                 'orders.order_no',
                 'orders.currency',
-            ])
-            ->get();
+            ])->get();
 
         $collections = $patientPayments->map(fn ($payment) => [
             'source' => 'Patient payment',
@@ -88,39 +68,22 @@ class ReportController extends Controller
             'currency' => $this->currencyCode($payment->currency),
             'method' => $payment->method,
             'url' => route('payments.show', $payment),
-        ])->concat(
-            $orderPayments->map(fn ($payment) => [
-                'source' => 'Nuskha order payment',
-                'reference' => $payment->order_no,
-                'name' => $payment->customer_name,
-                'date' => $payment->paid_at,
-                'amount' => $payment->amount,
-                'currency' => $this->currencyCode($payment->currency),
-                'method' => $payment->method,
-                'url' => route('orders.show', $payment->nuskha_order_id),
-            ])
-        )->sortByDesc('date')->values();
+        ])->concat($orderPayments->map(fn ($payment) => [
+            'source' => 'Nuskha order payment',
+            'reference' => $payment->order_no,
+            'name' => $payment->customer_name,
+            'date' => $payment->paid_at,
+            'amount' => $payment->amount,
+            'currency' => $this->currencyCode($payment->currency),
+            'method' => $payment->method,
+            'url' => route('orders.show', $payment->nuskha_order_id),
+        ]))->sortByDesc('date')->values();
 
-        $expenses = Expense::query()
-            ->where('clinic_id', $clinicId)
+        $expenses = Expense::where('clinic_id', $clinicId)
             ->whereBetween('expense_date', $range)
-            ->orderByDesc('expense_date')
-            ->orderByDesc('expense_id')
-            ->get();
+            ->orderByDesc('expense_date')->orderByDesc('expense_id')->get();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Exact Totals, Grouped by Original Currency
-        |--------------------------------------------------------------------------
-        */
-
-        $totals = [
-            $currency => [
-                'received' => 0,
-                'expenses' => 0,
-            ],
-        ];
-
+        $totals = [$currency => ['received' => 0, 'expenses' => 0]];
         $patientIncomeCents = 0;
         $orderIncomeCents = 0;
         $unconfirmedCurrencyCount = 0;
@@ -133,11 +96,7 @@ class ReportController extends Controller
                 continue;
             }
 
-            $totals[$code] ??= [
-                'received' => 0,
-                'expenses' => 0,
-            ];
-
+            $totals[$code] ??= ['received' => 0, 'expenses' => 0];
             $amount = $this->toCents($record['amount']);
             $totals[$code]['received'] += $amount;
 
@@ -158,18 +117,11 @@ class ReportController extends Controller
                 continue;
             }
 
-            $totals[$code] ??= [
-                'received' => 0,
-                'expenses' => 0,
-            ];
-
-            $totals[$code]['expenses'] += $this->toCents(
-                $expense->amount
-            );
+            $totals[$code] ??= ['received' => 0, 'expenses' => 0];
+            $totals[$code]['expenses'] += $this->toCents($expense->amount);
         }
 
         ksort($totals);
-
         $currencySummary = [];
 
         foreach ($totals as $code => $amounts) {
@@ -177,18 +129,14 @@ class ReportController extends Controller
                 'currency' => $code,
                 'received' => $this->decimal($amounts['received']),
                 'expenses' => $this->decimal($amounts['expenses']),
-                'net' => $this->decimal(
-                    $amounts['received'] - $amounts['expenses']
-                ),
+                'net' => $this->decimal($amounts['received'] - $amounts['expenses']),
             ];
         }
 
         $currentTotals = $totals[$currency];
 
-        $decimalSetting = Setting::query()
-            ->where('clinic_id', $clinicId)
-            ->where('setting_key', 'decimal_places')
-            ->value('setting_value');
+        $decimalSetting = Setting::where('clinic_id', $clinicId)
+            ->where('setting_key', 'decimal_places')->value('setting_value');
 
         return view('reports.index', [
             'clinic' => $clinic,
@@ -197,7 +145,6 @@ class ReportController extends Controller
             'from' => $from,
             'to' => $to,
             'reportType' => $data['report_type'] ?? 'summary',
-
             'patientIncome' => $this->decimal($patientIncomeCents),
             'orderIncome' => $this->decimal($orderIncomeCents),
             'totalIncome' => $this->decimal($currentTotals['received']),
@@ -205,21 +152,14 @@ class ReportController extends Controller
             'netIncome' => $this->decimal(
                 $currentTotals['received'] - $currentTotals['expenses']
             ),
-
             'collections' => $collections,
             'expenses' => $expenses,
             'currencySummary' => $currencySummary,
             'unconfirmedCurrencyCount' => $unconfirmedCurrencyCount,
-
-            'totalPatients' => Patient::query()
-                ->where('clinic_id', $clinicId)
-                ->whereBetween('created_at', $range)
-                ->count(),
-
-            'totalVisits' => Visit::query()
-                ->where('clinic_id', $clinicId)
-                ->whereBetween('visit_date', $range)
-                ->count(),
+            'totalPatients' => Patient::where('clinic_id', $clinicId)
+                ->whereBetween('created_at', $range)->count(),
+            'totalVisits' => Visit::where('clinic_id', $clinicId)
+                ->whereBetween('visit_date', $range)->count(),
         ]);
     }
 
@@ -227,26 +167,15 @@ class ReportController extends Controller
     {
         $code = strtoupper(trim((string) $value));
 
-        return in_array($code, ['AED', 'PKR', 'USD'], true)
-            ? $code
-            : null;
+        return ClinicLocaleCatalog::knownCurrency($code) ? $code : null;
     }
 
     private function toCents($amount): int
     {
-        [$whole, $fraction] = array_pad(
-            explode('.', (string) $amount, 2),
-            2,
-            ''
-        );
+        [$whole, $fraction] = array_pad(explode('.', (string) $amount, 2), 2, '');
 
         return ((int) $whole * 100)
-            + (int) str_pad(
-                substr($fraction, 0, 2),
-                2,
-                '0',
-                STR_PAD_RIGHT
-            );
+            + (int) str_pad(substr($fraction, 0, 2), 2, '0', STR_PAD_RIGHT);
     }
 
     private function decimal(int $cents): string
@@ -254,14 +183,7 @@ class ReportController extends Controller
         $prefix = $cents < 0 ? '-' : '';
         $absolute = abs($cents);
 
-        return $prefix
-            . intdiv($absolute, 100)
-            . '.'
-            . str_pad(
-                (string) ($absolute % 100),
-                2,
-                '0',
-                STR_PAD_LEFT
-            );
+        return $prefix . intdiv($absolute, 100) . '.'
+            . str_pad((string) ($absolute % 100), 2, '0', STR_PAD_LEFT);
     }
 }

@@ -44,10 +44,7 @@ class SettingController extends Controller
         $clinic = $this->clinic();
         $settings = $this->settings();
 
-        return view(
-            'settings.notifications',
-            compact('clinic', 'settings')
-        );
+        return view('settings.notifications', compact('clinic', 'settings'));
     }
 
     public function security()
@@ -67,12 +64,7 @@ class SettingController extends Controller
         );
 
         $validated = $request->validate([
-            'clinic_name' => [
-                'sometimes',
-                'required',
-                'string',
-                'max:160',
-            ],
+            'clinic_name' => ['sometimes', 'required', 'string', 'max:160'],
 
             'clinic_phone' => [
                 'bail',
@@ -83,11 +75,7 @@ class SettingController extends Controller
                 new InternationalPhone(),
             ],
 
-            'clinic_address' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
+            'clinic_address' => ['nullable', 'string', 'max:255'],
 
             'clinic_logo' => [
                 'nullable',
@@ -98,25 +86,12 @@ class SettingController extends Controller
                 'prohibited_if:remove_logo,1',
             ],
 
-            'remove_logo' => [
-                'nullable',
-                'boolean',
-            ],
+            'remove_logo' => ['nullable', 'boolean'],
+            'settings' => ['nullable', 'array:print_location'],
+            'settings.print_location' => ['nullable', 'string', 'max:160'],
 
-            // Only this preference is permitted through Clinic Profile.
-            'settings' => [
-                'nullable',
-                'array:print_location',
-            ],
-
-            'settings.print_location' => [
-                'nullable',
-                'string',
-                'max:160',
-            ],
-
-            // These belong to dedicated settings endpoints.
             'currency' => ['prohibited'],
+            'country_code' => ['prohibited'],
             'patient_id_country' => ['prohibited'],
             'decimal_places' => ['prohibited'],
             'cash_enabled' => ['prohibited'],
@@ -127,21 +102,18 @@ class SettingController extends Controller
         ], [
             'clinic_logo.prohibited_if' =>
                 'Choose either a new logo or Remove current logo.',
-
             'clinic_logo.max' =>
                 'The clinic logo must not exceed 2 MB.',
-
             'clinic_logo.dimensions' =>
                 'The clinic logo must not exceed 3000 × 3000 pixels.',
-
             'settings.array' =>
                 'Only the print location can be changed through Clinic Profile.',
-
             'currency.prohibited' =>
-                'Change currency through Payment settings.',
-
+                'Only the platform administrator can change clinic currency.',
+            'country_code.prohibited' =>
+                'Only the platform administrator can change clinic country.',
             'patient_id_country.prohibited' =>
-                'Use the Patient ID country form to change this preference.',
+                'Use the Patient identification form to change this preference.',
         ]);
 
         $clinicId = (int) $request->user()->clinic_id;
@@ -150,14 +122,12 @@ class SettingController extends Controller
 
         try {
             if ($request->hasFile('clinic_logo')) {
-                $newLogoPath = $request
-                    ->file('clinic_logo')
+                $newLogoPath = $request->file('clinic_logo')
                     ->store("clinics/{$clinicId}/logos", 'public');
 
-                if (! $newLogoPath) {
+                if (!$newLogoPath) {
                     throw ValidationException::withMessages([
-                        'clinic_logo' =>
-                            'The clinic logo could not be uploaded.',
+                        'clinic_logo' => 'The clinic logo could not be uploaded.',
                     ]);
                 }
             }
@@ -188,39 +158,28 @@ class SettingController extends Controller
                     }
                 }
 
-                if (
-                    $newLogoPath !== null ||
-                    $request->boolean('remove_logo')
-                ) {
+                if ($newLogoPath !== null || $request->boolean('remove_logo')) {
                     $oldLogoPath = $clinic->logo_path;
                     $clinicData['logo_path'] = $newLogoPath;
                 }
 
                 if ($clinicData !== []) {
-                    $clinicData['updated_at'] = now();
-
                     DB::table('clinics')
                         ->where('clinic_id', $clinicId)
-                        ->update($clinicData);
+                        ->update([...$clinicData, 'updated_at' => now()]);
                 }
 
                 $preferences = $validated['settings'] ?? [];
 
                 if (array_key_exists('print_location', $preferences)) {
-                    $location = trim(
-                        (string) ($preferences['print_location'] ?? '')
-                    );
+                    $location = trim((string) ($preferences['print_location'] ?? ''));
 
-                    Setting::updateOrCreate(
-                        [
-                            'clinic_id' => $clinicId,
-                            'setting_key' => 'print_location',
-                        ],
-                        [
-                            'setting_value' =>
-                                $location !== '' ? $location : null,
-                        ]
-                    );
+                    Setting::updateOrCreate([
+                        'clinic_id' => $clinicId,
+                        'setting_key' => 'print_location',
+                    ], [
+                        'setting_value' => $location !== '' ? $location : null,
+                    ]);
                 }
             });
         } catch (Throwable $exception) {
@@ -236,12 +195,9 @@ class SettingController extends Controller
         }
 
         if (
-            $oldLogoPath &&
-            $oldLogoPath !== $newLogoPath &&
-            Str::startsWith(
-                $oldLogoPath,
-                "clinics/{$clinicId}/logos/"
-            )
+            $oldLogoPath
+            && $oldLogoPath !== $newLogoPath
+            && Str::startsWith($oldLogoPath, "clinics/{$clinicId}/logos/")
         ) {
             try {
                 Storage::disk('public')->delete($oldLogoPath);
@@ -250,10 +206,7 @@ class SettingController extends Controller
             }
         }
 
-        return back()->with(
-            'success',
-            'Settings updated successfully.'
-        );
+        return back()->with('success', 'Settings updated successfully.');
     }
 
     private function clinic()

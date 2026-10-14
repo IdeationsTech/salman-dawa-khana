@@ -5,35 +5,27 @@
 @section('content')
 <div class="auth-page">
     <div class="auth-card register-card">
-
-        {{-- Registration — Brand Panel --}}
         <div class="auth-brand-panel">
             <div class="brand-mark">
                 <i class="bi bi-hospital" aria-hidden="true"></i>
             </div>
 
             <h1>Salman Dawa Khana</h1>
-
-            <p class="brand-tagline">
-                Patient Care &amp; Clinic Management
-            </p>
-
+            <p class="brand-tagline">Patient Care &amp; Clinic Management</p>
             <div class="brand-divider"></div>
 
             <p class="brand-description">
-                Create your clinic account and start managing patients,
+                Create your clinic account and manage patients,
                 prescriptions and payments in one place.
             </p>
         </div>
 
-        {{-- Registration — Form Panel --}}
         <div class="auth-form-panel">
             <div class="auth-form-content">
                 <div class="mobile-brand">
                     <div class="brand-mark">
                         <i class="bi bi-hospital" aria-hidden="true"></i>
                     </div>
-
                     <h2>Salman Dawa Khana</h2>
                 </div>
 
@@ -43,7 +35,7 @@
                     <p>Enter your clinic and owner details below.</p>
                 </div>
 
-                @if($errors->any())
+                @if ($errors->any())
                     <div class="alert alert-danger" role="alert">
                         <button
                             type="button"
@@ -53,7 +45,7 @@
                         ></button>
 
                         <ul class="mb-0 ps-3">
-                            @foreach($errors->all() as $error)
+                            @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
                         </ul>
@@ -63,6 +55,7 @@
                 <form
                     action="{{ route('register.submit') }}"
                     method="POST"
+                    data-clinic-signup
                 >
                     @csrf
 
@@ -117,7 +110,6 @@
                             >
                         </div>
 
-                        {{-- Registration — International Clinic Phone --}}
                         <div>
                             <label for="phone" class="form-label">
                                 Clinic Phone Number *
@@ -128,6 +120,63 @@
                                 id="phone"
                                 :required="true"
                             />
+                        </div>
+
+                        <div>
+                            <label for="country_code" class="form-label">
+                                Clinic Country *
+                            </label>
+
+                            <select
+                                id="country_code"
+                                name="country_code"
+                                class="form-select"
+                                data-signup-country
+                                required
+                            >
+                                <option value="">Select country</option>
+
+                                @foreach ($countries as $code => $name)
+                                    <option
+                                        value="{{ $code }}"
+                                        data-default-currency="{{ $countryCurrencies[$code] ?? '' }}"
+                                        @selected(old('country_code') === $code)
+                                    >
+                                        {{ $name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="currency" class="form-label">
+                                Clinic Currency *
+                            </label>
+
+                            <select
+                                id="currency"
+                                name="currency"
+                                class="form-select"
+                                data-signup-currency
+                                required
+                            >
+                                <option value="">Select currency</option>
+
+                                @foreach ($currencies as $code => $name)
+                                    <option
+                                        value="{{ $code }}"
+                                        @selected(old('currency') === $code)
+                                    >
+                                        {{ $code }} — {{ $name }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <small class="text-muted" data-signup-currency-help>
+                                Country currency is selected automatically.
+                                You may choose another before registering.
+                                Afterwards, contact the platform administrator to change it.
+                            </small>
                         </div>
 
                         <div>
@@ -182,20 +231,14 @@
                         </label>
                     </div>
 
-                    <button
-                        type="submit"
-                        class="btn btn-primary btn-lg w-100"
-                    >
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
                         Create Clinic Account
                     </button>
                 </form>
 
                 <div class="auth-footer">
                     <span>Already have an account?</span>
-
-                    <a href="{{ route('login') }}" class="auth-link">
-                        Sign in
-                    </a>
+                    <a href="{{ route('login') }}" class="auth-link">Sign in</a>
                 </div>
             </div>
         </div>

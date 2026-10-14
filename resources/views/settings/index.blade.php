@@ -5,13 +5,15 @@
 @section('content')
 @php
     $currentUser = auth()->user();
+    $isOwner = $currentUser->role?->name === 'Owner';
 
     $patientIdCountry = old(
         'patient_id_country',
-        $settings->get('patient_id_country')?->setting_value ?? 'AE'
+        $settings->get('patient_id_country')?->setting_value
+            ?? \App\Support\ClinicLocaleCatalog::idCountry($clinic->country_code)
     );
 
-    $isOwner = $currentUser->role?->name === 'Owner';
+    $idLabels = \App\Support\ClinicLocaleCatalog::idLabels();
 @endphp
 
 <div class="app-shell">
@@ -28,17 +30,17 @@
             </div>
         </header>
 
-        @if(session('success'))
+        @if (session('success'))
             <div class="alert alert-success" role="status">
                 {{ session('success') }}
             </div>
         @endif
 
-        @if($errors->any())
+        @if ($errors->any())
             <div class="alert alert-danger" role="alert">
                 <strong>Please correct the following:</strong>
                 <ul class="mb-0 mt-2">
-                    @foreach($errors->all() as $error)
+                    @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
@@ -49,8 +51,41 @@
             @include('settings._navigation')
 
             <div class="settings-content">
+                <section class="settings-panel">
+                    <div class="settings-panel-heading">
+                        <div>
+                            <h2>Clinic country and currency</h2>
+                            <p>The platform administrator manages changes.</p>
+                        </div>
+                    </div>
 
-                {{-- Clinic Profile — Details and Logo --}}
+                    <div class="settings-form-grid">
+                        <div class="form-field">
+                            <label for="clinic_country_display" class="form-label">
+                                Clinic country
+                            </label>
+                            <input
+                                id="clinic_country_display"
+                                class="form-control"
+                                value="{{ \App\Support\ClinicLocaleCatalog::countryName($clinic->country_code) }}"
+                                readonly
+                            >
+                        </div>
+
+                        <div class="form-field">
+                            <label for="clinic_currency_display" class="form-label">
+                                Clinic currency
+                            </label>
+                            <input
+                                id="clinic_currency_display"
+                                class="form-control"
+                                value="{{ $clinic->currency }}"
+                                readonly
+                            >
+                        </div>
+                    </div>
+                </section>
+
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
@@ -59,7 +94,7 @@
                         </div>
 
                         <div class="clinic-settings-logo">
-                            @if($clinic->logo_path)
+                            @if ($clinic->logo_path)
                                 <img
                                     src="{{ asset('storage/' . $clinic->logo_path) }}"
                                     alt="{{ $clinic->name }} logo"
@@ -91,6 +126,7 @@
                                     class="form-control"
                                     value="{{ old('clinic_name', $clinic->name) }}"
                                     maxlength="160"
+                                    @disabled(!$isOwner)
                                     required
                                 >
                             </div>
@@ -125,7 +161,7 @@
 
                             <div class="form-field settings-field-wide">
                                 <label for="clinic_address" class="form-label">
-                                    Clinic address
+                                    Full clinic address
                                 </label>
                                 <textarea
                                     id="clinic_address"
@@ -133,59 +169,86 @@
                                     class="form-control"
                                     rows="3"
                                     maxlength="255"
+                                    @disabled(!$isOwner)
                                 >{{ old('clinic_address', $clinic->address) }}</textarea>
                             </div>
 
                             <div class="form-field settings-field-wide">
-                                <label for="clinic_logo" class="form-label">
-                                    {{ $clinic->logo_path ? 'Change clinic logo' : 'Upload clinic logo' }}
+                                <label for="print_location" class="form-label">
+                                    Short location for print header
                                 </label>
                                 <input
-                                    type="file"
-                                    id="clinic_logo"
-                                    name="clinic_logo"
+                                    type="text"
+                                    id="print_location"
+                                    name="settings[print_location]"
                                     class="form-control"
-                                    accept="image/png,image/jpeg,image/webp"
+                                    value="{{ old('settings.print_location', $settings->get('print_location')?->setting_value) }}"
+                                    maxlength="160"
+                                    placeholder="City, State, Country"
+                                    @disabled(!$isOwner)
                                 >
                                 <small class="text-muted">
-                                    PNG, JPG or WebP. Maximum 2 MB and 3000 × 3000 pixels.
+                                    Full address appears in the print footer.
                                 </small>
                             </div>
 
-                            @if($clinic->logo_path)
+                            @if ($isOwner)
                                 <div class="form-field settings-field-wide">
-                                    <div class="settings-toggle-row">
-                                        <div>
-                                            <label for="remove_logo">
-                                                <strong>Remove current logo</strong>
-                                            </label>
-                                            <small>
-                                                Select this without choosing a new file.
-                                            </small>
-                                        </div>
-                                        <input
-                                            type="checkbox"
-                                            id="remove_logo"
-                                            name="remove_logo"
-                                            class="form-check-input"
-                                            value="1"
-                                            @checked(old('remove_logo'))
-                                        >
-                                    </div>
+                                    <label for="clinic_logo" class="form-label">
+                                        {{ $clinic->logo_path ? 'Change clinic logo' : 'Upload clinic logo' }}
+                                    </label>
+                                    <input
+                                        type="file"
+                                        id="clinic_logo"
+                                        name="clinic_logo"
+                                        class="form-control"
+                                        accept="image/png,image/jpeg,image/webp"
+                                    >
+                                    <small class="text-muted">
+                                        PNG, JPG or WebP. Maximum 2 MB and 3000 × 3000 pixels.
+                                    </small>
                                 </div>
+
+                                @if ($clinic->logo_path)
+                                    <div class="form-field settings-field-wide">
+                                        <div class="settings-toggle-row">
+                                            <div>
+                                                <label for="remove_logo">
+                                                    <strong>Remove current logo</strong>
+                                                </label>
+                                                <small>
+                                                    Select this without choosing a new file.
+                                                </small>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                id="remove_logo"
+                                                name="remove_logo"
+                                                class="form-check-input"
+                                                value="1"
+                                                @checked(old('remove_logo'))
+                                            >
+                                        </div>
+                                    </div>
+                                @endif
                             @endif
                         </div>
 
-                        <div class="settings-panel-actions">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
-                                Save clinic profile
-                            </button>
-                        </div>
+                        @if ($isOwner)
+                            <div class="settings-panel-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
+                                    Save clinic profile
+                                </button>
+                            </div>
+                        @else
+                            <p class="text-muted mt-3">
+                                The clinic Owner manages clinic details.
+                            </p>
+                        @endif
                     </form>
                 </section>
 
-                {{-- Clinic Profile — Patient ID Country --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
@@ -194,7 +257,7 @@
                         </div>
                     </div>
 
-                    @if($isOwner)
+                    @if ($isOwner)
                         <form
                             method="POST"
                             action="{{ route('settings.patient-id.update') }}"
@@ -205,7 +268,7 @@
                             <div class="settings-form-grid">
                                 <div class="form-field settings-field-wide">
                                     <label for="patient_id_country" class="form-label">
-                                        Patient ID country *
+                                        Patient ID format *
                                     </label>
 
                                     <select
@@ -214,25 +277,20 @@
                                         class="form-select"
                                         required
                                     >
-                                        <option
-                                            value="AE"
-                                            @selected($patientIdCountry === 'AE')
-                                        >
-                                            United Arab Emirates — Emirates ID
-                                        </option>
-
-                                        <option
-                                            value="PK"
-                                            @selected($patientIdCountry === 'PK')
-                                        >
-                                            Pakistan — CNIC
-                                        </option>
+                                        @foreach ($idLabels as $code => $label)
+                                            <option
+                                                value="{{ $code }}"
+                                                @selected($patientIdCountry === $code)
+                                            >
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
                                     </select>
 
                                     <small class="text-muted">
                                         This applies to new patients.
-                                        Existing records retain their saved ID country.
-                                        Phone country selection is independent.
+                                        Existing records retain their saved ID format.
+                                        Other accepts an ID without a country-specific format.
                                     </small>
                                 </div>
                             </div>
@@ -240,24 +298,18 @@
                             <div class="settings-panel-actions">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
-                                    Save ID country
+                                    Save ID format
                                 </button>
                             </div>
                         </form>
                     @else
-                        <p>
-                            {{ $patientIdCountry === 'PK'
-                                ? 'Pakistan — CNIC'
-                                : 'United Arab Emirates — Emirates ID' }}
-                        </p>
-
+                        <p>{{ $idLabels[$patientIdCountry] ?? $idLabels['ZZ'] }}</p>
                         <small class="text-muted">
                             The clinic Owner manages this setting.
                         </small>
                     @endif
                 </section>
 
-                {{-- Clinic Profile — Payment Preferences --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
@@ -279,7 +331,6 @@
                     </div>
                 </section>
 
-                {{-- Clinic Profile — Current User --}}
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
@@ -292,12 +343,10 @@
                         <div class="settings-account-avatar">
                             {{ mb_strtoupper(mb_substr($currentUser->name, 0, 1)) }}
                         </div>
-
                         <div>
                             <strong>{{ $currentUser->name }}</strong>
                             <small>{{ $currentUser->email }}</small>
                         </div>
-
                         <a
                             href="{{ route('settings.account') }}"
                             class="btn btn-outline-secondary ms-auto"
@@ -306,7 +355,6 @@
                         </a>
                     </div>
                 </section>
-
             </div>
         </section>
     </main>

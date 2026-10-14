@@ -12,13 +12,10 @@ class Clinic extends Model
     use HasFactory;
 
     protected $table = 'clinics';
-
     protected $primaryKey = 'clinic_id';
 
     public $incrementing = true;
-
     protected $keyType = 'int';
-
     public $timestamps = true;
 
     protected $fillable = [
@@ -26,6 +23,7 @@ class Clinic extends Model
         'phone',
         'address',
         'currency',
+        'country_code',
     ];
 
     public function users()
