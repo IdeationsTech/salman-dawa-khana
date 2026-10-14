@@ -233,3 +233,349 @@ img {
         gap: 14px;
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| Clinicora — Registration
+|--------------------------------------------------------------------------
+*/
+
+.auth-page.clinicora-register {
+    padding: 32px 20px;
+    background:
+        radial-gradient(
+            circle at 12% 15%,
+            rgb(0 170 165 / 7%),
+            transparent 36%
+        ),
+        var(--page-bg);
+}
+
+.clinicora-register .auth-card.register-card {
+    width: min(100%, 1120px);
+    min-height: 680px;
+    grid-template-columns: minmax(0, 34%) minmax(0, 66%);
+    border-radius: 22px;
+}
+
+.clinicora-register .auth-brand-panel {
+    justify-content: space-between;
+    gap: 38px;
+    padding: 36px 34px;
+    background:
+        radial-gradient(
+            circle at 100% 100%,
+            rgb(0 170 165 / 22%),
+            transparent 55%
+        ),
+        var(--brand-navy);
+}
+
+.clinicora-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.clinicora-register .brand-mark {
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    margin: 0;
+    border-radius: 14px;
+    font-size: 25px;
+}
+
+.clinicora-brand > span {
+    color: #fff;
+    font-size: 25px;
+    font-weight: 600;
+    letter-spacing: -0.6px;
+}
+
+.clinicora-brand-eyebrow {
+    display: block;
+    margin-bottom: 15px;
+    color: #91d8d5;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.8px;
+}
+
+.clinicora-register .auth-brand-panel h1 {
+    margin: 0 0 18px;
+    color: #fff;
+    font-size: 35px;
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -1px;
+}
+
+.clinicora-register .brand-tagline {
+    margin: 0 0 12px;
+    color: #8de1db;
+    font-size: 14px;
+}
+
+.clinicora-register .brand-description {
+    max-width: none;
+    color: #c5d3df;
+    font-size: 13px;
+    line-height: 1.75;
+}
+
+.clinicora-features {
+    display: grid;
+    gap: 18px;
+    margin-top: 30px;
+}
+
+.clinicora-features > div {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.clinicora-features > div > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 35px;
+    width: 35px;
+    height: 35px;
+    border-radius: 10px;
+    background: rgb(255 255 255 / 8%);
+    color: #89ded7;
+    font-size: 17px;
+}
+
+.clinicora-features p {
+    margin: 0;
+}
+
+.clinicora-features strong {
+    display: block;
+    color: #f4f8fb;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.clinicora-features small {
+    display: block;
+    margin-top: 3px;
+    color: #b2c5d5;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.clinicora-brand-footer {
+    padding-top: 18px;
+    border-top: 1px solid rgb(255 255 255 / 12%);
+    color: #a9bfce;
+    font-size: 11px;
+}
+
+.clinicora-register .auth-form-panel {
+    align-items: center;
+    min-width: 0;
+    padding: 36px 42px;
+}
+
+.clinicora-register .auth-form-content {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.clinicora-register .auth-heading {
+    margin-bottom: 22px;
+}
+
+.clinicora-register .auth-heading h2 {
+    margin-bottom: 6px;
+    font-size: 27px;
+    line-height: 1.25;
+    letter-spacing: -0.7px;
+}
+
+.clinicora-register .auth-heading p:last-child {
+    font-size: 13px;
+}
+
+.clinicora-register .register-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 14px 18px;
+}
+
+.clinicora-register .register-form-grid > div {
+    min-width: 0;
+    margin: 0;
+}
+
+.clinicora-register .form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.clinicora-register .form-control,
+.clinicora-register .form-select {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 9px;
+    font-size: 13px;
+}
+
+.clinicora-register .form-control::placeholder {
+    color: #8b9dac;
+    font-size: 12px;
+}
+
+.clinicora-register .international-phone-field > small {
+    display: block;
+    margin-top: 5px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.clinicora-register .iti {
+    width: 100%;
+}
+
+.clinicora-register .clinicora-currency-note {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: rgb(0 170 165 / 6%);
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.clinicora-currency-note > .bi {
+    flex: 0 0 15px;
+    margin-top: 1px;
+    color: var(--brand-teal-dark);
+    font-size: 14px;
+}
+
+.clinicora-currency-note small {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+}
+
+.clinicora-register .register-terms {
+    margin: 18px 0;
+}
+
+.clinicora-register .register-terms .form-check-label,
+.clinicora-register .register-terms .auth-link {
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.clinicora-register .clinicora-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 46px;
+    border-radius: 9px;
+    font-size: 13px;
+}
+
+.clinicora-register .auth-footer {
+    margin-top: 18px;
+    padding-top: 16px;
+    font-size: 12px;
+}
+
+.clinicora-register .auth-footer .auth-link {
+    font-size: 12px;
+}
+
+@media (max-width: 1000px) {
+    .clinicora-register .auth-card.register-card {
+        grid-template-columns: minmax(0, 32%) minmax(0, 68%);
+    }
+
+    .clinicora-register .auth-brand-panel {
+        padding: 30px 25px;
+    }
+
+    .clinicora-register .auth-brand-panel h1 {
+        font-size: 29px;
+    }
+
+    .clinicora-register .auth-form-panel {
+        padding: 30px;
+    }
+
+    .clinicora-register .auth-heading h2 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .auth-page.clinicora-register {
+        padding: 20px 14px;
+    }
+
+    .clinicora-register .auth-card.register-card {
+        display: block;
+        max-width: 680px;
+        min-height: auto;
+        border-radius: 18px;
+    }
+
+    .clinicora-register .auth-brand-panel {
+        display: none;
+    }
+
+    .clinicora-register .auth-form-panel {
+        padding: 28px;
+    }
+
+    .clinicora-register .mobile-brand {
+        display: flex;
+        margin-bottom: 22px;
+    }
+
+    .clinicora-register .mobile-brand .brand-mark {
+        flex-basis: 38px;
+        width: 38px;
+        height: 38px;
+        font-size: 22px;
+    }
+
+    .clinicora-register .mobile-brand h2 {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 520px) {
+    .clinicora-register .auth-form-panel {
+        padding: 24px 20px;
+    }
+
+    .clinicora-register .register-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 13px;
+    }
+
+    .clinicora-register .auth-heading h2 {
+        font-size: 23px;
+    }
+
+    .clinicora-register .form-control,
+    .clinicora-register .form-select {
+        font-size: 16px;
+    }
+}

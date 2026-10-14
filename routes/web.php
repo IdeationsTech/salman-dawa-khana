@@ -28,27 +28,25 @@ use App\Http\Controllers\PlatformAdmin\DashboardController as PlatformAdminDashb
 use App\Http\Controllers\PlatformAdmin\ClinicController as PlatformAdminClinicController;
 use App\Http\Controllers\PlatformAdmin\ClinicEditController;
 use App\Http\Controllers\PlatformAdmin\ClinicDetailsController;
+use App\Http\Controllers\PlatformAdmin\ClinicCurrencyController;
 use App\Http\Controllers\PlatformAdmin\SubscriptionPlanController;
 use App\Http\Controllers\PlatformAdmin\LicensePaymentController;
 use App\Http\Controllers\PlatformAdmin\ComplimentaryLicenseController;
-
-use App\Http\Middleware\EnsurePlatformAdmin;
-use App\Http\Middleware\EnsureClinicAccess;
-use App\Http\Middleware\EnsureClinicRole;
 use App\Http\Controllers\PlatformAdmin\LicenseController;
 use App\Http\Controllers\PlatformAdmin\AuditLogController;
 use App\Http\Controllers\PlatformAdmin\AccountController as PlatformAdminAccountController;
 
+use App\Http\Middleware\EnsurePlatformAdmin;
+use App\Http\Middleware\EnsureClinicAccess;
+use App\Http\Middleware\EnsureClinicRole;
 
 /*
 |--------------------------------------------------------------------------
-| Public Authentication Routes
+| Public Authentication
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+Route::get('/', fn () => redirect()->route('login'));
 
 Route::get('/login', [LoginController::class, 'show'])
     ->name('login');
@@ -70,7 +68,7 @@ Route::view('/registration/pending', 'auth.pending')
 
 /*
 |--------------------------------------------------------------------------
-| Protected Clinic Application Routes
+| Protected Clinic Application
 |--------------------------------------------------------------------------
 */
 
@@ -78,12 +76,6 @@ Route::middleware(['auth', EnsureClinicAccess::class])
     ->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
-
-            /*
-|--------------------------------------------------------------------------
-| Clinic In-App Notifications
-|--------------------------------------------------------------------------
-*/
 
         Route::get('/notifications', [
             ClinicNotificationController::class,
@@ -102,15 +94,14 @@ Route::middleware(['auth', EnsureClinicAccess::class])
 
         Route::resource('patients', PatientController::class);
 
-        /*
-|--------------------------------------------------------------------------
-| Expenses — Owner and Doctor Only
-|--------------------------------------------------------------------------
-*/
-
         Route::middleware(EnsureClinicRole::class . ':Owner,Doctor')
             ->group(function () {
                 Route::resource('expenses', ExpenseController::class);
+
+                Route::get('/reports', [
+                    ReportController::class,
+                    'index',
+                ])->name('reports.index');
             });
 
         Route::get('/payments/bills/{bill}', [
@@ -120,19 +111,12 @@ Route::middleware(['auth', EnsureClinicAccess::class])
 
         Route::resource('payments', PaymentController::class);
 
-        // Template routes must precede prescriptions/{prescription}.
         Route::resource(
             'prescriptions/templates',
             NuskhaTemplateController::class
         )->names('prescriptions.templates');
 
         Route::resource('prescriptions', PrescriptionController::class);
-
-        /*
-|--------------------------------------------------------------------------
-| Nuskha Orders — Non-Patient Sales
-|--------------------------------------------------------------------------
-*/
 
         Route::get('/orders', [
             NuskhaOrderController::class,
@@ -174,22 +158,12 @@ Route::middleware(['auth', EnsureClinicAccess::class])
             'updateStatus',
         ])->whereNumber('order')->name('orders.status.update');
 
-/*
-|--------------------------------------------------------------------------
-| Reports — Owner and Doctor Only
-|--------------------------------------------------------------------------
-*/
-
-        Route::middleware(EnsureClinicRole::class . ':Owner,Doctor')
-            ->group(function () {
-                Route::get('/reports', [
-                    ReportController::class,
-                    'index',
-                ])->name('reports.index');
-            });
-
         Route::get('/settings', [SettingController::class, 'index'])
             ->name('settings.index');
+
+        Route::put('/settings', [SettingController::class, 'update'])
+            ->middleware(EnsureClinicRole::class . ':Owner')
+            ->name('settings.update');
 
         Route::get('/settings/account', [
             SettingController::class,
@@ -209,8 +183,7 @@ Route::middleware(['auth', EnsureClinicAccess::class])
         Route::put('/settings/payments', [
             PaymentSettingsController::class,
             'update',
-        ])
-            ->middleware(EnsureClinicRole::class . ':Owner')
+        ])->middleware(EnsureClinicRole::class . ':Owner')
             ->name('settings.payments.update');
 
         Route::get('/settings/notifications', [
@@ -221,9 +194,14 @@ Route::middleware(['auth', EnsureClinicAccess::class])
         Route::put('/settings/notifications', [
             NotificationSettingsController::class,
             'update',
-        ])
-            ->middleware(EnsureClinicRole::class . ':Owner')
+        ])->middleware(EnsureClinicRole::class . ':Owner')
             ->name('settings.notifications.update');
+
+        Route::put('/settings/patient-id', [
+            PatientIdSettingsController::class,
+            'update',
+        ])->middleware(EnsureClinicRole::class . ':Owner')
+            ->name('settings.patient-id.update');
 
         Route::get('/settings/security', [
             SettingController::class,
@@ -235,26 +213,6 @@ Route::middleware(['auth', EnsureClinicAccess::class])
             'updatePassword',
         ])->name('settings.security.password.update');
 
-        Route::put('/settings', [
-            SettingController::class,
-            'update',
-        ])
-            ->middleware(EnsureClinicRole::class . ':Owner')
-            ->name('settings.update');
-
-        Route::put('/settings/patient-id', [
-            PatientIdSettingsController::class,
-            'update',
-        ])
-            ->middleware(EnsureClinicRole::class . ':Owner')
-            ->name('settings.patient-id.update');
-
-/*
-|--------------------------------------------------------------------------
-| User Management — Owner Only
-|--------------------------------------------------------------------------
-*/
-
         Route::middleware(EnsureClinicRole::class . ':Owner')
             ->group(function () {
                 Route::resource('users', UserController::class);
@@ -265,7 +223,7 @@ Route::middleware(['auth', EnsureClinicAccess::class])
 
 /*
 |--------------------------------------------------------------------------
-| Platform Admin Routes
+| Platform Administration
 |--------------------------------------------------------------------------
 */
 
@@ -354,11 +312,20 @@ Route::prefix('platform-admin')
                     'edit',
                 ])->whereNumber('clinic')->name('clinics.edit');
 
+                Route::get('/clinics/{clinic}/currency', [
+                    ClinicCurrencyController::class,
+                    'edit',
+                ])->whereNumber('clinic')->name('clinics.currency.edit');
+
+                Route::put('/clinics/{clinic}/currency', [
+                    ClinicCurrencyController::class,
+                    'update',
+                ])->whereNumber('clinic')->name('clinics.currency.update');
+
                 Route::put('/clinics/{clinic}/details', [
                     ClinicDetailsController::class,
                     'update',
-                ])->whereNumber('clinic')
-                    ->name('clinics.details.update');
+                ])->whereNumber('clinic')->name('clinics.details.update');
 
                 Route::post('/clinics/{clinic}/status', [
                     ClinicEditController::class,
@@ -373,14 +340,12 @@ Route::prefix('platform-admin')
                 Route::get('/clinics/{clinic}/complimentary', [
                     ComplimentaryLicenseController::class,
                     'create',
-                ])->whereNumber('clinic')
-                    ->name('clinics.complimentary.create');
+                ])->whereNumber('clinic')->name('clinics.complimentary.create');
 
                 Route::post('/clinics/{clinic}/complimentary', [
                     ComplimentaryLicenseController::class,
                     'store',
-                ])->whereNumber('clinic')
-                    ->name('clinics.complimentary.store');
+                ])->whereNumber('clinic')->name('clinics.complimentary.store');
 
                 Route::get('/clinics/{clinic}', [
                     PlatformAdminClinicController::class,

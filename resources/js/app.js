@@ -1766,6 +1766,9 @@ if (document.readyState === 'loading') {
 
 function initializeNationalIdFormatting() {
     document.querySelectorAll('[data-national-id]').forEach((input) => {
+    if (!['PK', 'AE'].includes(input.dataset.idCountry)) {
+        return;
+    }
         if (input.dataset.idInitialized === '1') {
             return;
         }
@@ -2079,7 +2082,7 @@ function initializeCurrencyPaymentForm() {
     }
 
     const validCurrency = (code) =>
-        ['AED', 'PKR', 'USD'].includes(code);
+        /^[A-Z]{3}$/.test(String(code ?? ''));
 
     const cents = (input) => {
         const text = input.value.trim();
@@ -2452,4 +2455,55 @@ if (document.readyState === 'loading') {
     );
 } else {
     initializePrescriptionDoctorSelection();
+}
+
+/*
+|--------------------------------------------------------------------------
+| SIGNUP — Country and Default Currency
+|--------------------------------------------------------------------------
+*/
+
+function initializeClinicSignupLocale() {
+    const form = document.querySelector('[data-clinic-signup]');
+
+    if (!form || form.dataset.localeInitialized === '1') {
+        return;
+    }
+
+    form.dataset.localeInitialized = '1';
+
+    const country = form.querySelector('[data-signup-country]');
+    const currency = form.querySelector('[data-signup-currency]');
+    const help = form.querySelector('[data-signup-currency-help]');
+
+    if (!country || !currency || !help) {
+        return;
+    }
+
+    const applyDefault = () => {
+        const code =
+            country.selectedOptions[0]?.dataset.defaultCurrency || '';
+
+        currency.value = code;
+
+        help.textContent = code
+            ? `Default currency: ${code}. You can choose another before signup.`
+            : 'Select your preferred clinic currency.';
+    };
+
+    country.addEventListener('change', applyDefault);
+
+    // Preserve manual currency selection after validation errors.
+    if (country.value && !currency.value) {
+        applyDefault();
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeClinicSignupLocale
+    );
+} else {
+    initializeClinicSignupLocale();
 }

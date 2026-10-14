@@ -1,38 +1,90 @@
 @extends('layouts.app')
 
-@section('title', 'Create Clinic Account — Salman Dawa Khana')
+@section('title', 'Create Clinic Account — Clinicora')
 
 @section('content')
-<div class="auth-page">
+<div class="auth-page clinicora-register">
     <div class="auth-card register-card">
         <div class="auth-brand-panel">
-            <div class="brand-mark">
-                <i class="bi bi-hospital" aria-hidden="true"></i>
+            <div class="clinicora-brand">
+                <div class="brand-mark">
+                    <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+                </div>
+
+                <span>Clinicora</span>
             </div>
 
-            <h1>Salman Dawa Khana</h1>
-            <p class="brand-tagline">Patient Care &amp; Clinic Management</p>
-            <div class="brand-divider"></div>
+            <div class="clinicora-brand-content">
+                <span class="clinicora-brand-eyebrow">
+                    YOUR CLINIC, CONNECTED
+                </span>
 
-            <p class="brand-description">
-                Create your clinic account and manage patients,
-                prescriptions and payments in one place.
-            </p>
+                <h1>
+                    Better care.<br>
+                    Simpler management.
+                </h1>
+
+                <p class="brand-tagline">
+                    Clinic Management, Simplified.
+                </p>
+
+                <p class="brand-description">
+                    Manage patients, consultations, prescriptions and
+                    payments from one organized workspace.
+                </p>
+
+                <div class="clinicora-features">
+                    <div>
+                        <span>
+                            <i class="bi bi-person-vcard" aria-hidden="true"></i>
+                        </span>
+                        <p>
+                            <strong>Patient records</strong>
+                            <small>A clear history of every visit.</small>
+                        </p>
+                    </div>
+
+                    <div>
+                        <span>
+                            <i class="bi bi-prescription2" aria-hidden="true"></i>
+                        </span>
+                        <p>
+                            <strong>Prescriptions &amp; orders</strong>
+                            <small>Your daily work in one place.</small>
+                        </p>
+                    </div>
+
+                    <div>
+                        <span>
+                            <i class="bi bi-shield-check" aria-hidden="true"></i>
+                        </span>
+                        <p>
+                            <strong>Your clinic workspace</strong>
+                            <small>Access for your authorized team.</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="clinicora-brand-footer">
+                Built around the way your clinic works.
+            </div>
         </div>
 
         <div class="auth-form-panel">
             <div class="auth-form-content">
                 <div class="mobile-brand">
                     <div class="brand-mark">
-                        <i class="bi bi-hospital" aria-hidden="true"></i>
+                        <i class="bi bi-heart-pulse" aria-hidden="true"></i>
                     </div>
-                    <h2>Salman Dawa Khana</h2>
+
+                    <h2>Clinicora</h2>
                 </div>
 
                 <div class="auth-heading">
                     <p class="eyebrow">GET STARTED</p>
                     <h2>Create your clinic account</h2>
-                    <p>Enter your clinic and owner details below.</p>
+                    <p>Enter your clinic and owner details.</p>
                 </div>
 
                 @if ($errors->any())
@@ -62,7 +114,7 @@
                     <div class="register-form-grid">
                         <div>
                             <label for="clinic_name" class="form-label">
-                                Clinic Name *
+                                Clinic name *
                             </label>
 
                             <input
@@ -72,13 +124,15 @@
                                 class="form-control"
                                 value="{{ old('clinic_name') }}"
                                 maxlength="160"
+                                placeholder="Your clinic name"
+                                autocomplete="organization"
                                 required
                             >
                         </div>
 
                         <div>
                             <label for="owner_name" class="form-label">
-                                Owner Name *
+                                Owner name *
                             </label>
 
                             <input
@@ -88,6 +142,7 @@
                                 class="form-control"
                                 value="{{ old('owner_name') }}"
                                 maxlength="120"
+                                placeholder="Full name"
                                 autocomplete="name"
                                 required
                             >
@@ -95,7 +150,7 @@
 
                         <div>
                             <label for="email" class="form-label">
-                                Email Address *
+                                Email address *
                             </label>
 
                             <input
@@ -105,6 +160,7 @@
                                 class="form-control"
                                 value="{{ old('email') }}"
                                 maxlength="160"
+                                placeholder="you@example.com"
                                 autocomplete="email"
                                 required
                             >
@@ -112,7 +168,7 @@
 
                         <div>
                             <label for="phone" class="form-label">
-                                Clinic Phone Number *
+                                Clinic phone *
                             </label>
 
                             <x-phone-input
@@ -124,7 +180,7 @@
 
                         <div>
                             <label for="country_code" class="form-label">
-                                Clinic Country *
+                                Clinic country *
                             </label>
 
                             <select
@@ -150,7 +206,7 @@
 
                         <div>
                             <label for="currency" class="form-label">
-                                Clinic Currency *
+                                Clinic currency *
                             </label>
 
                             <select
@@ -171,12 +227,22 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
 
-                            <small class="text-muted" data-signup-currency-help>
-                                Country currency is selected automatically.
-                                You may choose another before registering.
-                                Afterwards, contact the platform administrator to change it.
-                            </small>
+                        <div class="clinicora-currency-note">
+                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+
+                            <div>
+                                <span data-signup-currency-help>
+                                    Country currency is selected automatically.
+                                    You can choose another before signup.
+                                </span>
+
+                                <small>
+                                    After signup, currency changes are managed
+                                    by the platform administrator.
+                                </small>
+                            </div>
                         </div>
 
                         <div>
@@ -190,6 +256,7 @@
                                 name="password"
                                 class="form-control"
                                 minlength="8"
+                                placeholder="At least 8 characters"
                                 autocomplete="new-password"
                                 required
                             >
@@ -197,7 +264,7 @@
 
                         <div>
                             <label for="password_confirmation" class="form-label">
-                                Confirm Password *
+                                Confirm password *
                             </label>
 
                             <input
@@ -206,6 +273,7 @@
                                 name="password_confirmation"
                                 class="form-control"
                                 minlength="8"
+                                placeholder="Repeat your password"
                                 autocomplete="new-password"
                                 required
                             >
@@ -231,8 +299,12 @@
                         </label>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100">
-                        Create Clinic Account
+                    <button
+                        type="submit"
+                        class="btn btn-primary w-100 clinicora-submit"
+                    >
+                        Create clinic account
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
                     </button>
                 </form>
 
