@@ -478,3 +478,14 @@
         height: 34px;
     }
 }
+
+/* Logo to the left of the clinic name */
+
+.clinic-letterhead .clh-clinic {
+    flex-direction: row;
+    align-items: center;
+}
+
+.clinic-letterhead .clh-logo {
+    order: -1;
+}

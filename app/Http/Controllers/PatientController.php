@@ -3,19 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Patient;
+use App\Models\Setting;
+use App\Rules\InternationalPhone;
+use App\Services\ClinicNotificationService;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class PatientController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | PATIENTS — List and Search
-    |--------------------------------------------------------------------------
-    */
-
     public function index(Request $request)
     {
         $filters = $request->validate([
@@ -26,79 +25,179 @@ class PatientController extends Controller
             ],
         ]);
 
-        $clinicId = Auth::user()->clinic_id;
+        $clinicId = (int) Auth::user()->clinic_id;
+        $balances = $this->patientBalancesQuery($clinicId);
 
         $query = Patient::query()
-            ->where('clinic_id', $clinicId);
+            ->where('patients.clinic_id', $clinicId)
+            ->leftJoinSub(
+                clone $balances,
+                'patient_balances',
+                'patient_balances.patient_id',
+                '=',
+                'patients.patient_id'
+            )
+            ->select('patients.*')
+            ->selectRaw(
+                'COALESCE(patient_balances.balance_due, 0) AS balance_due'
+            )
+            ->withMax([
+                'visits as last_visit_at' => function ($query) use ($clinicId) {
+                    $query->where('clinic_id', $clinicId);
+                },
+            ], 'visit_date')
+            ->withCasts([
+                'last_visit_at' => 'datetime',
+                'balance_due' => 'decimal:2',
+            ]);
 
-        if (!empty($filters['search'])) {
-            $search = trim($filters['search']);
+        $search = trim($filters['search'] ?? '');
+
+        if ($search !== '') {
             $normalizedId = preg_replace('/[\s-]+/', '', $search);
 
             $query->where(function ($query) use ($search, $normalizedId) {
-                $query->where('full_name', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('patient_code', 'like', "%{$search}%");
+                $query
+                    ->where('patients.full_name', 'like', "%{$search}%")
+                    ->orWhere('patients.phone', 'like', "%{$search}%")
+                    ->orWhere('patients.patient_code', 'like', "%{$search}%");
 
                 if ($normalizedId !== '') {
                     $query->orWhere(
-                        'emirates_id',
+                        'patients.emirates_id',
                         'like',
                         "%{$normalizedId}%"
                     );
                 }
 
                 if (ctype_digit($search)) {
-                    $query->orWhere('patient_id', $search);
+                    $query->orWhere('patients.patient_id', $search);
                 }
             });
         }
 
-        if (
-            !empty($filters['status']) &&
-            $filters['status'] !== 'all'
-        ) {
-            $query->where('status', $filters['status']);
+        $status = $filters['status'] ?? 'all';
+
+        if ($status !== 'all') {
+            $query->where('patients.status', $status);
         }
 
         $patients = $query
-            ->latest('created_at')
-            ->orderByDesc('patient_id')
+            ->orderByDesc('patients.created_at')
+            ->orderByDesc('patients.patient_id')
             ->paginate(100)
             ->withQueryString();
 
-        $totalPatients = Patient::where('clinic_id', $clinicId)
-            ->count();
+        $clinicPatients = Patient::query()
+            ->where('clinic_id', $clinicId);
 
-        $activePatients = Patient::where('clinic_id', $clinicId)
+        $totalPatients = (clone $clinicPatients)->count();
+
+        $activePatients = (clone $clinicPatients)
             ->where('status', 'active')
             ->count();
 
-        $inactivePatients = Patient::where('clinic_id', $clinicId)
+        $inactivePatients = (clone $clinicPatients)
             ->where('status', 'inactive')
             ->count();
 
-        $newPatientsThisMonth = Patient::where('clinic_id', $clinicId)
+        $newPatientsThisMonth = (clone $clinicPatients)
             ->whereBetween('created_at', [
                 now()->startOfMonth(),
                 now(),
             ])
             ->count();
 
+        $outstandingBalance = DB::query()
+            ->fromSub(clone $balances, 'patient_balances')
+            ->sum('balance_due');
+
+        $currency = strtoupper(
+            Auth::user()->clinic->currency ?: 'AED'
+        );
+
+        $decimalSetting = Setting::query()
+            ->where('clinic_id', $clinicId)
+            ->where('setting_key', 'decimal_places')
+            ->value('setting_value');
+
+        $moneyDecimals = (string) $decimalSetting === '0' ? 0 : 2;
+
         return view('patients.index', compact(
             'patients',
             'totalPatients',
             'activePatients',
             'inactivePatients',
-            'newPatientsThisMonth'
+            'newPatientsThisMonth',
+            'outstandingBalance',
+            'currency',
+            'moneyDecimals'
         ));
     }
 
     /*
     |--------------------------------------------------------------------------
-    | PATIENTS — Create Form
+    | Patient Balances — Actual Bill Payments
     |--------------------------------------------------------------------------
     */
+
+    private function patientBalancesQuery(int $clinicId): Builder
+    {
+        $payments = DB::table('payments')
+            ->where('clinic_id', $clinicId)
+            ->whereNotNull('bill_id')
+            ->select('bill_id', 'patient_id')
+            ->selectRaw('SUM(amount) AS received_amount')
+            ->groupBy('bill_id', 'patient_id');
+
+        return DB::table('bills as balance_bills')
+            ->join('patients as balance_patients', function ($join) {
+                $join
+                    ->on(
+                        'balance_patients.patient_id',
+                        '=',
+                        'balance_bills.patient_id'
+                    )
+                    ->on(
+                        'balance_patients.clinic_id',
+                        '=',
+                        'balance_bills.clinic_id'
+                    );
+            })
+            ->leftJoinSub($payments, 'bill_payments', function ($join) {
+                $join
+                    ->on(
+                        'bill_payments.bill_id',
+                        '=',
+                        'balance_bills.bill_id'
+                    )
+                    ->on(
+                        'bill_payments.patient_id',
+                        '=',
+                        'balance_bills.patient_id'
+                    );
+            })
+            ->where('balance_bills.clinic_id', $clinicId)
+            ->where(function ($query) {
+                $query
+                    ->whereNull('balance_bills.status')
+                    ->orWhereNotIn(
+                        'balance_bills.status',
+                        ['cancelled', 'void']
+                    );
+            })
+            ->select('balance_bills.patient_id')
+            ->selectRaw(
+                'SUM(
+                    GREATEST(
+                        balance_bills.total_amount
+                        - COALESCE(bill_payments.received_amount, 0),
+                        0
+                    )
+                ) AS balance_due'
+            )
+            ->groupBy('balance_bills.patient_id');
+    }
 
     public function create()
     {
@@ -107,55 +206,35 @@ class PatientController extends Controller
         return view('patients.create', compact('idCountry'));
     }
 
-/*
-|--------------------------------------------------------------------------
-| PATIENTS — Save with Short Patient Code
-|--------------------------------------------------------------------------
-*/
-/*
-|--------------------------------------------------------------------------
-| PATIENTS — Save Patient and Registration Alert
-|--------------------------------------------------------------------------
-*/
-
     public function store(Request $request)
     {
         $validated = $this->validatePatient($request);
 
-        \Illuminate\Support\Facades\DB::transaction(
-            function () use ($validated) {
-                $patient = Patient::create([
-                    ...$validated,
-                    'clinic_id' => Auth::user()->clinic_id,
-                    'patient_code' => 'TMP-' . (string) Str::ulid(),
-                    'status' => 'active',
-                ]);
+        DB::transaction(function () use ($validated) {
+            $patient = Patient::create([
+                ...$validated,
+                'clinic_id' => Auth::user()->clinic_id,
+                'patient_code' => 'TMP-' . (string) Str::ulid(),
+                'status' => 'active',
+            ]);
 
-                $patient->update([
-                    'patient_code' => 'P-' . str_pad(
-                        (string) $patient->patient_id,
-                        4,
-                        '0',
-                        STR_PAD_LEFT
-                    ),
-                ]);
+            $patient->update([
+                'patient_code' => 'P-' . str_pad(
+                    (string) $patient->patient_id,
+                    4,
+                    '0',
+                    STR_PAD_LEFT
+                ),
+            ]);
 
-                app(\App\Services\ClinicNotificationService::class)
-                    ->patientAdded($patient);
-            }
-        );
+            app(ClinicNotificationService::class)
+                ->patientAdded($patient);
+        });
 
         return redirect()
             ->route('patients.index')
             ->with('success', 'Patient created successfully.');
     }
-
-
-    /*
-|--------------------------------------------------------------------------
-| PATIENTS — Dynamic Patient Profile
-|--------------------------------------------------------------------------
-*/
 
     public function show(Patient $patient)
     {
@@ -181,15 +260,23 @@ class PatientController extends Controller
 
         $bills = $patient->bills()
             ->where('clinic_id', $clinicId)
-            ->whereNotIn('status', ['cancelled', 'void'])
+            ->where(function ($query) {
+                $query
+                    ->whereNull('status')
+                    ->orWhereNotIn('status', ['cancelled', 'void']);
+            })
             ->withSum([
-                'payments as recorded_paid' => function ($query) use ($clinicId) {
-                    $query->where('clinic_id', $clinicId);
+                'payments as recorded_paid' => function ($query) use (
+                    $clinicId,
+                    $patient
+                ) {
+                    $query
+                        ->where('clinic_id', $clinicId)
+                        ->where('patient_id', $patient->patient_id);
                 },
             ], 'amount')
             ->get();
 
-        // Calculate balances using integer minor units.
         $toCents = static function ($amount): int {
             [$whole, $fraction] = array_pad(
                 explode('.', (string) $amount, 2),
@@ -237,48 +324,25 @@ class PatientController extends Controller
         ));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PATIENTS — Edit Form
-    |--------------------------------------------------------------------------
-    */
-
     public function edit(Patient $patient)
     {
         $this->ensureClinicAccess($patient);
 
         $idCountry = $this->patientIdCountry($patient);
 
-        return view(
-            'patients.create',
-            compact('patient', 'idCountry')
-        );
+        return view('patients.create', compact('patient', 'idCountry'));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | PATIENTS — Update
-    |--------------------------------------------------------------------------
-    */
 
     public function update(Request $request, Patient $patient)
     {
         $this->ensureClinicAccess($patient);
 
-        $validated = $this->validatePatient($request, $patient);
-
-        $patient->update($validated);
+        $patient->update($this->validatePatient($request, $patient));
 
         return redirect()
             ->route('patients.show', $patient)
             ->with('success', 'Patient updated successfully.');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | PATIENTS — Delete
-    |--------------------------------------------------------------------------
-    */
 
     public function destroy(Patient $patient)
     {
@@ -307,40 +371,19 @@ class PatientController extends Controller
             ->with('success', 'Patient deleted successfully.');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PATIENTS — Clinic Access
-    |--------------------------------------------------------------------------
-    */
-
     private function ensureClinicAccess(Patient $patient): void
     {
         abort_unless(
-            (int) $patient->clinic_id ===
-                (int) Auth::user()->clinic_id,
+            (int) $patient->clinic_id === (int) Auth::user()->clinic_id,
             404
         );
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | PATIENTS — Validation
-    |--------------------------------------------------------------------------
-    */
-
-    /*
-|--------------------------------------------------------------------------
-| PATIENTS — Country-Specific ID and Required Fields
-|--------------------------------------------------------------------------
-*/
 
     private function validatePatient(
         Request $request,
         ?Patient $patient = null
     ): array {
         $clinicId = (int) Auth::user()->clinic_id;
-
-        // Never trust a submitted country to bypass the clinic's ID rules.
         $country = $this->patientIdCountry($patient);
         $idType = $country === 'PK' ? 'cnic' : 'emirates_id';
 
@@ -356,10 +399,7 @@ class PatientController extends Controller
             ]);
         }
 
-        $uniqueId = Rule::unique(
-            'patients',
-            'national_id_number'
-        )
+        $uniqueId = Rule::unique('patients', 'national_id_number')
             ->where('clinic_id', $clinicId)
             ->where('national_id_country', $country)
             ->where('national_id_type', $idType);
@@ -378,10 +418,6 @@ class PatientController extends Controller
             $uniqueId,
         ];
 
-        /*
-        * Also check legacy Emirates ID rows that have not yet been
-        * populated with the new national ID fields.
-        */
         if ($country === 'AE') {
             $idRules[] = function ($attribute, $value, $fail) use (
                 $clinicId,
@@ -395,34 +431,31 @@ class PatientController extends Controller
                     );
 
                 if ($patient !== null) {
-                    $query->where('patient_id', '<>', $patient->patient_id);
+                    $query->where(
+                        'patient_id',
+                        '<>',
+                        $patient->patient_id
+                    );
                 }
 
                 if ($query->exists()) {
-                    $fail('This Emirates ID is already registered in your clinic.');
+                    $fail(
+                        'This Emirates ID is already registered in your clinic.'
+                    );
                 }
             };
         }
 
         $validated = $request->validate([
-            'full_name' => [
-                'required',
-                'string',
-                'max:160',
-            ],
-
-            'father_or_husband_name' => [
-                'nullable',
-                'string',
-                'max:160',
-            ],
+            'full_name' => ['required', 'string', 'max:160'],
+            'father_or_husband_name' => ['nullable', 'string', 'max:160'],
 
             'phone' => [
                 'bail',
                 'required',
                 'string',
                 'max:16',
-                new \App\Rules\InternationalPhone(),
+                new InternationalPhone(),
             ],
 
             'national_id_number' => $idRules,
@@ -459,77 +492,43 @@ class PatientController extends Controller
                 'max:65535',
             ],
 
-            'address' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'notes' => [
-                'nullable',
-                'string',
-            ],
+            'address' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string'],
         ], [
-            'full_name.required' =>
-                'Please enter the patient’s full name.',
+            'full_name.required' => 'Please enter the patient’s full name.',
+            'phone.required' => 'Please enter the phone number.',
 
-            'phone.required' =>
-                'Please enter the phone number.',
+            'national_id_number.required' => $country === 'PK'
+                ? 'Please enter the CNIC.'
+                : 'Please enter the Emirates ID.',
 
-            'national_id_number.required' =>
-                $country === 'PK'
-                    ? 'Please enter the CNIC.'
-                    : 'Please enter the Emirates ID.',
-
-            'national_id_number.regex' =>
-                $country === 'PK'
-                    ? 'Enter a 13-digit CNIC.'
-                    : 'Enter a 15-digit Emirates ID starting with 784.',
+            'national_id_number.regex' => $country === 'PK'
+                ? 'Enter a 13-digit CNIC.'
+                : 'Enter a 15-digit Emirates ID starting with 784.',
 
             'national_id_number.unique' =>
                 'This ID is already registered in your clinic.',
 
-            'date_of_birth.required' =>
-                'Please enter the date of birth.',
-
-            'date_of_birth.date_format' =>
-                'Please enter a valid date of birth.',
-
+            'date_of_birth.required' => 'Please enter the date of birth.',
+            'date_of_birth.date_format' => 'Please enter a valid date of birth.',
             'date_of_birth.before_or_equal' =>
                 'Date of birth cannot be in the future.',
 
-            'gender.required' =>
-                'Please select the gender.',
-
-            'marital_status.required' =>
-                'Please select the marital status.',
-
+            'gender.required' => 'Please select the gender.',
+            'marital_status.required' => 'Please select the marital status.',
             'has_children.required' =>
                 'Please select whether the patient has children.',
-
-            'has_children.boolean' =>
-                'Please select Yes or No for children.',
-
-            'children_count.required' =>
-                'Please enter the number of children.',
-
+            'has_children.boolean' => 'Please select Yes or No for children.',
+            'children_count.required' => 'Please enter the number of children.',
             'children_count.integer' =>
                 'The number of children must be a whole number.',
-
             'children_count.min' =>
                 'Enter at least 1 child when Yes is selected.',
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Save the ID Country and Type with Each Patient
-        |--------------------------------------------------------------------------
-        */
-
         $validated['national_id_country'] = $country;
         $validated['national_id_type'] = $idType;
 
-        // Keep the legacy UAE field synchronized during transition.
         $validated['emirates_id'] = $country === 'AE'
             ? $validated['national_id_number']
             : null;
@@ -538,23 +537,15 @@ class PatientController extends Controller
             $validated['has_children'] = null;
             $validated['children_count'] = null;
         } else {
-            $validated['has_children'] =
-                (bool) $validated['has_children'];
+            $validated['has_children'] = (bool) $validated['has_children'];
 
-            $validated['children_count'] =
-                $validated['has_children']
-                    ? (int) $validated['children_count']
-                    : 0;
+            $validated['children_count'] = $validated['has_children']
+                ? (int) $validated['children_count']
+                : 0;
         }
 
         return $validated;
     }
-
-    /*
-|--------------------------------------------------------------------------
-| PATIENTS — Saved ID Country or Clinic Default
-|--------------------------------------------------------------------------
-*/
 
     private function patientIdCountry(?Patient $patient = null): string
     {
@@ -572,7 +563,7 @@ class PatientController extends Controller
             }
         }
 
-        $country = \App\Models\Setting::query()
+        $country = Setting::query()
             ->where('clinic_id', Auth::user()->clinic_id)
             ->where('setting_key', 'patient_id_country')
             ->value('setting_value');

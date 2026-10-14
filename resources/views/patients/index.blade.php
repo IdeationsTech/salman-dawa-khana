@@ -1,78 +1,73 @@
 @extends('layouts.app')
 
-@section('title', 'Patients — Salman Dawa Khana')
+@section('title', 'Patients')
 
 @section('content')
-@php
-    $currency = strtoupper(
-        auth()->user()->clinic->currency ?: 'AED'
-    );
-
-    $decimalSetting = \App\Models\Setting::query()
-        ->where('clinic_id', auth()->user()->clinic_id)
-        ->where('setting_key', 'decimal_places')
-        ->value('setting_value');
-
-    $moneyDecimals = (string) $decimalSetting === '0' ? 0 : 2;
-@endphp
 <div class="app-shell">
-
     @include('layouts._sidebar')
-    
-    <main class="dashboard-main">
 
+    <main class="dashboard-main">
         <header class="page-header">
             <div>
                 <p class="dashboard-date">Clinic management</p>
-
                 <h1>Patients</h1>
-
                 <p class="page-subtitle">
                     Manage your patient records and visit history.
                 </p>
             </div>
 
             <a href="{{ route('patients.create') }}" class="btn btn-primary">
-                + Add Patient
+                <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                Add patient
             </a>
         </header>
 
-        @if(session('success'))
-            <div class="alert alert-success">
+        @if (session('success'))
+            <div class="alert alert-success" role="status">
                 {{ session('success') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
         <section class="patient-stats-grid">
             <article class="patient-stat-card">
-                <span class="patient-stat-label">Total Patients</span>
-                <strong>{{ number_format($patients->total()) }}</strong>
+                <span class="patient-stat-label">Total patients</span>
+                <strong>{{ number_format($totalPatients) }}</strong>
                 <small>All registered patients</small>
             </article>
 
             <article class="patient-stat-card">
-                <span class="patient-stat-label">Active Patients</span>
-                <strong>{{ number_format($activePatients ?? 0) }}</strong>
+                <span class="patient-stat-label">Active patients</span>
+                <strong>{{ number_format($activePatients) }}</strong>
                 <small class="stat-success">Currently active records</small>
             </article>
 
             <article class="patient-stat-card">
-                <span class="patient-stat-label">New This Month</span>
-                <strong>{{ number_format($newPatientsThisMonth ?? 0) }}</strong>
+                <span class="patient-stat-label">New this month</span>
+                <strong>{{ number_format($newPatientsThisMonth) }}</strong>
                 <small class="stat-success">Recently registered</small>
             </article>
 
             <article class="patient-stat-card">
-                <span class="patient-stat-label">Outstanding Balance</span>
+                <span class="patient-stat-label">Outstanding balance</span>
                 <strong>
-                    {{ $currency }} {{ number_format($outstandingBalance ?? 0, $moneyDecimals) }}
+                    {{ $currency }}
+                    {{ number_format($outstandingBalance, $moneyDecimals) }}
                 </strong>
-                <small class="stat-warning">Patient account balance</small>
+                <small class="stat-warning">Outstanding patient bills</small>
             </article>
         </section>
 
         <section class="patients-panel">
-
             <div class="patients-toolbar">
                 <div>
                     <h2>All patients</h2>
@@ -85,11 +80,16 @@
                         class="btn btn-outline-secondary"
                         data-export-table="patients-table"
                     >
+                        <i class="bi bi-download" aria-hidden="true"></i>
                         Export
                     </button>
 
-                    <a href="{{ route('patients.create') }}" class="btn btn-primary">
-                        + New Patient
+                    <a
+                        href="{{ route('patients.create') }}"
+                        class="btn btn-primary"
+                    >
+                        <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                        New patient
                     </a>
                 </div>
             </div>
@@ -100,34 +100,41 @@
                 class="patient-filters"
             >
                 <div class="patient-search">
-                    <span>⌕</span>
+                    <span>
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                    </span>
 
                     <input
                         type="search"
                         name="search"
                         value="{{ request('search') }}"
                         placeholder="Search by name, phone or patient ID"
+                        aria-label="Search patients"
                     >
                 </div>
 
-                <select name="status" class="form-select">
+                <select
+                    name="status"
+                    class="form-select"
+                    aria-label="Patient status"
+                >
                     <option
                         value="all"
-                        {{ request('status', 'all') === 'all' ? 'selected' : '' }}
+                        @selected(request('status', 'all') === 'all')
                     >
                         All statuses
                     </option>
 
                     <option
                         value="active"
-                        {{ request('status') === 'active' ? 'selected' : '' }}
+                        @selected(request('status') === 'active')
                     >
                         Active
                     </option>
 
                     <option
                         value="inactive"
-                        {{ request('status') === 'inactive' ? 'selected' : '' }}
+                        @selected(request('status') === 'inactive')
                     >
                         Inactive
                     </option>
@@ -143,13 +150,16 @@
             </form>
 
             <div class="table-responsive">
-                <table class="table patients-table align-middle" id="patients-table">
+                <table
+                    class="table patients-table align-middle"
+                    id="patients-table"
+                >
                     <thead>
                         <tr>
                             <th>Patient ID</th>
-                            <th>Patient Name</th>
-                            <th>Phone Number</th>
-                            <th>Last Visit</th>
+                            <th>Patient name</th>
+                            <th>Phone number</th>
+                            <th>Last visit</th>
                             <th>Balance</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
@@ -157,38 +167,33 @@
                     </thead>
 
                     <tbody>
-                        @forelse($patients as $patient)
-                            @php
-                                $balance = data_get($patient, 'balance_due', 0);
-                            @endphp
-
+                        @forelse ($patients as $patient)
                             <tr>
-                                <td>
-                                    {{ $patient->patient_id }}
-                                </td>
+                                <td>{{ $patient->patient_id }}</td>
 
                                 <td>
                                     <strong>{{ $patient->full_name }}</strong>
+                                    <small>{{ $patient->gender ?: '—' }}</small>
+                                </td>
 
-                                    <small>
-                                        {{ $patient->gender ?? '—' }}
-                                    </small>
+                                <td>{{ $patient->phone ?: '—' }}</td>
+
+                                <td>
+                                    {{ $patient->last_visit_at?->format('d M Y') ?? '—' }}
+                                </td>
+
+                                <td
+                                    class="{{ $patient->balance_due > 0 ? 'balance-due' : '' }}"
+                                >
+                                    {{ $currency }}
+                                    {{ number_format(
+                                        $patient->balance_due,
+                                        $moneyDecimals
+                                    ) }}
                                 </td>
 
                                 <td>
-                                    {{ $patient->phone ?? '—' }}
-                                </td>
-
-                                <td>
-                                    {{ optional($patient->updated_at)->format('d M Y') ?? '—' }}
-                                </td>
-
-                                <td class="{{ $balance > 0 ? 'balance-due' : '' }}">
-                                    {{ $currency }} {{ number_format($balance, $moneyDecimals) }}
-                                </td>
-
-                                <td>
-                                    @if($patient->status === 'active')
+                                    @if ($patient->status === 'active')
                                         <span class="status-badge active-badge">
                                             Active
                                         </span>
@@ -226,13 +231,9 @@
                     of {{ $patients->total() }} patients
                 </span>
 
-                <div>
-                    {{ $patients->links() }}
-                </div>
+                <div>{{ $patients->links() }}</div>
             </div>
-
         </section>
-
     </main>
 </div>
 @endsection
