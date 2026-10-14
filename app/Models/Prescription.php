@@ -24,6 +24,7 @@ class Prescription extends Model
         'patient_id',
         'visit_id',
         'created_by_user_id',
+        'doctor_user_id',
         'prescription_no',
         'nuskha_name',
         'prescribed_at',
@@ -40,17 +41,29 @@ class Prescription extends Model
 
     public function clinic()
     {
-        return $this->belongsTo(Clinic::class, 'clinic_id', 'clinic_id');
+        return $this->belongsTo(
+            Clinic::class,
+            'clinic_id',
+            'clinic_id'
+        );
     }
 
     public function patient()
     {
-        return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
+        return $this->belongsTo(
+            Patient::class,
+            'patient_id',
+            'patient_id'
+        );
     }
 
     public function visit()
     {
-        return $this->belongsTo(Visit::class, 'visit_id', 'visit_id');
+        return $this->belongsTo(
+            Visit::class,
+            'visit_id',
+            'visit_id'
+        );
     }
 
     public function createdBy()
@@ -58,6 +71,15 @@ class Prescription extends Model
         return $this->belongsTo(
             User::class,
             'created_by_user_id',
+            'user_id'
+        );
+    }
+
+    public function doctor()
+    {
+        return $this->belongsTo(
+            User::class,
+            'doctor_user_id',
             'user_id'
         );
     }

@@ -25,6 +25,7 @@ class Visit extends Model
         'clinic_id',
         'patient_id',
         'recorded_by_user_id',
+        'doctor_user_id',
         'visit_date',
         'visit_reason',
         'general_notes',
@@ -62,6 +63,15 @@ class Visit extends Model
         return $this->belongsTo(
             User::class,
             'recorded_by_user_id',
+            'user_id'
+        );
+    }
+
+    public function doctor()
+    {
+        return $this->belongsTo(
+            User::class,
+            'doctor_user_id',
             'user_id'
         );
     }
