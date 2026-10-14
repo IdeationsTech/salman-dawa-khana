@@ -2402,3 +2402,54 @@ if (document.readyState === 'loading') {
 } else {
     initializeServerUserFilters();
 }
+
+/*
+|--------------------------------------------------------------------------
+| PRESCRIPTIONS — Default Practitioner from Selected Visit
+|--------------------------------------------------------------------------
+*/
+
+function initializePrescriptionDoctorSelection() {
+    const form = document.querySelector('[data-prescription-form]');
+    const visit = form?.querySelector('[data-rx-visit]');
+    const doctor = form?.querySelector('[data-rx-doctor]');
+    const message = form?.querySelector('[data-rx-doctor-message]');
+
+    if (!visit || !doctor || !message) return;
+
+    if (form.dataset.doctorSelectionInitialized === '1') return;
+    form.dataset.doctorSelectionInitialized = '1';
+
+    visit.addEventListener('change', () => {
+        const doctorId = visit.selectedOptions[0]?.dataset.doctorId;
+
+        if (!visit.value || !doctorId) {
+            message.textContent =
+                'Select the practitioner issuing this prescription.';
+            return;
+        }
+
+        const available = Array.from(doctor.options).some(
+            (option) => option.value === doctorId && !option.disabled
+        );
+
+        if (available) {
+            doctor.value = doctorId;
+            message.textContent =
+                'Practitioner selected from the visit. You can change the prescription practitioner.';
+        } else {
+            doctor.value = '';
+            message.textContent =
+                'This visit’s practitioner is unavailable. Select an active Doctor/Hakeem.';
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializePrescriptionDoctorSelection
+    );
+} else {
+    initializePrescriptionDoctorSelection();
+}

@@ -1,11 +1,6 @@
 @extends('layouts.app')
 
-@section(
-    'title',
-    isset($prescription)
-        ? 'Edit Prescription — Salman Dawa Khana'
-        : 'Create Prescription — Salman Dawa Khana'
-)
+@section('title', isset($prescription) ? 'Edit Prescription' : 'Create Prescription')
 
 @section('content')
 @php
@@ -18,7 +13,6 @@
         : [[]];
 
     $items = old('items', $defaultItems);
-
     $items = is_array($items)
         ? array_values(array_filter($items, 'is_array'))
         : [];
@@ -39,6 +33,18 @@
         $prescription->patient_id
             ?? request('patient_id', $requestedVisit?->patient_id)
     );
+
+    $defaultDoctor = $editing
+        ? $prescription->doctor_user_id
+        : $requestedVisit?->doctor_user_id;
+
+    if (!$editing && !$doctors->contains('user_id', $defaultDoctor)) {
+        $defaultDoctor = $doctors->contains('user_id', auth()->id())
+            ? auth()->id()
+            : ($doctors->count() === 1 ? $doctors->first()->user_id : null);
+    }
+
+    $selectedDoctor = old('doctor_user_id', $defaultDoctor);
 
     $selectedTemplate = old('template_id', request('template_id'));
 
@@ -61,10 +67,11 @@
     <main class="dashboard-main">
         <div class="form-page-header">
             <a href="{{ route('prescriptions.index') }}" class="back-link">
-                ← Back to prescriptions
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Back to prescriptions
             </a>
             <h1>{{ $editing ? 'Edit prescription' : 'Create prescription' }}</h1>
-            <p>Prepare a nuskha for a patient visit.</p>
+            <p>Prepare a nuskha for a patient.</p>
         </div>
 
         @if ($errors->any())
@@ -78,6 +85,13 @@
             </div>
         @endif
 
+        @if ($doctors->isEmpty())
+            <div class="alert alert-warning" role="status">
+                No active Owner/Doctor is available.
+                The clinic owner must activate or add a practitioner.
+            </div>
+        @endif
+
         <form
             action="{{ $editing
                 ? route('prescriptions.update', $prescription)
@@ -86,36 +100,29 @@
             data-prescription-form
         >
             @csrf
-
             @if ($editing)
                 @method('PUT')
             @endif
 
-            {{-- PRESCRIPTION — Patient and Visit --}}
             <section class="template-form-panel">
                 <div class="template-form-heading">
                     <div class="form-section-number">01</div>
                     <div>
-                        <h2>Patient and visit</h2>
-                        <p>Select the patient and related visit.</p>
+                        <h2>Patient, visit and practitioner</h2>
+                        <p>Select the patient and treating Doctor/Hakeem.</p>
                     </div>
                 </div>
 
                 <div class="template-form-grid">
                     <div class="form-field">
                         <label for="patient" class="form-label">Patient *</label>
-
                         @if ($editing)
-                            <input
-                                type="hidden"
-                                name="patient_id"
-                                value="{{ $prescription->patient_id }}"
-                            >
+                            <input type="hidden" name="patient_id" value="{{ $prescription->patient_id }}">
                         @endif
 
                         <select
                             id="patient"
-                            name="patient_id"
+                            name="{{ $editing ? 'patient_display' : 'patient_id' }}"
                             class="form-select"
                             data-rx-patient
                             required
@@ -138,17 +145,13 @@
 
                     <div class="form-field">
                         <label for="visit" class="form-label">Visit</label>
-                        <select
-                            id="visit"
-                            name="visit_id"
-                            class="form-select"
-                            data-rx-visit
-                        >
+                        <select id="visit" name="visit_id" class="form-select" data-rx-visit>
                             <option value="">No linked visit</option>
                             @foreach ($visits as $visit)
                                 <option
                                     value="{{ $visit->visit_id }}"
                                     data-patient-id="{{ $visit->patient_id }}"
+                                    data-doctor-id="{{ $visit->doctor_user_id }}"
                                     @selected((string) $selectedVisit === (string) $visit->visit_id)
                                 >
                                     #{{ $visit->visit_id }}
@@ -158,13 +161,42 @@
                             @endforeach
                         </select>
                         <small class="form-help">
-                            Only the selected patient's visits are available.
+                            Only this patient's visits are available.
+                        </small>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="doctor_user_id" class="form-label">
+                            Treating Doctor / Hakeem *
+                        </label>
+                        <select
+                            id="doctor_user_id"
+                            name="doctor_user_id"
+                            class="form-select"
+                            data-rx-doctor
+                            required
+                        >
+                            <option value="">Select Doctor / Hakeem</option>
+                            @foreach ($doctors as $doctor)
+                                <option
+                                    value="{{ $doctor->user_id }}"
+                                    @selected((string) $selectedDoctor === (string) $doctor->user_id)
+                                >
+                                    {{ $doctor->name }}
+                                    @if (!$doctor->is_active)
+                                        — Inactive, previously assigned
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="form-help" data-rx-doctor-message>
+                            Select the practitioner issuing this prescription.
                         </small>
                     </div>
 
                     <div class="form-field">
                         <label for="prescribed_at" class="form-label">
-                            Prescription Date &amp; Time — UAE *
+                            Prescription date &amp; time — UAE *
                         </label>
                         <input
                             type="datetime-local"
@@ -179,15 +211,8 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="prescription_status" class="form-label">
-                            Status *
-                        </label>
-                        <select
-                            id="prescription_status"
-                            name="status"
-                            class="form-select"
-                            required
-                        >
+                        <label for="prescription_status" class="form-label">Status *</label>
+                        <select id="prescription_status" name="status" class="form-select" required>
                             @foreach ([
                                 'issued' => 'Issued',
                                 'draft' => 'Draft',
@@ -205,13 +230,12 @@
                 </div>
             </section>
 
-            {{-- PRESCRIPTION — Choose Template --}}
             <section class="template-form-panel">
                 <div class="template-form-heading">
                     <div class="form-section-number">02</div>
                     <div>
                         <h2>Choose a nuskha</h2>
-                        <p>Load a saved template or enter ingredients manually.</p>
+                        <p>Load a template or enter ingredients manually.</p>
                     </div>
                 </div>
 
@@ -239,9 +263,7 @@
                     class="form-field template-selection-field {{ $mode === 'template' ? '' : 'd-none' }}"
                     data-rx-template-section
                 >
-                    <label for="template" class="form-label">
-                        Saved nuskha template
-                    </label>
+                    <label for="template" class="form-label">Saved nuskha template</label>
                     <select
                         id="template"
                         name="template_id"
@@ -262,40 +284,45 @@
                     </select>
 
                     <div class="d-flex flex-wrap gap-2 mt-2">
-                        <button
-                            type="button"
-                            class="btn btn-outline-primary"
-                            data-rx-apply-template
-                        >
+                        <button type="button" class="btn btn-outline-primary" data-rx-apply-template>
                             Load template items
                         </button>
-                        <a
-                            href="{{ route('prescriptions.templates.index') }}"
-                            class="btn btn-light"
-                        >
+                        <a href="{{ route('prescriptions.templates.index') }}" class="btn btn-light">
                             Manage templates
                         </a>
                     </div>
 
                     <small class="form-help">
-                        Loading replaces the current items and instructions.
-                        Review them before saving.
+                        Loading replaces current items and instructions.
                     </small>
-                    <p
-                        class="small mt-2 mb-0"
-                        data-rx-template-message
-                        role="status"
-                    ></p>
+                    <p class="small mt-2 mb-0" data-rx-template-message role="status"></p>
+                </div>
+
+                <div class="form-field mt-3">
+                    <label for="nuskha_name" class="form-label">
+                        Custom nuskha name — patient copy
+                    </label>
+                    <input
+                        type="text"
+                        id="nuskha_name"
+                        name="nuskha_name"
+                        class="form-control"
+                        value="{{ old('nuskha_name', $prescription->nuskha_name ?? '') }}"
+                        maxlength="160"
+                    >
+                    <small class="form-help">
+                        Saved-template mode uses the selected template's name.
+                        Patient copies show the nuskha name, not ingredients.
+                    </small>
                 </div>
             </section>
 
-            {{-- PRESCRIPTION — Ingredients --}}
             <section class="template-form-panel">
                 <div class="template-form-heading">
                     <div class="form-section-number">03</div>
                     <div>
                         <h2>Prescription items</h2>
-                        <p>Review ingredient quantities and patient-specific dosage.</p>
+                        <p>Review ingredient quantities and dosage.</p>
                     </div>
                 </div>
 
@@ -316,7 +343,7 @@
                                 data-remove-prescription-item
                                 aria-label="Remove item"
                             >
-                                ×
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
                             </button>
                         </div>
                     @endforeach
@@ -327,15 +354,11 @@
                     class="btn btn-outline-primary add-item-button"
                     data-add-prescription-item
                 >
-                    + Add custom item
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                    Add custom item
                 </button>
-
-                <p class="form-help mt-2 mb-0">
-                    If you enter a quantity, select its unit too.
-                </p>
             </section>
 
-            {{-- PRESCRIPTION — General Instructions --}}
             <section class="template-form-panel">
                 <div class="template-form-heading">
                     <div class="form-section-number">04</div>
@@ -347,9 +370,7 @@
 
                 <div class="template-form-grid">
                     <div class="form-field">
-                        <label for="prepared_by" class="form-label">
-                            Prepared by
-                        </label>
+                        <label for="prepared_by" class="form-label">Recorded by</label>
                         <input
                             type="text"
                             id="prepared_by"
@@ -362,9 +383,7 @@
                     </div>
 
                     <div class="form-field template-field-wide">
-                        <label for="notes" class="form-label">
-                            Patient instructions
-                        </label>
+                        <label for="notes" class="form-label">Patient instructions</label>
                         <textarea
                             id="notes"
                             name="general_instructions"
@@ -378,10 +397,8 @@
             </section>
 
             <div class="template-form-actions">
-                <a href="{{ route('prescriptions.index') }}" class="btn btn-light">
-                    Cancel
-                </a>
-                <button type="submit" class="btn btn-primary">
+                <a href="{{ route('prescriptions.index') }}" class="btn btn-light">Cancel</a>
+                <button type="submit" class="btn btn-primary" @disabled($doctors->isEmpty())>
                     {{ $editing ? 'Update prescription' : 'Save prescription' }}
                 </button>
             </div>
