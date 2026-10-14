@@ -19,16 +19,10 @@ class SendDailyClinicSummaries extends Command
         {--retry-failed : Retry previously failed deliveries}';
 
     protected $description =
-        'Preview or send clinic summaries with delivery tracking.';
+        'Preview or send currency-aware clinic summaries with delivery tracking.';
 
     public function handle(): int
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Date and Clinic Validation
-        |--------------------------------------------------------------------------
-        */
-
         $dateInput = $this->option('date');
 
         try {
@@ -50,8 +44,8 @@ class SendDailyClinicSummaries extends Command
                     ->startOfDay();
 
             if (
-                $dateInput &&
-                $day->format('Y-m-d') !== $dateInput
+                ! $day ||
+                ($dateInput && $day->format('Y-m-d') !== $dateInput)
             ) {
                 throw new \InvalidArgumentException();
             }
@@ -65,8 +59,10 @@ class SendDailyClinicSummaries extends Command
 
         if (
             $clinicOption !== null &&
-            (! ctype_digit((string) $clinicOption) ||
-                (int) $clinicOption < 1)
+            (
+                ! ctype_digit((string) $clinicOption) ||
+                (int) $clinicOption < 1
+            )
         ) {
             $this->error('Enter a valid clinic ID.');
 
@@ -75,7 +71,6 @@ class SendDailyClinicSummaries extends Command
 
         $mailer = (string) config('mail.default');
 
-        // Log/array testing cannot block future real email delivery.
         $channel = in_array(
             config("mail.mailers.{$mailer}.transport"),
             ['log', 'array'],
@@ -101,10 +96,7 @@ class SendDailyClinicSummaries extends Command
                 ->pluck('setting_value', 'setting_key');
 
             if (
-                (string) $settings->get(
-                    'daily_summary_enabled',
-                    '0'
-                ) !== '1' ||
+                (string) $settings->get('daily_summary_enabled', '0') !== '1' ||
                 ! $this->hasValidLicense($clinic)
             ) {
                 continue;
@@ -122,9 +114,11 @@ class SendDailyClinicSummaries extends Command
                 continue;
             }
 
+            $summaryCurrency = strtoupper($clinic->currency ?: 'AED');
+
             /*
             |--------------------------------------------------------------------------
-            | Clinic-Specific Daily Totals
+            | Activity and Received Amounts — Clinic and Currency Scoped
             |--------------------------------------------------------------------------
             */
 
@@ -134,10 +128,9 @@ class SendDailyClinicSummaries extends Command
                 ->where('visit_date', '<', $end)
                 ->count();
 
-            $summaryCurrency = strtoupper($clinic->currency ?: 'AED');
-
             $patientReceived = DB::table('payments')
                 ->where('clinic_id', $clinic->clinic_id)
+                ->where('currency', $summaryCurrency)
                 ->where('payment_date', '>=', $start)
                 ->where('payment_date', '<', $end)
                 ->sum('amount');
@@ -156,13 +149,21 @@ class SendDailyClinicSummaries extends Command
                 ->where('payments.paid_at', '<', $end)
                 ->sum('payments.amount');
 
-            $received = (float) $patientReceived + (float) $orderReceived;
-
-            $expenses = DB::table('expenses')
+            $expenseAmount = DB::table('expenses')
                 ->where('clinic_id', $clinic->clinic_id)
+                ->where('currency', $summaryCurrency)
                 ->where('expense_date', '>=', $start)
                 ->where('expense_date', '<', $end)
                 ->sum('amount');
+
+            $receivedCents =
+                $this->toCents($patientReceived)
+                + $this->toCents($orderReceived);
+
+            $expenseCents = $this->toCents($expenseAmount);
+
+            $received = $this->decimal($receivedCents);
+            $expenses = $this->decimal($expenseCents);
 
             $summary = [
                 'clinic_name' => $clinic->name,
@@ -170,8 +171,8 @@ class SendDailyClinicSummaries extends Command
                 'visits' => $visits,
                 'received' => $received,
                 'expenses' => $expenses,
-                'net' => (float) $received - (float) $expenses,
-                'currency' => strtoupper($clinic->currency ?: 'AED'),
+                'net' => $this->decimal($receivedCents - $expenseCents),
+                'currency' => $summaryCurrency,
                 'decimal_places' =>
                     (string) $settings->get('decimal_places', '2') === '0'
                         ? 0
@@ -186,9 +187,13 @@ class SendDailyClinicSummaries extends Command
                     $clinic->name,
                     $summary['date_label'],
                     $visits,
-                    $summary['currency'] . ' ' . $received,
-                    $summary['currency'] . ' ' . $expenses,
+                    $summaryCurrency . ' ' . $received,
+                    $summaryCurrency . ' ' . $expenses,
                 ]]
+            );
+
+            $this->line(
+                "Financial totals include {$summaryCurrency} records only."
             );
 
             $processed++;
@@ -211,12 +216,6 @@ class SendDailyClinicSummaries extends Command
 
                 continue;
             }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Send and Record the Result
-            |--------------------------------------------------------------------------
-            */
 
             try {
                 Mail::to($email)->send(
@@ -279,12 +278,6 @@ class SendDailyClinicSummaries extends Command
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Delivery — Claim One Clinic/Date/Channel
-    |--------------------------------------------------------------------------
-    */
-
     private function claimDelivery(
         int $clinicId,
         string $date,
@@ -321,11 +314,7 @@ class SendDailyClinicSummaries extends Command
                 );
             }
 
-            if (in_array(
-                $delivery->status,
-                ['sent', 'processing'],
-                true
-            )) {
+            if (in_array($delivery->status, ['sent', 'processing'], true)) {
                 return null;
             }
 
@@ -336,11 +325,7 @@ class SendDailyClinicSummaries extends Command
                 return null;
             }
 
-            if (! in_array(
-                $delivery->status,
-                ['pending', 'failed'],
-                true
-            )) {
+            if (! in_array($delivery->status, ['pending', 'failed'], true)) {
                 return null;
             }
 
@@ -361,12 +346,6 @@ class SendDailyClinicSummaries extends Command
             return (int) $delivery->clinic_summary_delivery_id;
         }, 3);
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Clinic — License Eligibility
-    |--------------------------------------------------------------------------
-    */
 
     private function hasValidLicense(object $clinic): bool
     {
@@ -404,5 +383,38 @@ class SendDailyClinicSummaries extends Command
                     });
             })
             ->exists();
+    }
+
+    private function toCents($amount): int
+    {
+        [$whole, $fraction] = array_pad(
+            explode('.', (string) $amount, 2),
+            2,
+            ''
+        );
+
+        return ((int) $whole * 100)
+            + (int) str_pad(
+                substr($fraction, 0, 2),
+                2,
+                '0',
+                STR_PAD_RIGHT
+            );
+    }
+
+    private function decimal(int $cents): string
+    {
+        $prefix = $cents < 0 ? '-' : '';
+        $absolute = abs($cents);
+
+        return $prefix
+            . intdiv($absolute, 100)
+            . '.'
+            . str_pad(
+                (string) ($absolute % 100),
+                2,
+                '0',
+                STR_PAD_LEFT
+            );
     }
 }
