@@ -71,17 +71,19 @@
             <div class="patients-toolbar">
                 <div>
                     <h2>All patients</h2>
-                    <p>Search and manage patient records.</p>
+                    <p>Search across all your clinic’s patient records.</p>
                 </div>
 
                 <div class="patients-toolbar-actions">
                     <button
-                        type="button"
+                        type="submit"
+                        form="patient-filter-form"
+                        name="export"
+                        value="csv"
                         class="btn btn-outline-secondary"
-                        data-export-table="patients-table"
                     >
                         <i class="bi bi-download" aria-hidden="true"></i>
-                        Export
+                        Export CSV
                     </button>
 
                     <a
@@ -95,9 +97,11 @@
             </div>
 
             <form
+                id="patient-filter-form"
                 method="GET"
                 action="{{ route('patients.index') }}"
                 class="patient-filters"
+                data-server-patient-filters
             >
                 <div class="patient-search">
                     <span>
@@ -108,8 +112,9 @@
                         type="search"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Search by name, phone or patient ID"
+                        placeholder="Name, phone, patient code, CNIC or Emirates ID"
                         aria-label="Search patients"
+                        maxlength="160"
                     >
                 </div>
 
@@ -140,13 +145,16 @@
                     </option>
                 </select>
 
-                <button
-                    type="button"
-                    class="btn btn-light filter-clear"
-                    data-clear-patient-filters
+                <button type="submit" class="btn btn-primary">
+                    Search
+                </button>
+
+                <a
+                    href="{{ route('patients.index') }}"
+                    class="btn btn-light"
                 >
                     Clear
-                </button>
+                </a>
             </form>
 
             <div class="table-responsive">
@@ -216,7 +224,7 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center">
-                                    No patients found.
+                                    No patients match these filters.
                                 </td>
                             </tr>
                         @endforelse

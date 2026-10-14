@@ -1984,3 +1984,47 @@ if (document.readyState === 'loading') {
 } else {
     initializeNuskhaOrderForm();
 }
+
+/*
+|--------------------------------------------------------------------------
+| PATIENTS — Server Search and Status Filters
+|--------------------------------------------------------------------------
+*/
+
+function initializeServerPatientFilters() {
+    const form = document.querySelector(
+        '[data-server-patient-filters]'
+    );
+
+    if (!form || form.dataset.patientFiltersInitialized === '1') {
+        return;
+    }
+
+    form.dataset.patientFiltersInitialized = '1';
+
+    const search = form.querySelector('[name="search"]');
+    const status = form.querySelector('[name="status"]');
+
+    // Search is applied by submitting the form, not by hiding table rows.
+    search?.addEventListener('input', (event) => {
+        event.stopImmediatePropagation();
+    }, true);
+
+    search?.addEventListener('change', (event) => {
+        event.stopImmediatePropagation();
+    }, true);
+
+    status?.addEventListener('change', (event) => {
+        event.stopImmediatePropagation();
+        form.requestSubmit();
+    }, true);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener(
+        'DOMContentLoaded',
+        initializeServerPatientFilters
+    );
+} else {
+    initializeServerPatientFilters();
+}

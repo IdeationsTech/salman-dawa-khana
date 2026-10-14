@@ -21,14 +21,19 @@ class PatientController extends Controller
             'search' => ['nullable', 'string', 'max:160'],
             'status' => [
                 'nullable',
-                Rule::in(['all', 'active', 'inactive']),
+                \Illuminate\Validation\Rule::in([
+                    'all',
+                    'active',
+                    'inactive',
+                ]),
             ],
+            'export' => ['nullable', 'in:csv'],
         ]);
 
-        $clinicId = (int) Auth::user()->clinic_id;
+        $clinicId = (int) auth()->user()->clinic_id;
         $balances = $this->patientBalancesQuery($clinicId);
 
-        $query = Patient::query()
+        $query = \App\Models\Patient::query()
             ->where('patients.clinic_id', $clinicId)
             ->leftJoinSub(
                 clone $balances,
@@ -63,11 +68,17 @@ class PatientController extends Controller
                     ->orWhere('patients.patient_code', 'like', "%{$search}%");
 
                 if ($normalizedId !== '') {
-                    $query->orWhere(
-                        'patients.emirates_id',
-                        'like',
-                        "%{$normalizedId}%"
-                    );
+                    $query
+                        ->orWhere(
+                            'patients.national_id_number',
+                            'like',
+                            "%{$normalizedId}%"
+                        )
+                        ->orWhere(
+                            'patients.emirates_id',
+                            'like',
+                            "%{$normalizedId}%"
+                        );
                 }
 
                 if (ctype_digit($search)) {
@@ -82,13 +93,134 @@ class PatientController extends Controller
             $query->where('patients.status', $status);
         }
 
+        $currency = strtoupper(
+            auth()->user()->clinic->currency ?: 'AED'
+        );
+
+        $decimalSetting = \App\Models\Setting::query()
+            ->where('clinic_id', $clinicId)
+            ->where('setting_key', 'decimal_places')
+            ->value('setting_value');
+
+        $moneyDecimals = (string) $decimalSetting === '0' ? 0 : 2;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Export All Matching Patients — Before Pagination
+        |--------------------------------------------------------------------------
+        */
+
+        if (($filters['export'] ?? null) === 'csv') {
+            $exportQuery = (clone $query)
+                ->orderBy('patients.patient_id');
+
+            $filename = 'patients-' . now()->format('Y-m-d-His') . '.csv';
+
+            return response()->streamDownload(
+                function () use ($exportQuery, $currency) {
+                    $stream = fopen('php://output', 'w');
+
+                    if ($stream === false) {
+                        throw new \RuntimeException(
+                            'The export stream could not be opened.'
+                        );
+                    }
+
+                    // UTF-8 BOM for Excel.
+                    fwrite($stream, "\xEF\xBB\xBF");
+
+                    // Keep spreadsheet formulas from executing.
+                    $safeText = static function ($value): string {
+                        $text = (string) ($value ?? '');
+
+                        if (preg_match('/^[\s]*[=+\-@]/u', $text)) {
+                            return "'" . $text;
+                        }
+
+                        return $text;
+                    };
+
+                    try {
+                        fputcsv($stream, [
+                            'Patient ID',
+                            'Patient Code',
+                            'Full Name',
+                            'Phone',
+                            'ID Country',
+                            'ID Type',
+                            'National ID',
+                            'Date of Birth',
+                            'Gender',
+                            'Last Visit',
+                            'Outstanding Balance',
+                            'Currency',
+                            'Status',
+                        ], ',', '"', '');
+
+                        $exportQuery->chunk(
+                            500,
+                            function ($patients) use (
+                                $stream,
+                                $safeText,
+                                $currency
+                            ) {
+                                foreach ($patients as $patient) {
+                                    $idNumber = $patient->national_id_number
+                                        ?: $patient->emirates_id;
+
+                                    fputcsv($stream, [
+                                        $patient->patient_id,
+                                        $safeText($patient->patient_code),
+                                        $safeText($patient->full_name),
+                                        $safeText($patient->phone),
+                                        $safeText(
+                                            $patient->national_id_country
+                                                ?: ($patient->emirates_id ? 'AE' : '')
+                                        ),
+                                        $safeText(
+                                            $patient->national_id_type
+                                                ?: (
+                                                    $patient->emirates_id
+                                                        ? 'emirates_id'
+                                                        : ''
+                                                )
+                                        ),
+
+                                        // Preserve leading zeros in Excel.
+                                        $idNumber ? "'" . $idNumber : '',
+
+                                        $patient->date_of_birth?->format('Y-m-d') ?? '',
+                                        $safeText($patient->gender),
+                                        $patient->last_visit_at?->format('Y-m-d H:i') ?? '',
+
+                                        // Export exact stored precision.
+                                        $patient->balance_due,
+
+                                        $currency,
+                                        $safeText($patient->status),
+                                    ], ',', '"', '');
+                                }
+                            }
+                        );
+                    } finally {
+                        fclose($stream);
+                    }
+                },
+                $filename,
+                [
+                    'Content-Type' => 'text/csv; charset=UTF-8',
+                    'Cache-Control' => 'private, no-store',
+                ]
+            );
+        }
+
         $patients = $query
             ->orderByDesc('patients.created_at')
             ->orderByDesc('patients.patient_id')
             ->paginate(100)
             ->withQueryString();
 
-        $clinicPatients = Patient::query()
+        $clinicPatients = \App\Models\Patient::query()
             ->where('clinic_id', $clinicId);
 
         $totalPatients = (clone $clinicPatients)->count();
@@ -108,20 +240,9 @@ class PatientController extends Controller
             ])
             ->count();
 
-        $outstandingBalance = DB::query()
+        $outstandingBalance = \Illuminate\Support\Facades\DB::query()
             ->fromSub(clone $balances, 'patient_balances')
             ->sum('balance_due');
-
-        $currency = strtoupper(
-            Auth::user()->clinic->currency ?: 'AED'
-        );
-
-        $decimalSetting = Setting::query()
-            ->where('clinic_id', $clinicId)
-            ->where('setting_key', 'decimal_places')
-            ->value('setting_value');
-
-        $moneyDecimals = (string) $decimalSetting === '0' ? 0 : 2;
 
         return view('patients.index', compact(
             'patients',
