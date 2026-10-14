@@ -5,15 +5,14 @@
 @section('content')
 @php
     $money = fn ($value) =>
-        $order->currency . ' ' . number_format((float) $value, $decimalPlaces);
+        $order->currency . ' ' . number_format((float) $value, 2);
 
-    $methodLabels = [
-        'cash' => 'Cash',
-        'bank' => 'Bank transfer',
-        'card' => 'Card',
-    ];
-
+    $methodLabels = ['cash' => 'Cash', 'bank' => 'Bank transfer', 'card' => 'Card'];
     $cancelled = $order->status === 'cancelled';
+
+    $canRefund = in_array(auth()->user()->role?->name, ['Owner', 'Doctor'], true)
+        && !$cancelled
+        && (float) $paidAmount > 0;
 @endphp
 
 <div class="app-shell">
@@ -44,12 +43,16 @@
 
             <div class="d-flex flex-wrap gap-2">
                 @if (!$cancelled)
-                    <a
-                        href="{{ route('orders.edit', $order) }}"
-                        class="btn btn-outline-secondary"
-                    >
+                    <a href="{{ route('orders.edit', $order) }}" class="btn btn-outline-secondary">
                         <i class="bi bi-pencil" aria-hidden="true"></i>
                         Edit order
+                    </a>
+                @endif
+
+                @if ($canRefund)
+                    <a href="{{ route('orders.refunds.create', $order) }}" class="btn btn-outline-danger">
+                        <i class="bi bi-arrow-return-left" aria-hidden="true"></i>
+                        Refund
                     </a>
                 @endif
 
@@ -65,23 +68,15 @@
                 <div class="r2-brand">
                     <div class="r2-logo">
                         @if ($clinic->logo_path)
-                            <img
-                                src="{{ asset('storage/' . $clinic->logo_path) }}"
-                                alt="{{ $clinic->name }} logo"
-                            >
+                            <img src="{{ asset('storage/' . $clinic->logo_path) }}" alt="{{ $clinic->name }} logo">
                         @else
                             <i class="bi bi-hospital" aria-hidden="true"></i>
                         @endif
                     </div>
-
                     <div>
                         <h1>{{ $clinic->name }}</h1>
-                        @if ($clinic->phone)
-                            <p>{{ $clinic->phone }}</p>
-                        @endif
-                        @if ($clinic->address)
-                            <p>{{ $clinic->address }}</p>
-                        @endif
+                        @if ($clinic->phone)<p>{{ $clinic->phone }}</p>@endif
+                        @if ($clinic->address)<p>{{ $clinic->address }}</p>@endif
                     </div>
                 </div>
 
@@ -94,24 +89,13 @@
             </header>
 
             <section class="r2-patient">
-                <div>
-                    <span>Customer name</span>
-                    <strong>{{ $order->customer_name }}</strong>
-                </div>
-                <div>
-                    <span>Customer phone</span>
-                    <strong>{{ $order->customer_phone }}</strong>
-                </div>
+                <div><span>Customer name</span><strong>{{ $order->customer_name }}</strong></div>
+                <div><span>Customer phone</span><strong>{{ $order->customer_phone }}</strong></div>
                 <div>
                     <span>Order source</span>
-                    <strong>
-                        {{ $order->order_source === 'phone' ? 'Phone order' : 'Walk-in' }}
-                    </strong>
+                    <strong>{{ $order->order_source === 'phone' ? 'Phone order' : 'Walk-in' }}</strong>
                 </div>
-                <div>
-                    <span>Fulfillment</span>
-                    <strong>{{ ucfirst($order->fulfillment_method) }}</strong>
-                </div>
+                <div><span>Fulfillment</span><strong>{{ ucfirst($order->fulfillment_method) }}</strong></div>
             </section>
 
             <table class="r2-table">
@@ -151,52 +135,27 @@
                             <strong>{{ $order->delivery_address }}</strong>
                         </div>
                     @endif
-
                     <div>
                         <span>Payment status</span>
                         <strong>
-                            {{ (float) $dueAmount <= 0
-                                ? 'Paid'
-                                : ((float) $paidAmount > 0 ? 'Partially paid' : 'Unpaid') }}
+                            {{ $cancelled ? 'Cancelled' : ((float) $dueAmount <= 0 ? 'Paid' : ((float) $paidAmount > 0 ? 'Partially paid' : 'Unpaid')) }}
                         </strong>
                     </div>
                 </div>
 
                 <div class="r2-summary">
-                    <div>
-                        <span>Subtotal</span>
-                        <strong>{{ $money($order->subtotal) }}</strong>
-                    </div>
-                    <div>
-                        <span>Discount</span>
-                        <strong>{{ $money($order->discount) }}</strong>
-                    </div>
-                    <div>
-                        <span>Delivery fee</span>
-                        <strong>{{ $money($order->delivery_fee) }}</strong>
-                    </div>
-                    <div class="r2-total">
-                        <span>Order total</span>
-                        <strong>{{ $money($order->total_amount) }}</strong>
-                    </div>
-                    <div>
-                        <span>Total received</span>
-                        <strong>{{ $money($paidAmount) }}</strong>
-                    </div>
-                    <div class="r2-due">
-                        <span>Remaining balance</span>
-                        <strong>{{ $money($dueAmount) }}</strong>
-                    </div>
+                    <div><span>Subtotal</span><strong>{{ $money($order->subtotal) }}</strong></div>
+                    <div><span>Discount</span><strong>{{ $money($order->discount) }}</strong></div>
+                    <div><span>Delivery fee</span><strong>{{ $money($order->delivery_fee) }}</strong></div>
+                    <div class="r2-total"><span>Order total</span><strong>{{ $money($order->total_amount) }}</strong></div>
+                    <div><span>Payments received</span><strong>{{ $money($grossAmount) }}</strong></div>
+                    <div><span>Refunded</span><strong>{{ $money($refundedAmount) }}</strong></div>
+                    <div><span>Net received</span><strong>{{ $money($paidAmount) }}</strong></div>
+                    <div class="r2-due"><span>Remaining balance</span><strong>{{ $money($dueAmount) }}</strong></div>
                 </div>
             </section>
 
-            <p class="r2-balance-note">
-                Balances include all payments currently recorded against this order.
-            </p>
-
-            <div class="r2-signature">
-                Authorized signature: <span></span>
-            </div>
+            <div class="r2-signature">Authorized signature: <span></span></div>
 
             <footer class="r2-footer">
                 <p>Thank you for visiting {{ $clinic->name }}.</p>
@@ -204,55 +163,30 @@
             </footer>
         </article>
 
-        <section
-            class="payment-form-panel mt-4 no-print"
-            id="order-status-panel"
-        >
+        <section class="payment-form-panel mt-4 no-print" id="order-status-panel">
             @if ($cancelled)
                 <h2 class="h5">Restore cancelled order</h2>
-                <p>Restore this order to Confirmed to resume editing and preparation.</p>
 
-                <form
-                    method="POST"
-                    action="{{ route('orders.status.update', $order) }}"
-                >
+                <form method="POST" action="{{ route('orders.status.update', $order) }}">
                     @csrf
                     @method('PATCH')
-
                     <input type="hidden" name="status" value="confirmed">
-
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
-                        Restore order
-                    </button>
+                    <button type="submit" class="btn btn-primary">Restore order</button>
                 </form>
             @else
-                <h2 class="h5">
-                    {{ $order->status === 'completed' ? 'Reopen / change status' : 'Order status' }}
-                </h2>
+                <h2 class="h5">Order status</h2>
 
-                <form
-                    method="POST"
-                    action="{{ route('orders.status.update', $order) }}"
-                    class="orders-filter-actions"
-                >
+                <form method="POST" action="{{ route('orders.status.update', $order) }}" class="orders-filter-actions">
                     @csrf
                     @method('PATCH')
-
                     <select name="status" class="form-select w-auto" required>
                         @foreach ($statuses as $status)
-                            <option
-                                value="{{ $status }}"
-                                @selected($order->status === $status)
-                            >
+                            <option value="{{ $status }}" @selected($order->status === $status)>
                                 {{ ucfirst($status) }}
                             </option>
                         @endforeach
                     </select>
-
-                    <button type="submit" class="btn btn-primary">
-                        Update status
-                    </button>
+                    <button type="submit" class="btn btn-primary">Update status</button>
                 </form>
             @endif
         </section>
@@ -261,38 +195,18 @@
             <section class="payment-form-panel no-print">
                 <h2 class="h5 mb-3">Receive remaining payment</h2>
 
-                <form
-                    method="POST"
-                    action="{{ route('orders.payments.store', $order) }}"
-                >
+                <form method="POST" action="{{ route('orders.payments.store', $order) }}">
                     @csrf
 
                     <div class="payment-form-grid">
                         <label class="form-field">
                             <span class="form-label">Amount *</span>
-                            <input
-                                type="number"
-                                name="amount"
-                                class="form-control"
-                                value="{{ old('amount', $dueAmount) }}"
-                                min="0.01"
-                                max="{{ $dueAmount }}"
-                                step="0.01"
-                                required
-                            >
+                            <input type="number" name="amount" class="form-control" value="{{ old('amount', $dueAmount) }}" min="0.01" max="{{ $dueAmount }}" step="0.01" required>
                         </label>
 
                         <label class="form-field">
                             <span class="form-label">Payment date/time *</span>
-                            <input
-                                type="datetime-local"
-                                name="paid_at"
-                                class="form-control"
-                                value="{{ old('paid_at', now('Asia/Dubai')->format('Y-m-d\TH:i')) }}"
-                                min="1000-01-01T00:00"
-                                max="9999-12-31T23:59"
-                                required
-                            >
+                            <input type="datetime-local" name="paid_at" class="form-control" value="{{ old('paid_at', now('Asia/Dubai')->format('Y-m-d\TH:i')) }}" min="1000-01-01T00:00" max="9999-12-31T23:59" required>
                         </label>
 
                         <label class="form-field">
@@ -300,43 +214,24 @@
                             <select name="method" class="form-select" required>
                                 <option value="">Select method</option>
                                 @foreach ($enabledMethods as $method)
-                                    <option
-                                        value="{{ $method }}"
-                                        @selected(old('method') === $method)
-                                    >
-                                        {{ $methodLabels[$method] }}
-                                    </option>
+                                    <option value="{{ $method }}" @selected(old('method') === $method)>{{ $methodLabels[$method] }}</option>
                                 @endforeach
                             </select>
                         </label>
 
                         <label class="form-field">
-                            <span class="form-label">Bank/card transaction reference</span>
-                            <input
-                                type="text"
-                                name="reference_no"
-                                class="form-control"
-                                value="{{ old('reference_no') }}"
-                                maxlength="100"
-                            >
+                            <span class="form-label">Bank/card reference</span>
+                            <input type="text" name="reference_no" class="form-control" value="{{ old('reference_no') }}" maxlength="100">
                         </label>
 
                         <label class="form-field payment-field-wide">
                             <span class="form-label">Payment notes</span>
-                            <input
-                                type="text"
-                                name="notes"
-                                class="form-control"
-                                value="{{ old('notes') }}"
-                                maxlength="500"
-                            >
+                            <input type="text" name="notes" class="form-control" value="{{ old('notes') }}" maxlength="500">
                         </label>
                     </div>
 
                     <div class="settings-panel-actions">
-                        <button type="submit" class="btn btn-primary">
-                            Save payment
-                        </button>
+                        <button type="submit" class="btn btn-primary">Save payment</button>
                     </div>
                 </form>
             </section>
@@ -348,36 +243,36 @@
                 <p class="text-break">{{ $order->notes }}</p>
             @endif
 
-            <h2 class="h5">Payment history</h2>
+            <h2 class="h5">Payment and refund history</h2>
 
             <div class="table-responsive">
                 <table class="table orders-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Method</th>
-                            <th>Reference</th>
-                            <th>Amount</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Date</th><th>Type</th><th>Method</th><th>Reference</th><th>Amount</th></tr></thead>
                     <tbody>
                         @forelse ($order->payments as $record)
                             <tr>
                                 <td>{{ $record->paid_at->format('d M Y, h:i A') }}</td>
-                                <td>
-                                    {{ $methodLabels[$record->method] ?? ucfirst($record->method) }}
-                                </td>
+                                <td>{{ (float) $record->amount < 0 ? 'Refund' : 'Payment' }}</td>
+                                <td>{{ $methodLabels[$record->method] ?? $record->method }}</td>
                                 <td>{{ $record->reference_no ?: '—' }}</td>
                                 <td>{{ $money($record->amount) }}</td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="4">No payments recorded.</td>
-                            </tr>
+                            <tr><td colspan="5">No payments recorded.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+
+            @if ($refunds->isNotEmpty())
+                <h2 class="h5 mt-4">Refund reasons</h2>
+                @foreach ($refunds as $refund)
+                    <p class="text-break">
+                        <strong>Refund #{{ $refund->nuskha_order_refund_id }}:</strong>
+                        {{ $refund->reason }}
+                    </p>
+                @endforeach
+            @endif
         </section>
     </main>
 </div>

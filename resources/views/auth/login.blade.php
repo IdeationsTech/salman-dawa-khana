@@ -1,36 +1,29 @@
 @extends('layouts.app')
 
-@section('title', 'Login — Salman Dawa Khana')
+@section('title', 'Sign In — Clinicora')
 
 @section('content')
 <div class="auth-page">
     <div class="auth-card">
-
-        {{-- Login Brand Panel --}}
         <div class="auth-brand-panel">
-            <div class="brand-mark">+</div>
-
-            <h1>Salman Dawa Khana</h1>
-
-            <p class="brand-tagline">
-                Patient Care &amp; Clinic Management
-            </p>
-
+            <div class="brand-mark">
+                <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+            </div>
+            <h1>Clinicora</h1>
+            <p class="brand-tagline">Clinic Management, Simplified.</p>
             <div class="brand-divider"></div>
-
             <p class="brand-description">
-                A simple and reliable system for managing patients,
-                prescriptions and clinic payments.
+                Manage patients, prescriptions, orders and clinic payments.
             </p>
         </div>
 
-        {{-- Login Form Panel --}}
         <div class="auth-form-panel">
             <div class="auth-form-content">
-
                 <div class="mobile-brand">
-                    <div class="brand-mark">+</div>
-                    <h2>Salman Dawa Khana</h2>
+                    <div class="brand-mark">
+                        <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+                    </div>
+                    <h2>Clinicora</h2>
                 </div>
 
                 <div class="auth-heading">
@@ -41,19 +34,12 @@
 
                 @if ($errors->any())
                     <div class="alert alert-danger" role="alert">
-                        <button
-                            type="button"
-                            class="btn-close float-end"
-                            data-dismiss-alert
-                            aria-label="Close"
-                        ></button>
-
                         {{ $errors->first() }}
                     </div>
                 @endif
 
                 @if (session('status'))
-                    <div class="alert alert-success" role="alert">
+                    <div class="alert alert-success" role="status">
                         {{ session('status') }}
                     </div>
                 @endif
@@ -62,89 +48,65 @@
                     @csrf
 
                     <div class="mb-3">
-                        <label for="email" class="form-label">
-                            Email Address
-                        </label>
-
+                        <label for="email" class="form-label">Email address *</label>
                         <input
                             type="email"
-                            class="form-control form-control-lg @error('email') is-invalid @enderror"
                             id="email"
                             name="email"
+                            class="form-control form-control-lg"
                             value="{{ old('email') }}"
-                            placeholder="you@example.com"
+                            maxlength="160"
                             autocomplete="email"
                             required
                         >
-
-                        @error('email')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
                     </div>
 
                     <div class="mb-3">
                         <div class="password-label-row">
-                            <label for="password" class="form-label">
-                                Password
-                            </label>
-
-                            <a href="#" class="auth-link">
+                            <label for="password" class="form-label">Password *</label>
+                            <a href="{{ route('password.request') }}" class="auth-link">
                                 Forgot password?
                             </a>
                         </div>
 
                         <input
                             type="password"
-                            class="form-control form-control-lg @error('password') is-invalid @enderror"
                             id="password"
                             name="password"
-                            placeholder="Enter your password"
+                            class="form-control form-control-lg"
                             autocomplete="current-password"
                             required
                         >
-
-                        @error('password')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
                     </div>
 
                     <div class="form-check mb-4">
                         <input
-                            class="form-check-input"
                             type="checkbox"
                             id="remember"
                             name="remember"
+                            class="form-check-input"
+                            value="1"
+                            @checked(old('remember'))
                         >
-
-                        <label class="form-check-label" for="remember">
-                            Remember me
-                        </label>
+                        <label for="remember" class="form-check-label">Remember me</label>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg w-100">
-                        Sign In
+                        Sign in
                     </button>
                 </form>
 
                 <div class="auth-footer">
                     <span>New clinic?</span>
-                    <a href="{{ route('register') }}" class="auth-link">
-                        Create an account
-                    </a>
+                    <a href="{{ route('register') }}" class="auth-link">Create an account</a>
                 </div>
 
                 <div class="secure-note">
-                    <span>🔒</span>
-                    Secure access to your clinic data
+                    <i class="bi bi-shield-check" aria-hidden="true"></i>
+                    Access to your clinic workspace
                 </div>
-
             </div>
         </div>
-
     </div>
 </div>
 @endsection

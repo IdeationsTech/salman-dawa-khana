@@ -579,3 +579,23 @@ img {
         font-size: 16px;
     }
 }
+
+.clinic-audit-details {
+    min-width: 140px;
+}
+
+.clinic-audit-details summary {
+    color: var(--brand-teal-dark);
+}
+
+.clinic-audit-details pre {
+    max-width: 440px;
+    margin: 10px 0 0;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--surface-soft);
+    color: var(--text-main);
+    font-size: 11px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

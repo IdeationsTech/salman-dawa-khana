@@ -168,30 +168,11 @@ class DashboardController extends Controller
 
     private function toCents($amount): int
     {
-        [$whole, $fraction] = array_pad(
-            explode('.', (string) $amount, 2),
-            2,
-            ''
-        );
-
-        return ((int) $whole * 100)
-            + (int) str_pad(
-                substr($fraction, 0, 2),
-                2,
-                '0',
-                STR_PAD_RIGHT
-            );
+        return \App\Support\Money::scaled($amount, 2);
     }
 
     private function decimal(int $cents): string
     {
-        return intdiv($cents, 100)
-            . '.'
-            . str_pad(
-                (string) ($cents % 100),
-                2,
-                '0',
-                STR_PAD_LEFT
-            );
+        return \App\Support\Money::decimal($cents, 2);
     }
 }

@@ -2507,3 +2507,179 @@ if (document.readyState === 'loading') {
 } else {
     initializeClinicSignupLocale();
 }
+
+/*
+|--------------------------------------------------------------------------
+| NUSKHA ORDERS — Create/Edit Items and Exact Totals
+|--------------------------------------------------------------------------
+*/
+
+function initializeOrderEditor() {
+    const form = document.querySelector('[data-order-editor]');
+
+    if (!form || form.dataset.editorInitialized === '1') return;
+    form.dataset.editorInitialized = '1';
+
+    const list = form.querySelector('[data-oe-items]');
+    const firstRow = list?.querySelector('[data-oe-item]');
+
+    if (!list || !firstRow) return;
+
+    const source = firstRow.cloneNode(true);
+    const currency = form.dataset.currency;
+    const fulfillment = form.querySelector('[data-oe-fulfillment]');
+    const discount = form.querySelector('[name="discount"]');
+    const deliveryFee = form.querySelector('[name="delivery_fee"]');
+    const payment = form.querySelector('[name="payment_amount"]');
+    const method = form.querySelector('[name="payment_method"]');
+    const reference = form.querySelector('[name="reference_no"]');
+    const error = form.querySelector('[data-oe-error]');
+
+    const scaled = (value, places) => {
+        const text = String(value ?? '').trim();
+
+        if (!/^\d+(?:\.\d+)?$/.test(text)) return 0n;
+
+        const [whole, fraction = ''] = text.split('.');
+
+        return BigInt(whole) * (10n ** BigInt(places))
+            + BigInt(fraction.slice(0, places).padEnd(places, '0'));
+    };
+
+    const existingPaid = scaled(form.dataset.existingPaid, 2);
+
+    const money = (value) => {
+        const sign = value < 0n ? '-' : '';
+        const amount = value < 0n ? -value : value;
+
+        return `${currency} ${sign}${(amount / 100n).toLocaleString('en-US')}`
+            + `.${String(amount % 100n).padStart(2, '0')}`;
+    };
+
+    const refresh = () => {
+        let subtotal = 0n;
+        const rows = list.querySelectorAll('[data-oe-item]');
+
+        rows.forEach((row, index) => {
+            row.querySelector('[data-oe-number]').textContent = index + 1;
+
+            row.querySelectorAll('[data-oe-field]').forEach((field) => {
+                field.name = `items[${index}][${field.dataset.oeField}]`;
+            });
+
+            row.querySelector('[data-oe-remove]').disabled = rows.length === 1;
+
+            const template = row.querySelector('[data-oe-field="nuskha_template_id"]');
+            const name = row.querySelector('[data-oe-field="nuskha_name"]');
+
+            name.required = !template.value;
+            name.readOnly = Boolean(template.value);
+
+            const quantity = scaled(
+                row.querySelector('[data-oe-field="quantity"]').value,
+                3
+            );
+
+            const price = scaled(
+                row.querySelector('[data-oe-field="unit_price"]').value,
+                2
+            );
+
+            subtotal += (quantity * price + 500n) / 1000n;
+        });
+
+        const isDelivery = fulfillment.value === 'delivery';
+        const address = form.querySelector('[data-oe-address]');
+        const addressInput = address.querySelector('textarea');
+
+        address.hidden = !isDelivery;
+        addressInput.disabled = !isDelivery;
+        addressInput.required = isDelivery;
+
+        form.querySelector('[data-oe-fee]').hidden = !isDelivery;
+
+        const total = subtotal - scaled(discount.value, 2)
+            + (isDelivery ? scaled(deliveryFee.value, 2) : 0n);
+
+        const received = payment ? scaled(payment.value, 2) : 0n;
+        const due = total - existingPaid - received;
+
+        form.querySelector('[data-oe-subtotal]').textContent = money(subtotal);
+        form.querySelector('[data-oe-total]').textContent = money(total > 0n ? total : 0n);
+        form.querySelector('[data-oe-due]').textContent = money(due > 0n ? due : 0n);
+
+        error.textContent = total <= 0n
+            ? 'Order total must be greater than zero.'
+            : total < existingPaid
+                ? 'Refund the difference first. Total is below the net amount received.'
+                : due < 0n
+                    ? 'Amount received exceeds the order total.'
+                    : '';
+
+        if (method && reference) {
+            method.required = received > 0n;
+            reference.required = received > 0n
+                && ['bank', 'card'].includes(method.value);
+        }
+    };
+
+    form.querySelector('[data-oe-add]').addEventListener('click', () => {
+        if (list.querySelectorAll('[data-oe-item]').length >= 50) return;
+
+        const row = source.cloneNode(true);
+
+        row.querySelectorAll('[data-oe-field]').forEach((field) => {
+            field.value = field.dataset.oeField === 'quantity'
+                ? '1'
+                : field.dataset.oeField === 'unit'
+                    ? 'pack'
+                    : '';
+        });
+
+        row.querySelector('[data-oe-field="nuskha_name"]').readOnly = false;
+        list.appendChild(row);
+        refresh();
+    });
+
+    list.addEventListener('click', (event) => {
+        const remove = event.target.closest('[data-oe-remove]');
+
+        if (remove && list.querySelectorAll('[data-oe-item]').length > 1) {
+            remove.closest('[data-oe-item]').remove();
+            refresh();
+        }
+    });
+
+    list.addEventListener('change', (event) => {
+        if (event.target.matches('[data-oe-field="nuskha_template_id"]')) {
+            const row = event.target.closest('[data-oe-item]');
+            const name = row.querySelector('[data-oe-field="nuskha_name"]');
+
+            if (event.target.value) {
+                name.value = event.target.selectedOptions[0].textContent
+                    .replace('— inactive; existing item only', '')
+                    .trim();
+            }
+        }
+    });
+
+    form.addEventListener('input', refresh);
+    form.addEventListener('change', refresh);
+
+    form.addEventListener('submit', (event) => {
+        refresh();
+
+        if (error.textContent || !form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+        }
+    });
+
+    refresh();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeOrderEditor);
+} else {
+    initializeOrderEditor();
+}
