@@ -47,11 +47,6 @@
                 : ((float) $billPaid > 0 ? 'Partially paid' : 'Unpaid')))
         : null;
 
-    $otherBillsDue = max(
-        0,
-        (float) $patientOutstanding - (float) ($billDue ?? 0)
-    );
-
     $dob = $patient->date_of_birth;
 
     $ageAtDocument = $dob && $dob->lte($documentDate)
@@ -60,26 +55,25 @@
 @endphp
 
 <div class="app-shell">
-    @include('payments._sidebar')
+    @include('layouts._sidebar')
 
     <main class="dashboard-main">
-        @if(session('success'))
+        @if (session('success'))
             <div class="alert alert-success no-print" role="status">
                 {{ session('success') }}
             </div>
         @endif
 
-        @if($errors->any())
+        @if ($errors->any())
             <div class="alert alert-danger no-print" role="alert">
                 <ul class="mb-0">
-                    @foreach($errors->all() as $error)
+                    @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
             </div>
         @endif
 
-        {{-- Receipt — Screen Actions --}}
         <div class="payment-detail-toolbar no-print">
             <a href="{{ route('payments.index') }}" class="back-link">
                 <i class="bi bi-arrow-left app-icon" aria-hidden="true"></i>
@@ -87,7 +81,7 @@
             </a>
 
             <div class="payment-toolbar-actions flex-wrap">
-                @if($payment)
+                @if ($payment)
                     <a
                         href="{{ route('payments.edit', $payment) }}"
                         class="btn btn-outline-secondary"
@@ -97,7 +91,7 @@
                     </a>
                 @endif
 
-                @if(
+                @if (
                     $bill &&
                     (float) $billDue > 0 &&
                     !in_array($bill->status, ['cancelled', 'void'], true)
@@ -126,12 +120,10 @@
         </div>
 
         <article class="payment-receipt receipt-v2">
-
-            {{-- Receipt — Clinic and Document Header --}}
             <header class="r2-header">
                 <div class="r2-brand">
                     <div class="r2-logo">
-                        @if($clinic->logo_path)
+                        @if ($clinic->logo_path)
                             <img
                                 src="{{ asset('storage/' . $clinic->logo_path) }}"
                                 alt="{{ $clinic->name }} logo"
@@ -144,11 +136,11 @@
                     <div>
                         <h1>{{ $clinic->name }}</h1>
 
-                        @if($clinic->address)
+                        @if ($clinic->address)
                             <p>{{ $clinic->address }}</p>
                         @endif
 
-                        @if($clinic->phone)
+                        @if ($clinic->phone)
                             <p>{{ $clinic->phone }}</p>
                         @endif
                     </div>
@@ -163,10 +155,10 @@
 
                     <p>{{ $documentDate->format('d M Y') }}</p>
                     <p>{{ $documentDate->format('h:i A') }}</p>
+                    <p>Currency: {{ $currency }}</p>
                 </div>
             </header>
 
-            {{-- Receipt — Patient Details --}}
             <section class="r2-patient">
                 <div>
                     <span>Patient name</span>
@@ -180,11 +172,10 @@
 
                 <div>
                     <span>Date of birth / Age at receipt date</span>
-
                     <strong>
-                        @if($dob)
+                        @if ($dob)
                             {{ $dob->format('d M Y') }}
-                            @if($ageAtDocument !== null)
+                            @if ($ageAtDocument !== null)
                                 / {{ $ageAtDocument }} years
                             @endif
                         @else
@@ -199,8 +190,7 @@
                 </div>
             </section>
 
-            {{-- Receipt — Charges --}}
-            @if($bill)
+            @if ($bill)
                 <table class="r2-table">
                     <thead>
                         <tr>
@@ -210,10 +200,9 @@
                     </thead>
 
                     <tbody>
-                        @forelse($bill->items as $item)
+                        @forelse ($bill->items as $item)
                             <tr>
                                 <td>{{ $item->description }}</td>
-
                                 <td class="r2-number">
                                     {{ number_format($item->line_total, $decimals) }}
                                 </td>
@@ -230,7 +219,6 @@
                 </table>
             @endif
 
-            {{-- Receipt — Payment Details and Balance Summary --}}
             <section class="r2-bottom">
                 <div class="r2-details">
                     <div>
@@ -240,7 +228,7 @@
                         </strong>
                     </div>
 
-                    @if($payment)
+                    @if ($payment)
                         <div>
                             <span>Payment method</span>
                             <strong>{{ $methodLabel }}</strong>
@@ -251,7 +239,7 @@
                             <strong>{{ $payment->receivedBy?->name ?? '—' }}</strong>
                         </div>
 
-                        @if($payment->reference_no)
+                        @if ($payment->reference_no)
                             <div>
                                 <span>Transaction reference</span>
                                 <strong>{{ $payment->reference_no }}</strong>
@@ -259,7 +247,7 @@
                         @endif
                     @endif
 
-                    @if($bill)
+                    @if ($bill)
                         <div>
                             <span>Current bill status</span>
                             <strong>{{ $billStatus }}</strong>
@@ -268,7 +256,7 @@
                 </div>
 
                 <div class="r2-summary">
-                    @if($bill)
+                    @if ($bill)
                         <div>
                             <span>Subtotal</span>
                             <strong>{{ $money($bill->subtotal) }}</strong>
@@ -285,14 +273,14 @@
                         </div>
                     @endif
 
-                    @if($payment)
+                    @if ($payment)
                         <div>
                             <span>This payment</span>
                             <strong>{{ $money($payment->amount) }}</strong>
                         </div>
                     @endif
 
-                    @if($bill)
+                    @if ($bill)
                         <div>
                             <span>Total paid on this bill</span>
                             <strong>{{ $money($billPaid) }}</strong>
@@ -304,24 +292,23 @@
                         </div>
                     @endif
 
-                    @if($showPreviousDue)
-                        @if($bill)
+                    @if ($showPreviousDue)
+                        @if ($bill)
                             <div>
-                                <span>Other bills outstanding</span>
+                                <span>Other bills outstanding ({{ $currency }})</span>
                                 <strong>{{ $money($otherBillsDue) }}</strong>
                             </div>
                         @endif
 
                         <div class="r2-total">
-                            <span>Patient total outstanding</span>
+                            <span>Patient outstanding ({{ $currency }})</span>
                             <strong>{{ $money($patientOutstanding) }}</strong>
                         </div>
                     @endif
                 </div>
             </section>
 
-            {{-- Receipt — Notes --}}
-            @if($payment?->notes)
+            @if ($payment?->notes)
                 <div class="r2-notes">
                     <span>Payment notes</span>
                     <p>{{ $payment->notes }}</p>
@@ -329,8 +316,8 @@
             @endif
 
             <p class="r2-balance-note">
-                Balances shown are current when this receipt is generated,
-                including subsequent payments.
+                Balances are current when this receipt is generated.
+                Outstanding totals include only {{ $currency }} bills.
                 Unallocated payments are not deducted from bill balances.
             </p>
 
@@ -349,8 +336,7 @@
                 </small>
             </footer>
 
-            {{-- Receipt — Payment History, Screen Only --}}
-            @if($bill && $billPayments->isNotEmpty())
+            @if ($bill && $billPayments->isNotEmpty())
                 <section class="r2-history no-print">
                     <h2>Payments against this bill</h2>
 
@@ -364,7 +350,7 @@
                         </thead>
 
                         <tbody>
-                            @foreach($billPayments as $record)
+                            @foreach ($billPayments as $record)
                                 <tr>
                                     <td>
                                         <a href="{{ route('payments.show', $record) }}">

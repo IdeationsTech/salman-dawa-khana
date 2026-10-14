@@ -27,6 +27,15 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $clinicId = $this->clinicId();
+        $clinic = $this->clinic();
+        $currency = strtoupper($clinic->currency ?: 'AED');
+
+        $decimalSetting = Setting::query()
+            ->where('clinic_id', $clinicId)
+            ->where('setting_key', 'decimal_places')
+            ->value('setting_value');
+
+        $moneyDecimals = (string) $decimalSetting === '0' ? 0 : 2;
 
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:160'],
@@ -44,6 +53,7 @@ class PaymentController extends Controller
         $dateRange = $filters['date_range'] ?? 'all time';
         $search = trim($filters['search'] ?? '');
 
+        // List all payment currencies with their original labels.
         $query = Payment::query()
             ->where('clinic_id', $clinicId)
             ->with([
@@ -82,7 +92,10 @@ class PaymentController extends Controller
                 ? ['bank', 'bank transfer', 'bank_transfer']
                 : [$method];
 
-            $query->whereIn(DB::raw('LOWER(TRIM(method))'), $methods);
+            $query->whereIn(
+                DB::raw('LOWER(TRIM(method))'),
+                $methods
+            );
         }
 
         $today = Carbon::now('Asia/Dubai')->startOfDay();
@@ -111,10 +124,18 @@ class PaymentController extends Controller
         $payments = $query
             ->orderByDesc('payment_date')
             ->orderByDesc('payment_id')
-            ->paginate(10)
+            ->paginate(50)
             ->withQueryString();
 
-        $base = Payment::query()->where('clinic_id', $clinicId);
+        /*
+        |--------------------------------------------------------------------------
+        | Summary — Current Clinic Currency Only
+        |--------------------------------------------------------------------------
+        */
+
+        $base = Payment::query()
+            ->where('clinic_id', $clinicId)
+            ->where('currency', $currency);
 
         $totalReceived = (clone $base)->sum('amount');
 
@@ -142,12 +163,55 @@ class PaymentController extends Controller
             ->whereNull('bill_id')
             ->sum('amount');
 
-        $outstandingBalance = $this->decimal(
-            $this->billOptions()->sum('due_cents')
-        );
+        $paidByBill = DB::table('payments')
+            ->where('clinic_id', $clinicId)
+            ->where('currency', $currency)
+            ->whereNotNull('bill_id')
+            ->select('bill_id', 'patient_id')
+            ->selectRaw('SUM(amount) AS received_amount')
+            ->groupBy('bill_id', 'patient_id');
 
-        $clinic = $this->clinic();
-        $currency = strtoupper($clinic->currency ?: 'AED');
+        $balanceRow = DB::table('bills as balance_bills')
+            ->leftJoinSub($paidByBill, 'bill_payments', function ($join) {
+                $join
+                    ->on('bill_payments.bill_id', '=', 'balance_bills.bill_id')
+                    ->on(
+                        'bill_payments.patient_id',
+                        '=',
+                        'balance_bills.patient_id'
+                    );
+            })
+            ->where('balance_bills.clinic_id', $clinicId)
+            ->where('balance_bills.currency', $currency)
+            ->where(function ($query) {
+                $query
+                    ->whereNull('balance_bills.status')
+                    ->orWhereNotIn(
+                        'balance_bills.status',
+                        ['cancelled', 'void']
+                    );
+            })
+            ->selectRaw(
+                'COALESCE(
+                    SUM(
+                        GREATEST(
+                            balance_bills.total_amount
+                            - COALESCE(bill_payments.received_amount, 0),
+                            0
+                        )
+                    ),
+                    0
+                ) AS outstanding'
+            )
+            ->first();
+
+        $outstandingBalance = $balanceRow->outstanding ?? '0.00';
+
+        $unconfirmedCurrencyCount = Payment::query()
+            ->where('clinic_id', $clinicId)
+            ->whereNull('currency')
+            ->count();
+
         $monthLabel = $today->format('F Y');
         $paymentMethods = collect(['cash', 'bank', 'card']);
 
@@ -160,10 +224,12 @@ class PaymentController extends Controller
             'outstandingBalance',
             'clinic',
             'currency',
+            'moneyDecimals',
             'monthLabel',
             'paymentMethods',
             'method',
-            'dateRange'
+            'dateRange',
+            'unconfirmedCurrencyCount'
         ));
     }
 
@@ -339,25 +405,72 @@ class PaymentController extends Controller
     private function receipt(?Bill $bill, ?Payment $payment = null)
     {
         $clinicId = $this->clinicId();
-        $patientId = $bill?->patient_id ?? $payment->patient_id;
+        $patientId = $bill?->patient_id ?? $payment?->patient_id;
+
+        abort_unless($patientId, 404);
 
         $patient = Patient::query()
             ->where('clinic_id', $clinicId)
             ->whereKey($patientId)
             ->firstOrFail();
 
-        if ($bill) {
-            $bill->load('items');
-        }
+        $clinic = $this->clinic();
+
+        // Never use the clinic's current currency for an old receipt.
+        $currency = strtoupper(trim(
+            (string) ($bill ? $bill->currency : $payment?->currency)
+        ));
+
+        abort_unless(
+            in_array($currency, ['AED', 'PKR', 'USD'], true),
+            422,
+            'This record has no confirmed currency.'
+        );
 
         if ($payment) {
+            $paymentCurrency = strtoupper(trim(
+                (string) $payment->currency
+            ));
+
+            abort_unless(
+                $paymentCurrency === $currency,
+                422,
+                'The payment currency does not match the bill currency.'
+            );
+
             $payment->load([
                 'receivedBy' => fn ($query) =>
                     $query->where('clinic_id', $clinicId),
             ]);
         }
 
-        $paidCents = $bill ? $this->paidCents($bill) : 0;
+        if ($bill) {
+            $bill->load('items');
+        }
+
+        $billPayments = $bill
+            ? Payment::query()
+                ->where('clinic_id', $clinicId)
+                ->where('patient_id', $patientId)
+                ->where('bill_id', $bill->bill_id)
+                ->orderBy('payment_date')
+                ->orderBy('payment_id')
+                ->get()
+            : collect();
+
+        foreach ($billPayments as $record) {
+            abort_unless(
+                strtoupper(trim((string) $record->currency)) === $currency,
+                422,
+                'A payment against this bill has an inconsistent currency.'
+            );
+        }
+
+        $paidCents = 0;
+
+        foreach ($billPayments as $record) {
+            $paidCents += $this->cents($record->amount);
+        }
 
         $billPaid = $this->decimal($paidCents);
 
@@ -368,23 +481,57 @@ class PaymentController extends Controller
             ))
             : null;
 
-        $patientOutstanding = $this->decimal(
-            $this->billOptions()
-                ->where('patient_id', (int) $patientId)
-                ->sum('due_cents')
-        );
+        /*
+        |--------------------------------------------------------------------------
+        | Patient Outstanding — Same Currency Only
+        |--------------------------------------------------------------------------
+        */
 
-        $billPayments = $bill
-            ? Payment::query()
-                ->where('clinic_id', $clinicId)
-                ->where('bill_id', $bill->bill_id)
-                ->orderBy('payment_date')
-                ->orderBy('payment_id')
-                ->get()
-            : collect();
+        $patientBills = Bill::query()
+            ->where('clinic_id', $clinicId)
+            ->where('patient_id', $patientId)
+            ->where('currency', $currency)
+            ->where(function ($query) {
+                $query
+                    ->whereNull('status')
+                    ->orWhereNotIn('status', ['cancelled', 'void']);
+            })
+            ->withSum([
+                'payments as recorded_paid' => function ($query) use (
+                    $clinicId,
+                    $patientId,
+                    $currency
+                ) {
+                    $query
+                        ->where('clinic_id', $clinicId)
+                        ->where('patient_id', $patientId)
+                        ->where('currency', $currency);
+                },
+            ], 'amount')
+            ->get();
 
-        $clinic = $this->clinic();
-        $currency = strtoupper($clinic->currency ?: 'AED');
+        $outstandingCents = 0;
+        $otherBillsCents = 0;
+
+        foreach ($patientBills as $patientBill) {
+            $remaining = max(
+                0,
+                $this->cents($patientBill->total_amount)
+                    - $this->cents($patientBill->recorded_paid ?? '0')
+            );
+
+            $outstandingCents += $remaining;
+
+            if (
+                ! $bill ||
+                (int) $patientBill->bill_id !== (int) $bill->bill_id
+            ) {
+                $otherBillsCents += $remaining;
+            }
+        }
+
+        $patientOutstanding = $this->decimal($outstandingCents);
+        $otherBillsDue = $this->decimal($otherBillsCents);
 
         return view('payments.show', compact(
             'bill',
@@ -395,6 +542,7 @@ class PaymentController extends Controller
             'billPaid',
             'billDue',
             'patientOutstanding',
+            'otherBillsDue',
             'billPayments'
         ));
     }

@@ -32,9 +32,16 @@ class ExpenseController extends Controller
         $clinic = Clinic::findOrFail($clinicId);
         $currency = strtoupper($clinic->currency ?: 'AED');
 
+        $decimalSetting = \App\Models\Setting::query()
+            ->where('clinic_id', $clinicId)
+            ->where('setting_key', 'decimal_places')
+            ->value('setting_value');
+
+        $moneyDecimals = (string) $decimalSetting === '0' ? 0 : 2;
+
         if (
-            is_string($request->input('category'))
-            && $request->input('category') !== 'all'
+            is_string($request->input('category')) &&
+            $request->input('category') !== 'all'
         ) {
             $request->merge([
                 'category' => $this->categoryLabel(
@@ -45,12 +52,10 @@ class ExpenseController extends Controller
 
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:160'],
-
             'category' => [
                 'nullable',
                 Rule::in(['all', ...self::CATEGORIES]),
             ],
-
             'date_range' => [
                 'nullable',
                 Rule::in([
@@ -62,6 +67,7 @@ class ExpenseController extends Controller
             ],
         ]);
 
+        // The list includes all currencies, each labelled separately.
         $query = Expense::query()
             ->where('clinic_id', $clinicId);
 
@@ -118,14 +124,10 @@ class ExpenseController extends Controller
                     $today->copy(),
                     $today->copy()->addDay(),
                 ],
-
                 'this week' => [
                     $today->copy()->startOfWeek(Carbon::MONDAY),
-                    $today->copy()
-                        ->startOfWeek(Carbon::MONDAY)
-                        ->addWeek(),
+                    $today->copy()->startOfWeek(Carbon::MONDAY)->addWeek(),
                 ],
-
                 'this month' => [
                     $monthStart->copy(),
                     $nextMonth->copy(),
@@ -133,16 +135,8 @@ class ExpenseController extends Controller
             };
 
             $query
-                ->where(
-                    'expense_date',
-                    '>=',
-                    $start->format('Y-m-d H:i:s')
-                )
-                ->where(
-                    'expense_date',
-                    '<',
-                    $end->format('Y-m-d H:i:s')
-                );
+                ->where('expense_date', '>=', $start->format('Y-m-d H:i:s'))
+                ->where('expense_date', '<', $end->format('Y-m-d H:i:s'));
         }
 
         $expenses = $query
@@ -152,20 +146,23 @@ class ExpenseController extends Controller
             ->withQueryString();
 
         $expenses->getCollection()->each(function ($expense) {
-            $expense->category = $this->categoryLabel(
-                $expense->category
-            );
+            $expense->category = $this->categoryLabel($expense->category);
         });
 
         $categories = collect(self::CATEGORIES);
 
-        $todayQuery = Expense::query()
+        /*
+        |--------------------------------------------------------------------------
+        | Summary Cards — Current Clinic Currency Only
+        |--------------------------------------------------------------------------
+        */
+
+        $summaryQuery = Expense::query()
             ->where('clinic_id', $clinicId)
-            ->where(
-                'expense_date',
-                '>=',
-                $today->format('Y-m-d H:i:s')
-            )
+            ->where('currency', $currency);
+
+        $todayQuery = (clone $summaryQuery)
+            ->where('expense_date', '>=', $today->format('Y-m-d H:i:s'))
             ->where(
                 'expense_date',
                 '<',
@@ -178,8 +175,7 @@ class ExpenseController extends Controller
         $monthFrom = $monthStart->format('Y-m-d H:i:s');
         $monthUntil = $nextMonth->format('Y-m-d H:i:s');
 
-        $monthQuery = Expense::query()
-            ->where('clinic_id', $clinicId)
+        $monthQuery = (clone $summaryQuery)
             ->where('expense_date', '>=', $monthFrom)
             ->where('expense_date', '<', $monthUntil);
 
@@ -208,14 +204,9 @@ class ExpenseController extends Controller
             ? $categoryTotals[$highestExpenseCategory] / 100
             : 0;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Monthly Received Payments
-        |--------------------------------------------------------------------------
-        */
-
         $patientIncome = Payment::query()
             ->where('clinic_id', $clinicId)
+            ->where('currency', $currency)
             ->where('payment_date', '>=', $monthFrom)
             ->where('payment_date', '<', $monthUntil)
             ->sum('amount');
@@ -234,19 +225,16 @@ class ExpenseController extends Controller
             ->where('payments.paid_at', '<', $monthUntil)
             ->sum('payments.amount');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Calculate Using Integer Minor Units
-        |--------------------------------------------------------------------------
-        */
-
-        $monthIncomeCents =
-            $this->toCents($patientIncome)
-            + $this->toCents($orderIncome);
-
         $netIncome = (
-            $monthIncomeCents - $this->toCents($monthExpenses)
+            $this->toCents($patientIncome)
+            + $this->toCents($orderIncome)
+            - $this->toCents($monthExpenses)
         ) / 100;
+
+        $unconfirmedCurrencyCount = Expense::query()
+            ->where('clinic_id', $clinicId)
+            ->whereNull('currency')
+            ->count();
 
         return view('expenses.index', compact(
             'expenses',
@@ -257,7 +245,9 @@ class ExpenseController extends Controller
             'highestExpenseCategory',
             'highestCategoryAmount',
             'netIncome',
-            'currency'
+            'currency',
+            'moneyDecimals',
+            'unconfirmedCurrencyCount'
         ));
     }
 
@@ -308,6 +298,9 @@ class ExpenseController extends Controller
         return view('expenses.create', [
             ...$this->formData(),
             'expense' => $expense,
+            'currency' => $expense->currency
+                ? strtoupper($expense->currency)
+                : null,
         ]);
     }
 

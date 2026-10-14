@@ -10,12 +10,10 @@
         ? strtolower(trim($expense->category))
         : '';
 
-    $categoryAliases = [
+    $defaultCategory = [
         'transport' => 'Travel',
         'others' => 'Other',
-    ];
-
-    $defaultCategory = $categoryAliases[$existingCategory] ?? '';
+    ][$existingCategory] ?? '';
 
     if ($defaultCategory === '') {
         foreach ($categories as $label) {
@@ -41,35 +39,40 @@
     $expenseDate = old(
         'expense_date',
         $editing
-            ? $expense->expense_date->format('Y-m-d')
+            ? $expense->expense_date?->format('Y-m-d')
             : now('Asia/Dubai')->format('Y-m-d')
     );
 @endphp
 
 <div class="app-shell">
-
-    {{-- EXPENSES — Sidebar --}}
     @include('layouts._sidebar')
 
     <main class="dashboard-main">
         <div class="form-page-header">
             <a href="{{ route('expenses.index') }}" class="back-link">
-                ← Back to expenses
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Back to expenses
             </a>
 
             <h1>{{ $editing ? 'Edit expense' : 'Add expense' }}</h1>
             <p>Record a clinic expense.</p>
         </div>
 
-        @if($errors->any())
+        @if ($errors->any())
             <div class="alert alert-danger" role="alert">
                 <strong>Please correct the following:</strong>
-
                 <ul class="mb-0 mt-2">
-                    @foreach($errors->all() as $error)
+                    @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
+            </div>
+        @endif
+
+        @if ($editing && !$currency)
+            <div class="alert alert-warning" role="status">
+                This expense has no confirmed currency.
+                Editing does not assign or convert its currency.
             </div>
         @endif
 
@@ -81,15 +84,13 @@
         >
             @csrf
 
-            @if($editing)
+            @if ($editing)
                 @method('PUT')
             @endif
 
-            {{-- EXPENSES — Description, Category and Date --}}
             <section class="expense-form-panel">
                 <div class="expense-form-heading">
                     <div class="form-section-number">01</div>
-
                     <div>
                         <h2>Expense information</h2>
                         <p>All fields marked * are required.</p>
@@ -99,7 +100,7 @@
                 <div class="expense-form-grid">
                     <div class="form-field expense-field-wide">
                         <label for="description" class="form-label">
-                            Description <span>*</span>
+                            Description *
                         </label>
 
                         <input
@@ -119,9 +120,7 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="category" class="form-label">
-                            Category <span>*</span>
-                        </label>
+                        <label for="category" class="form-label">Category *</label>
 
                         <select
                             id="category"
@@ -130,8 +129,7 @@
                             required
                         >
                             <option value="">Select category</option>
-
-                            @foreach($categories as $category)
+                            @foreach ($categories as $category)
                                 <option
                                     value="{{ $category }}"
                                     @selected($selectedCategory === $category)
@@ -154,7 +152,7 @@
 
                     <div class="form-field">
                         <label for="expense_date" class="form-label">
-                            Expense date <span>*</span>
+                            Expense date *
                         </label>
 
                         <input
@@ -175,25 +173,26 @@
                 </div>
             </section>
 
-            {{-- EXPENSES — Amount and Payment Method --}}
             <section class="expense-form-panel">
                 <div class="expense-form-heading">
                     <div class="form-section-number">02</div>
-
                     <div>
                         <h2>Payment details</h2>
-                        <p>Enter the amount paid and payment method.</p>
+                        <p>
+                            Currency: {{ $currency ?: 'Not recorded' }}.
+                            @if ($editing)
+                                Original expense currency is preserved.
+                            @endif
+                        </p>
                     </div>
                 </div>
 
                 <div class="expense-form-grid">
                     <div class="form-field">
-                        <label for="amount" class="form-label">
-                            Amount <span>*</span>
-                        </label>
+                        <label for="amount" class="form-label">Amount *</label>
 
                         <div class="expense-amount-input">
-                            <span>{{ $currency }}</span>
+                            <span>{{ $currency ?: '—' }}</span>
 
                             <input
                                 type="number"
@@ -217,7 +216,7 @@
 
                     <div class="form-field">
                         <label for="payment_method" class="form-label">
-                            Payment method <span>*</span>
+                            Payment method *
                         </label>
 
                         <select
@@ -228,26 +227,18 @@
                         >
                             <option value="">Select payment method</option>
 
-                            <option
-                                value="cash"
-                                @selected($selectedMethod === 'cash')
-                            >
-                                Cash
-                            </option>
-
-                            <option
-                                value="bank"
-                                @selected($selectedMethod === 'bank')
-                            >
-                                Bank transfer
-                            </option>
-
-                            <option
-                                value="card"
-                                @selected($selectedMethod === 'card')
-                            >
-                                Card
-                            </option>
+                            @foreach ([
+                                'cash' => 'Cash',
+                                'bank' => 'Bank transfer',
+                                'card' => 'Card',
+                            ] as $value => $label)
+                                <option
+                                    value="{{ $value }}"
+                                    @selected($selectedMethod === $value)
+                                >
+                                    {{ $label }}
+                                </option>
+                            @endforeach
                         </select>
 
                         @error('payment_method')
