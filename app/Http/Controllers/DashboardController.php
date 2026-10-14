@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bill;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Visit;
@@ -16,18 +15,23 @@ class DashboardController extends Controller
     {
         $clinicId = (int) Auth::user()->clinic_id;
         $currency = strtoupper(Auth::user()->clinic->currency ?: 'AED');
-        $today = Carbon::now('Asia/Dubai')->toDateString();
 
-        $patientIncome = Payment::query()
-            ->where('clinic_id', $clinicId)
-            ->whereDate('payment_date', $today)
-            ->sum('amount');
+        $today = Carbon::now('Asia/Dubai')->startOfDay();
+        $dayFrom = $today->format('Y-m-d H:i:s');
+        $dayUntil = $today->copy()->addDay()->format('Y-m-d H:i:s');
 
         /*
         |--------------------------------------------------------------------------
-        | Only Received Order Payments Count as Collections
+        | Today's Received Payments — Same Currency
         |--------------------------------------------------------------------------
         */
+
+        $patientIncome = Payment::query()
+            ->where('clinic_id', $clinicId)
+            ->where('currency', $currency)
+            ->where('payment_date', '>=', $dayFrom)
+            ->where('payment_date', '<', $dayUntil)
+            ->sum('amount');
 
         $orderIncome = DB::table('nuskha_order_payments as payments')
             ->join(
@@ -39,21 +43,72 @@ class DashboardController extends Controller
             ->where('payments.clinic_id', $clinicId)
             ->where('orders.clinic_id', $clinicId)
             ->where('orders.currency', $currency)
-            ->whereDate('payments.paid_at', $today)
+            ->where('payments.paid_at', '>=', $dayFrom)
+            ->where('payments.paid_at', '<', $dayUntil)
             ->sum('payments.amount');
 
-        $patientOutstanding = Bill::query()
-            ->where('clinic_id', $clinicId)
-            ->sum('due_amount');
+        /*
+        |--------------------------------------------------------------------------
+        | Patient Outstanding — Calculate from Actual Payments
+        |--------------------------------------------------------------------------
+        */
 
-        $orderOutstanding = DB::table('nuskha_orders as orders')
+        $paidByBill = DB::table('payments')
+            ->where('clinic_id', $clinicId)
+            ->where('currency', $currency)
+            ->whereNotNull('bill_id')
+            ->select('bill_id', 'patient_id')
+            ->selectRaw('SUM(amount) AS received_amount')
+            ->groupBy('bill_id', 'patient_id');
+
+        $patientBalanceRow = DB::table('bills as bills')
+            ->leftJoinSub($paidByBill, 'paid', function ($join) {
+                $join
+                    ->on('paid.bill_id', '=', 'bills.bill_id')
+                    ->on('paid.patient_id', '=', 'bills.patient_id');
+            })
+            ->where('bills.clinic_id', $clinicId)
+            ->where('bills.currency', $currency)
+            ->where(function ($query) {
+                $query
+                    ->whereNull('bills.status')
+                    ->orWhereNotIn(
+                        'bills.status',
+                        ['cancelled', 'void']
+                    );
+            })
+            ->selectRaw(
+                'COALESCE(
+                    SUM(
+                        GREATEST(
+                            bills.total_amount
+                            - COALESCE(paid.received_amount, 0),
+                            0
+                        )
+                    ),
+                    0
+                ) AS outstanding'
+            )
+            ->first();
+
+        $patientOutstanding =
+            $patientBalanceRow->outstanding ?? '0.00';
+
+        /*
+        |--------------------------------------------------------------------------
+        | Order Outstanding — Same Currency, Excluding Cancelled Orders
+        |--------------------------------------------------------------------------
+        */
+
+        $paidByOrder = DB::table('nuskha_order_payments')
+            ->where('clinic_id', $clinicId)
+            ->select('nuskha_order_id')
+            ->selectRaw('SUM(amount) AS received_amount')
+            ->groupBy('nuskha_order_id');
+
+        $orderBalanceRow = DB::table('nuskha_orders as orders')
             ->leftJoinSub(
-                DB::table('nuskha_order_payments')
-                    ->where('clinic_id', $clinicId)
-                    ->selectRaw(
-                        'nuskha_order_id, SUM(amount) as received'
-                    )
-                    ->groupBy('nuskha_order_id'),
+                $paidByOrder,
                 'paid',
                 'paid.nuskha_order_id',
                 '=',
@@ -63,29 +118,80 @@ class DashboardController extends Controller
             ->where('orders.currency', $currency)
             ->where('orders.status', '<>', 'cancelled')
             ->selectRaw(
-                'COALESCE(SUM(GREATEST(
-                    orders.total_amount - COALESCE(paid.received, 0),
+                'COALESCE(
+                    SUM(
+                        GREATEST(
+                            orders.total_amount
+                            - COALESCE(paid.received_amount, 0),
+                            0
+                        )
+                    ),
                     0
-                )), 0) as outstanding'
+                ) AS outstanding'
             )
-            ->value('outstanding');
+            ->first();
+
+        $orderOutstanding =
+            $orderBalanceRow->outstanding ?? '0.00';
+
+        $incomeCents =
+            $this->toCents($patientIncome)
+            + $this->toCents($orderIncome);
+
+        $outstandingCents =
+            $this->toCents($patientOutstanding)
+            + $this->toCents($orderOutstanding);
 
         return view('dashboard.index', [
-            'totalPatients' => Patient::where('clinic_id', $clinicId)->count(),
-
-            'todaysVisits' => Visit::where('clinic_id', $clinicId)
-                ->whereDate('visit_date', $today)
+            'totalPatients' => Patient::query()
+                ->where('clinic_id', $clinicId)
                 ->count(),
 
-            'todaysIncome' => (float) $patientIncome + (float) $orderIncome,
+            'todaysVisits' => Visit::query()
+                ->where('clinic_id', $clinicId)
+                ->where('visit_date', '>=', $dayFrom)
+                ->where('visit_date', '<', $dayUntil)
+                ->count(),
 
-            'outstandingBalance' =>
-                (float) $patientOutstanding + (float) $orderOutstanding,
+            'todaysIncome' => $this->decimal($incomeCents),
 
-            'recentPatients' => Patient::where('clinic_id', $clinicId)
+            'outstandingBalance' => $this->decimal($outstandingCents),
+
+            'recentPatients' => Patient::query()
+                ->where('clinic_id', $clinicId)
                 ->orderByDesc('created_at')
-                ->take(5)
+                ->orderByDesc('patient_id')
+                ->limit(5)
                 ->get(),
         ]);
+    }
+
+    private function toCents($amount): int
+    {
+        [$whole, $fraction] = array_pad(
+            explode('.', (string) $amount, 2),
+            2,
+            ''
+        );
+
+        return ((int) $whole * 100)
+            + (int) str_pad(
+                substr($fraction, 0, 2),
+                2,
+                '0',
+                STR_PAD_RIGHT
+            );
+    }
+
+    private function decimal(int $cents): string
+    {
+        return intdiv($cents, 100)
+            . '.'
+            . str_pad(
+                (string) ($cents % 100),
+                2,
+                '0',
+                STR_PAD_LEFT
+            );
     }
 }
