@@ -10,25 +10,23 @@
         ? ($payment->bill_id ? 'existing_bill' : 'unallocated')
         : (request('mode') === 'existing_bill' ? 'existing_bill' : 'new_bill');
 
-    $mode = old('mode', $defaultMode);
+    $mode = $editing ? $defaultMode : old('mode', $defaultMode);
 
-    if (!in_array($mode, ['new_bill', 'existing_bill', 'unallocated'], true)) {
-        $mode = $defaultMode;
+    if (!in_array($mode, ['new_bill', 'existing_bill'], true) && !$editing) {
+        $mode = 'new_bill';
     }
 
-    $selectedPatient = (string) old(
-        'patient_id',
-        $editing ? $payment->patient_id : request('patient_id', '')
-    );
+    $selectedPatient = (string) ($editing
+        ? $payment->patient_id
+        : old('patient_id', request('patient_id', '')));
 
-    $selectedBill = (string) old(
-        'bill_id',
-        $editing ? $payment->bill_id : request('bill_id', '')
-    );
+    $selectedBill = (string) ($editing
+        ? $payment->bill_id
+        : old('bill_id', request('bill_id', '')));
 
     $initialMethod = $editing
         ? strtolower(trim($payment->method))
-        : 'cash';
+        : ($enabledMethods[0] ?? '');
 
     if (in_array($initialMethod, ['bank transfer', 'bank_transfer'], true)) {
         $initialMethod = 'bank';
@@ -45,27 +43,23 @@
 @endphp
 
 <div class="app-shell">
-    @include('payments._sidebar')
+    @include('layouts._sidebar')
 
     <main class="dashboard-main">
         <div class="form-page-header">
             <a href="{{ route('payments.index') }}" class="back-link">
-                ← Back to payments
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Back to payments
             </a>
-
             <h1>{{ $editing ? 'Edit payment' : 'Bill and payment' }}</h1>
-
-            <p>
-                Create a patient bill or receive payment against an existing bill.
-            </p>
+            <p>Create a bill or receive payment against an existing bill.</p>
         </div>
 
-        @if($errors->any())
+        @if ($errors->any())
             <div class="alert alert-danger" role="alert">
                 <strong>Please correct the following:</strong>
-
                 <ul class="mb-0 mt-2">
-                    @foreach($errors->all() as $error)
+                    @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
@@ -77,63 +71,57 @@
             action="{{ $editing
                 ? route('payments.update', $payment)
                 : route('payments.store') }}"
-            data-payment-form
-            data-currency="{{ $currency }}"
+            data-currency-payment-form
+            data-clinic-currency="{{ $clinicCurrency }}"
+            data-saved-currency="{{ $editing ? $currency : '' }}"
             data-editing="{{ $editing ? '1' : '0' }}"
+            data-money-decimals="{{ $moneyDecimals }}"
+            data-allow-partial="{{ $allowPartialPayments ? '1' : '0' }}"
         >
             @csrf
-
-            @if($editing)
+            @if ($editing)
                 @method('PUT')
+                <input type="hidden" name="mode" value="{{ $defaultMode }}">
+                <input type="hidden" name="patient_id" value="{{ $payment->patient_id }}">
+                @if ($payment->bill_id)
+                    <input type="hidden" name="bill_id" value="{{ $payment->bill_id }}">
+                @endif
             @endif
 
-            {{-- BILLING — Mode and Patient --}}
             <section class="payment-form-panel">
                 <div class="payment-form-heading">
                     <div class="form-section-number">01</div>
-
                     <div>
                         <h2>Patient and billing option</h2>
-                        <p>Choose what you want to record.</p>
+                        <p>
+                            Currency:
+                            <strong data-cp-currency>{{ $currency }}</strong>
+                        </p>
                     </div>
                 </div>
 
                 <div class="payment-form-grid">
                     <div class="form-field">
-                        <label for="billing_mode" class="form-label">
-                            Billing option <span>*</span>
-                        </label>
-
-                        @if($editing)
-                            <input
-                                type="hidden"
-                                name="mode"
-                                value="{{ $defaultMode }}"
-                            >
-                        @endif
-
+                        <label for="billing_mode" class="form-label">Billing option *</label>
                         <select
                             id="billing_mode"
                             name="{{ $editing ? 'mode_display' : 'mode' }}"
                             class="form-select"
-                            data-payment-mode
+                            data-cp-mode
                             @disabled($editing)
                             required
                         >
-                            @if(!$editing)
+                            @if (!$editing)
                                 <option value="new_bill" @selected($mode === 'new_bill')>
-                                    New Bill + Payment
+                                    New bill + payment
                                 </option>
                             @endif
 
-                            <option
-                                value="existing_bill"
-                                @selected($mode === 'existing_bill')
-                            >
-                                Pay Existing Bill
+                            <option value="existing_bill" @selected($mode === 'existing_bill')>
+                                Pay existing bill
                             </option>
 
-                            @if($editing && $defaultMode === 'unallocated')
+                            @if ($editing && $mode === 'unallocated')
                                 <option value="unallocated" selected>
                                     Existing unallocated payment
                                 </option>
@@ -142,37 +130,22 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="patient" class="form-label">
-                            Patient <span>*</span>
-                        </label>
-
-                        @if($editing)
-                            <input
-                                type="hidden"
-                                name="patient_id"
-                                value="{{ $payment->patient_id }}"
-                            >
-                        @endif
-
+                        <label for="patient" class="form-label">Patient *</label>
                         <select
                             id="patient"
                             name="{{ $editing ? 'patient_display' : 'patient_id' }}"
                             class="form-select"
-                            data-payment-patient
+                            data-cp-patient
                             @disabled($editing)
                             required
                         >
                             <option value="">Select patient</option>
-
-                            @foreach($patients as $patient)
+                            @foreach ($patients as $patient)
                                 <option
                                     value="{{ $patient->patient_id }}"
-                                    @selected(
-                                        $selectedPatient === (string) $patient->patient_id
-                                    )
+                                    @selected($selectedPatient === (string) $patient->patient_id)
                                 >
-                                    {{ $patient->full_name }}
-                                    — {{ $patient->patient_code }}
+                                    {{ $patient->full_name }} — {{ $patient->patient_code }}
                                     {{ $patient->phone ? ' — ' . $patient->phone : '' }}
                                 </option>
                             @endforeach
@@ -180,39 +153,26 @@
                     </div>
                 </div>
 
-                @if($editing)
+                @if ($editing)
                     <small class="text-muted d-block mt-3">
-                        Editing changes the payment only.
-                        Its patient and related bill remain fixed.
+                        Patient, bill and original payment currency remain fixed.
                     </small>
                 @endif
             </section>
 
-            {{-- BILLING — New Bill Charges --}}
-            <section
-                class="payment-form-panel"
-                data-new-bill-section
-                @if($mode !== 'new_bill') hidden @endif
-            >
+            <section class="payment-form-panel" data-cp-new-section>
                 <div class="payment-form-heading">
                     <div class="form-section-number">02</div>
-
                     <div>
                         <h2>New bill</h2>
-                        <p>Enter the charges for this bill.</p>
+                        <p>New bills use {{ $clinicCurrency }}.</p>
                     </div>
                 </div>
 
-                <fieldset
-                    data-new-bill-fields
-                    @disabled($mode !== 'new_bill')
-                >
+                <fieldset data-cp-new-fields @disabled($mode !== 'new_bill')>
                     <div class="payment-form-grid">
                         <div class="form-field payment-field-wide">
-                            <label for="description" class="form-label">
-                                Charges description <span>*</span>
-                            </label>
-
+                            <label for="description" class="form-label">Charges description *</label>
                             <input
                                 type="text"
                                 id="description"
@@ -220,19 +180,14 @@
                                 class="form-control"
                                 value="{{ old('description') }}"
                                 maxlength="255"
-                                placeholder="Enter what this bill is for"
                                 required
                             >
                         </div>
 
                         <div class="form-field">
-                            <label for="subtotal" class="form-label">
-                                Charges amount <span>*</span>
-                            </label>
-
+                            <label for="subtotal" class="form-label">Charges amount *</label>
                             <div class="amount-input">
-                                <span>{{ $currency }}</span>
-
+                                <span>{{ $clinicCurrency }}</span>
                                 <input
                                     type="number"
                                     id="subtotal"
@@ -242,20 +197,16 @@
                                     min="0.01"
                                     max="9999999999.99"
                                     step="0.01"
-                                    data-bill-subtotal
+                                    data-cp-subtotal
                                     required
                                 >
                             </div>
                         </div>
 
                         <div class="form-field">
-                            <label for="discount" class="form-label">
-                                Discount
-                            </label>
-
+                            <label for="discount" class="form-label">Discount</label>
                             <div class="amount-input">
-                                <span>{{ $currency }}</span>
-
+                                <span>{{ $clinicCurrency }}</span>
                                 <input
                                     type="number"
                                     id="discount"
@@ -265,7 +216,7 @@
                                     min="0"
                                     max="9999999999.99"
                                     step="0.01"
-                                    data-bill-discount
+                                    data-cp-discount
                                     required
                                 >
                             </div>
@@ -274,148 +225,90 @@
                 </fieldset>
             </section>
 
-            {{-- BILLING — Existing Bill --}}
-            <section
-                class="payment-form-panel"
-                data-existing-bill-section
-                @if($mode !== 'existing_bill') hidden @endif
-            >
+            <section class="payment-form-panel" data-cp-existing-section>
                 <div class="payment-form-heading">
                     <div class="form-section-number">02</div>
-
                     <div>
                         <h2>Existing bill</h2>
-                        <p>Select this patient's outstanding bill.</p>
+                        <p>Payment uses the selected bill's original currency.</p>
                     </div>
                 </div>
 
-                @if($editing)
-                    <input
-                        type="hidden"
-                        name="bill_id"
-                        value="{{ $payment->bill_id }}"
-                    >
-                @endif
-
                 <div class="payment-form-grid">
                     <div class="form-field">
-                        <label for="bill" class="form-label">
-                            Bill <span>*</span>
-                        </label>
-
+                        <label for="bill" class="form-label">Bill *</label>
                         <select
                             id="bill"
                             name="{{ $editing ? 'bill_display' : 'bill_id' }}"
                             class="form-select"
-                            data-payment-bill
+                            data-cp-bill
                             data-selected-bill="{{ $selectedBill }}"
                             @disabled($editing || $mode !== 'existing_bill')
-                            @required($mode === 'existing_bill' && !$editing)
                         >
                             <option value="">Select bill</option>
-
-                            @foreach($billData as $bill)
-                                @if(
-                                    (string) $bill['patient_id'] === $selectedPatient
-                                    && (
-                                        $bill['due_cents'] > 0
-                                        || (string) $bill['bill_id'] === $selectedBill
-                                    )
-                                )
-                                    <option
-                                        value="{{ $bill['bill_id'] }}"
-                                        @selected(
-                                            (string) $bill['bill_id'] === $selectedBill
-                                        )
-                                    >
-                                        {{ $bill['bill_no'] }}
-                                        — {{ $currency }}
-                                        {{ number_format($bill['due_cents'] / 100, 2) }}
-                                        due
-                                    </option>
-                                @endif
-                            @endforeach
                         </select>
                     </div>
 
                     <div class="form-field">
-                        <p class="text-muted" data-bill-empty-message hidden>
+                        <p class="text-muted" data-cp-empty hidden>
                             No outstanding bills for this patient.
-                            Choose New Bill + Payment to create one.
                         </p>
-
-                        <a
-                            class="btn btn-outline-secondary"
-                            data-bill-receipt-link
-                            hidden
-                        >
+                        <a class="btn btn-outline-secondary" data-cp-receipt hidden>
                             View selected bill
                         </a>
                     </div>
                 </div>
             </section>
 
-            {{-- BILLING — Balance Summary --}}
             <section class="payment-form-panel">
                 <div class="payment-form-heading">
                     <div class="form-section-number">03</div>
-
                     <div>
                         <h2>Balance summary</h2>
-                        <p>Previous dues are shown separately, not charged again.</p>
+                        <p>Balances include only the displayed currency.</p>
                     </div>
                 </div>
 
                 <div class="balance-summary-grid">
                     <div>
-                        <span data-other-due-label>Previous outstanding bills</span>
-                        <strong data-payment-other-due>—</strong>
+                        <span>Other outstanding bills</span>
+                        <strong data-cp-other>—</strong>
                     </div>
-
                     <div>
-                        <span data-current-bill-label>New bill total</span>
-                        <strong data-total-payable>—</strong>
+                        <span>New / selected bill due</span>
+                        <strong data-cp-current>—</strong>
                     </div>
-
                     <div>
                         <span>Total outstanding before payment</span>
-                        <strong data-payment-total-due>—</strong>
+                        <strong data-cp-total>—</strong>
                     </div>
                 </div>
 
-                <p class="text-muted small mt-3 mb-0" data-payment-help>
-                    Payment is applied only to the new or selected bill.
+                <p class="text-muted small mt-3 mb-0" data-cp-help>
+                    Payment applies only to the new or selected bill.
                 </p>
 
-                @if($editing)
+                @if ($editing)
                     <small class="text-muted d-block mt-2">
                         Preview excludes the payment being edited.
                     </small>
                 @endif
             </section>
 
-            {{-- BILLING — Received Payment --}}
             <section class="payment-form-panel">
                 <div class="payment-form-heading">
                     <div class="form-section-number">04</div>
-
                     <div>
                         <h2>Payment received</h2>
-                        <p>
-                            For a new bill, enter 0 if nothing has been received.
-                        </p>
+                        <p>For a new bill, enter 0 if nothing has been received.</p>
                     </div>
                 </div>
 
                 <div class="payment-form-grid">
                     <div class="form-field">
-                        <label for="amount" class="form-label">
-                            Amount received <span>*</span>
-                        </label>
-
+                        <label for="amount" class="form-label">Amount received *</label>
                         <div class="amount-input">
-                            <span>{{ $currency }}</span>
-
+                            <span data-cp-currency>{{ $currency }}</span>
                             <input
                                 type="number"
                                 id="amount"
@@ -425,20 +318,14 @@
                                 min="{{ $mode === 'new_bill' ? '0' : '0.01' }}"
                                 max="9999999999.99"
                                 step="0.01"
-                                data-payment-amount
+                                data-cp-amount
                                 required
                             >
                         </div>
                     </div>
 
                     <div class="form-field">
-                        <label for="payment_date" class="form-label">
-                            <span class="text-reset" data-payment-date-label>
-                                Bill / payment date and time
-                            </span>
-                            <span>*</span>
-                        </label>
-
+                        <label for="payment_date" class="form-label">Bill / payment date *</label>
                         <input
                             type="datetime-local"
                             id="payment_date"
@@ -449,50 +336,37 @@
                             max="9999-12-31T23:59"
                             required
                         >
-
                         <small class="text-muted">UAE local time.</small>
                     </div>
 
                     <div class="form-field">
-                        <label for="payment_method" class="form-label">
-                            Payment method
-                        </label>
-
+                        <label for="method" class="form-label">Payment method</label>
                         <select
                             id="method"
                             name="method"
-                            class="form-select @error('method') is-invalid @enderror"
-                            data-payment-method
+                            class="form-select"
+                            data-cp-method
                         >
                             <option value="">Select payment method</option>
-
-                            @foreach([
+                            @foreach ([
                                 'cash' => 'Cash',
                                 'bank' => 'Bank transfer',
                                 'card' => 'Card',
-                            ] as $methodValue => $methodLabel)
-                                @if(in_array($methodValue, $enabledMethods, true))
-                                    <option
-                                        value="{{ $methodValue }}"
-                                        @selected($selectedMethod === $methodValue)
-                                    >
-                                        {{ $methodLabel }}
+                            ] as $value => $label)
+                                @if (in_array($value, $enabledMethods, true))
+                                    <option value="{{ $value }}" @selected($selectedMethod === $value)>
+                                        {{ $label }}
                                     </option>
                                 @endif
                             @endforeach
                         </select>
-
-                        @error('method')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
                     </div>
 
                     <div class="form-field">
                         <label for="reference" class="form-label">
                             Transaction reference
-                            <span data-payment-reference-star hidden>*</span>
+                            <span data-cp-reference-star hidden>*</span>
                         </label>
-
                         <input
                             type="text"
                             id="reference"
@@ -500,56 +374,42 @@
                             class="form-control"
                             value="{{ old('reference_no', $payment->reference_no ?? '') }}"
                             maxlength="80"
-                            data-payment-reference
+                            data-cp-reference
                         >
                     </div>
 
                     <div class="form-field payment-field-wide">
-                        <label for="notes" class="form-label">
-                            Payment notes
-                        </label>
-
+                        <label for="notes" class="form-label">Payment notes</label>
                         <textarea
                             id="notes"
                             name="notes"
                             class="form-control"
                             rows="3"
                             maxlength="255"
-                            data-payment-notes
-                            placeholder="Saved only when a payment is received"
+                            data-cp-notes
                         >{{ old('notes', $payment->notes ?? '') }}</textarea>
                     </div>
                 </div>
 
                 <div class="remaining-balance-box">
-                    <span data-payment-remaining-label>
-                        This bill's remaining balance
-                    </span>
-
-                    <strong data-remaining-balance aria-live="polite">—</strong>
+                    <span>This bill's remaining balance</span>
+                    <strong data-cp-remaining aria-live="polite">—</strong>
                 </div>
 
                 <p class="text-muted small mt-3 mb-0">
-                    Total outstanding bills after this payment:
-                    <strong data-patient-remaining>—</strong>
+                    Outstanding after payment, same currency:
+                    <strong data-cp-patient-remaining>—</strong>
                 </p>
             </section>
 
             <div class="payment-form-actions">
-                <a href="{{ route('payments.index') }}" class="btn btn-light">
-                    Cancel
-                </a>
-
-                <button
-                    type="submit"
-                    class="btn btn-primary"
-                    data-payment-submit
-                >
+                <a href="{{ route('payments.index') }}" class="btn btn-light">Cancel</a>
+                <button type="submit" class="btn btn-primary" data-cp-submit>
                     {{ $editing ? 'Update payment' : 'Save bill and payment' }}
                 </button>
             </div>
 
-            <script type="application/json" data-payment-bills>
+            <script type="application/json" data-cp-bills>
                 @json($billData)
             </script>
         </form>

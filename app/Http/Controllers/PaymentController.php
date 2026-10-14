@@ -579,11 +579,22 @@ class PaymentController extends Controller
                 ->firstOrFail();
 
             if (
-                (int) $locked->patient_id !== (int) $data['patient_id']
-                || (int) $locked->bill_id !== (int) ($data['bill_id'] ?? 0)
+                (int) $locked->patient_id !== (int) $data['patient_id'] ||
+                (int) $locked->bill_id !== (int) ($data['bill_id'] ?? 0)
             ) {
                 throw ValidationException::withMessages([
-                    'bill_id' => 'The patient or bill has changed. Reload the page.',
+                    'bill_id' =>
+                        'The patient or bill has changed. Reload the page.',
+                ]);
+            }
+
+            $savedCurrency = strtoupper(trim(
+                (string) $locked->currency
+            ));
+
+            if (! in_array($savedCurrency, ['AED', 'PKR', 'USD'], true)) {
+                throw ValidationException::withMessages([
+                    'amount' => 'This payment has no confirmed currency.',
                 ]);
             }
 
@@ -594,12 +605,23 @@ class PaymentController extends Controller
                 )
                 : null;
 
+            if (
+                $bill &&
+                strtoupper(trim((string) $bill->currency)) !== $savedCurrency
+            ) {
+                throw ValidationException::withMessages([
+                    'bill_id' =>
+                        'The payment and bill currencies do not match.',
+                ]);
+            }
+
             $this->checkAmount(
                 $bill,
                 $data['amount'],
                 (int) $locked->payment_id
             );
 
+            // Only payment details change; currency stays fixed.
             $locked->update($this->paymentValues($data));
 
             $this->writePaymentLedger($locked);
@@ -836,10 +858,35 @@ class PaymentController extends Controller
     private function formData(?Payment $payment = null): array
     {
         $clinic = $this->clinic();
+        $clinicCurrency = strtoupper($clinic->currency ?: 'AED');
+
+        $currency = $payment
+            ? strtoupper(trim((string) $payment->currency))
+            : $clinicCurrency;
+
+        if ($payment && ! in_array($currency, ['AED', 'PKR', 'USD'], true)) {
+            abort(422, 'This payment has no confirmed currency.');
+        }
+
+        $preferences = Setting::query()
+            ->where('clinic_id', $this->clinicId())
+            ->whereIn('setting_key', [
+                'decimal_places',
+                'allow_partial_payments',
+            ])
+            ->pluck('setting_value', 'setting_key');
 
         return [
             'clinic' => $clinic,
-            'currency' => strtoupper($clinic->currency ?: 'AED'),
+            'currency' => $currency,
+            'clinicCurrency' => $clinicCurrency,
+            'moneyDecimals' =>
+                (string) $preferences->get('decimal_places', '2') === '0'
+                    ? 0
+                    : 2,
+
+            'allowPartialPayments' =>
+                (string) $preferences->get('allow_partial_payments', '1') === '1',
 
             'enabledMethods' => $this->enabledPaymentMethods(),
 
@@ -865,16 +912,27 @@ class PaymentController extends Controller
 
         return Bill::query()
             ->where('clinic_id', $clinicId)
-            ->whereNotIn('status', ['cancelled', 'void'])
+            ->where(function ($query) {
+                $query
+                    ->whereNull('status')
+                    ->orWhereNotIn('status', ['cancelled', 'void']);
+            })
             ->withSum([
                 'payments as recorded_paid' => function ($query) use (
                     $clinicId,
                     $excludePaymentId
                 ) {
-                    $query->where('clinic_id', $clinicId);
+                    $query
+                        ->where('clinic_id', $clinicId)
+                        ->whereColumn('payments.patient_id', 'bills.patient_id')
+                        ->whereColumn('payments.currency', 'bills.currency');
 
                     if ($excludePaymentId !== null) {
-                        $query->where('payment_id', '<>', $excludePaymentId);
+                        $query->where(
+                            'payment_id',
+                            '<>',
+                            $excludePaymentId
+                        );
                     }
                 },
             ], 'amount')
@@ -888,6 +946,9 @@ class PaymentController extends Controller
                     'bill_id' => (int) $bill->bill_id,
                     'patient_id' => (int) $bill->patient_id,
                     'bill_no' => $bill->bill_no,
+                    'currency' => $bill->currency
+                        ? strtoupper($bill->currency)
+                        : null,
                     'total_cents' => $total,
                     'paid_cents' => $paid,
                     'due_cents' => max(0, $total - $paid),
