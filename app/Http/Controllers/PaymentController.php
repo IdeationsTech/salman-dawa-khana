@@ -31,7 +31,10 @@ class PaymentController extends Controller
 
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:160'],
-            'method' => ['nullable', Rule::in(['all', 'cash', 'bank', 'card'])],
+            'method' => [
+                'nullable',
+                Rule::in(['all', 'cash', 'bank', 'card']),
+            ],
             'date_range' => [
                 'nullable',
                 Rule::in(['all time', 'today', 'this week', 'this month']),
@@ -43,7 +46,7 @@ class PaymentController extends Controller
         $search = trim($filters['search'] ?? '');
 
         $query = Payment::where('clinic_id', $clinicId)->with([
-            'patient' => fn ($query) => $query->where('clinic_id', $clinicId),
+            'patient' => fn ($patient) => $patient->where('clinic_id', $clinicId),
         ]);
 
         if ($search !== '') {
@@ -67,23 +70,29 @@ class PaymentController extends Controller
         }
 
         if ($method !== 'all') {
-            $query->whereIn(DB::raw('LOWER(TRIM(method))'), $method === 'bank'
-                ? ['bank', 'bank transfer', 'bank_transfer']
-                : [$method]);
+            $query->whereIn(
+                DB::raw('LOWER(TRIM(method))'),
+                $method === 'bank'
+                    ? ['bank', 'bank transfer', 'bank_transfer']
+                    : [$method]
+            );
         }
 
         $today = Carbon::now('Asia/Dubai')->startOfDay();
+        $tomorrow = $today->copy()->addDay();
+        $monthStart = $today->copy()->startOfMonth();
+        $nextMonth = $monthStart->copy()->addMonth();
 
         if ($dateRange !== 'all time') {
             [$start, $end] = match ($dateRange) {
-                'today' => [$today->copy(), $today->copy()->addDay()],
+                'today' => [$today->copy(), $tomorrow->copy()],
                 'this week' => [
                     $today->copy()->startOfWeek(Carbon::MONDAY),
                     $today->copy()->startOfWeek(Carbon::MONDAY)->addWeek(),
                 ],
                 'this month' => [
-                    $today->copy()->startOfMonth(),
-                    $today->copy()->startOfMonth()->addMonth(),
+                    $monthStart->copy(),
+                    $nextMonth->copy(),
                 ],
             };
 
@@ -92,57 +101,168 @@ class PaymentController extends Controller
         }
 
         $payments = $query->orderByDesc('payment_date')
-            ->orderByDesc('payment_id')->paginate(50)->withQueryString();
+            ->orderByDesc('payment_id')
+            ->paginate(50)
+            ->withQueryString();
 
-        $base = Payment::where('clinic_id', $clinicId)->where('currency', $currency);
-        $totalReceived = (clone $base)->sum('amount');
+        /*
+        |--------------------------------------------------------------------------
+        | Patient receipts: this clinic and its current currency
+        |--------------------------------------------------------------------------
+        */
 
-        $todayReceived = (clone $base)
-            ->where('payment_date', '>=', $today->format('Y-m-d H:i:s'))
-            ->where('payment_date', '<', $today->copy()->addDay()->format('Y-m-d H:i:s'))
+        $patientBase = Payment::where('clinic_id', $clinicId)
+            ->where('currency', $currency);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Order receipts and refunds
+        |
+        | Positive payment entries are receipts.
+        | Negative payment entries are refunds.
+        | Refunds are counted from payment entries once, avoiding double counting.
+        |--------------------------------------------------------------------------
+        */
+
+        $orderBase = DB::table('nuskha_order_payments as order_payments')
+            ->join(
+                'nuskha_orders as orders',
+                'orders.nuskha_order_id',
+                '=',
+                'order_payments.nuskha_order_id'
+            )
+            ->where('order_payments.clinic_id', $clinicId)
+            ->where('orders.clinic_id', $clinicId)
+            ->where('orders.currency', $currency);
+
+        $buildSummary = function ($start = null, $end = null) use (
+            $patientBase,
+            $orderBase
+        ): array {
+            $patientQuery = clone $patientBase;
+            $orderQuery = clone $orderBase;
+
+            if ($start !== null && $end !== null) {
+                $patientQuery
+                    ->where('payment_date', '>=', $start->format('Y-m-d H:i:s'))
+                    ->where('payment_date', '<', $end->format('Y-m-d H:i:s'));
+
+                $orderQuery
+                    ->where(
+                        'order_payments.paid_at',
+                        '>=',
+                        $start->format('Y-m-d H:i:s')
+                    )
+                    ->where(
+                        'order_payments.paid_at',
+                        '<',
+                        $end->format('Y-m-d H:i:s')
+                    );
+            }
+
+            $patientCents = \App\Support\Money::scaled(
+                $patientQuery->sum('amount')
+            );
+
+            $orderRow = $orderQuery->selectRaw(
+                'COALESCE(SUM(
+                    CASE WHEN order_payments.amount > 0
+                    THEN order_payments.amount ELSE 0 END
+                ), 0) AS gross_received,
+                COALESCE(SUM(
+                    CASE WHEN order_payments.amount < 0
+                    THEN -order_payments.amount ELSE 0 END
+                ), 0) AS refunded'
+            )->first();
+
+            $orderCents = \App\Support\Money::scaled(
+                $orderRow->gross_received ?? '0'
+            );
+
+            $refundCents = \App\Support\Money::scaled(
+                $orderRow->refunded ?? '0'
+            );
+
+            return [
+                'patient' => \App\Support\Money::decimal($patientCents),
+                'orders' => \App\Support\Money::decimal($orderCents),
+                'refunds' => \App\Support\Money::decimal($refundCents),
+                'net' => \App\Support\Money::decimal(
+                    $patientCents + $orderCents - $refundCents
+                ),
+            ];
+        };
+
+        $todaySummary = $buildSummary($today, $tomorrow);
+        $monthSummary = $buildSummary($monthStart, $nextMonth);
+        $allTimeSummary = $buildSummary();
+
+        $unallocatedReceived = (clone $patientBase)
+            ->whereNull('bill_id')
             ->sum('amount');
 
-        $monthStart = $today->copy()->startOfMonth();
-
-        $monthReceived = (clone $base)
-            ->where('payment_date', '>=', $monthStart->format('Y-m-d H:i:s'))
-            ->where('payment_date', '<', $monthStart->copy()->addMonth()->format('Y-m-d H:i:s'))
-            ->sum('amount');
-
-        $unallocatedReceived = (clone $base)->whereNull('bill_id')->sum('amount');
+        /*
+        |--------------------------------------------------------------------------
+        | Outstanding patient bills
+        |--------------------------------------------------------------------------
+        */
 
         $paidByBill = DB::table('payments')
-            ->where('clinic_id', $clinicId)->where('currency', $currency)
-            ->whereNotNull('bill_id')->select('bill_id', 'patient_id')
+            ->where('clinic_id', $clinicId)
+            ->where('currency', $currency)
+            ->whereNotNull('bill_id')
+            ->select('bill_id', 'patient_id')
             ->selectRaw('SUM(amount) AS received_amount')
             ->groupBy('bill_id', 'patient_id');
 
         $balanceRow = DB::table('bills as balance_bills')
             ->leftJoinSub($paidByBill, 'bill_payments', function ($join) {
-                $join->on('bill_payments.bill_id', '=', 'balance_bills.bill_id')
-                    ->on('bill_payments.patient_id', '=', 'balance_bills.patient_id');
+                $join->on(
+                    'bill_payments.bill_id',
+                    '=',
+                    'balance_bills.bill_id'
+                )->on(
+                    'bill_payments.patient_id',
+                    '=',
+                    'balance_bills.patient_id'
+                );
             })
             ->where('balance_bills.clinic_id', $clinicId)
             ->where('balance_bills.currency', $currency)
-            ->where(fn ($query) => $query->whereNull('balance_bills.status')
+            ->where(fn ($query) => $query
+                ->whereNull('balance_bills.status')
                 ->orWhereNotIn('balance_bills.status', ['cancelled', 'void']))
             ->selectRaw(
-                'COALESCE(SUM(GREATEST(balance_bills.total_amount
-                - COALESCE(bill_payments.received_amount, 0), 0)), 0) AS outstanding'
-            )->first();
+                'COALESCE(SUM(GREATEST(
+                    balance_bills.total_amount
+                    - COALESCE(bill_payments.received_amount, 0),
+                    0
+                )), 0) AS outstanding'
+            )
+            ->first();
 
         $outstandingBalance = $balanceRow->outstanding ?? '0.00';
+
         $unconfirmedCurrencyCount = Payment::where('clinic_id', $clinicId)
-            ->whereNull('currency')->count();
+            ->whereNull('currency')
+            ->count();
 
         $monthLabel = $today->format('F Y');
-        $paymentMethods = collect(['cash', 'bank', 'card']);
 
         return view('payments.index', compact(
-            'payments', 'totalReceived', 'todayReceived', 'monthReceived',
-            'unallocatedReceived', 'outstandingBalance', 'clinic', 'currency',
-            'moneyDecimals', 'monthLabel', 'paymentMethods', 'method',
-            'dateRange', 'unconfirmedCurrencyCount'
+            'payments',
+            'clinic',
+            'currency',
+            'moneyDecimals',
+            'todaySummary',
+            'monthSummary',
+            'allTimeSummary',
+            'unallocatedReceived',
+            'outstandingBalance',
+            'unconfirmedCurrencyCount',
+            'monthLabel',
+            'method',
+            'dateRange'
         ));
     }
 

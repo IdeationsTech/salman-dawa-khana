@@ -12,7 +12,7 @@
                 <p class="dashboard-date">Clinic finances</p>
                 <h1>Payments</h1>
                 <p class="page-subtitle">
-                    Track patient payments and outstanding bills.
+                    Patient receipts, nuskha order collections and refunds.
                 </p>
             </div>
 
@@ -40,64 +40,102 @@
 
         @if ($unconfirmedCurrencyCount > 0)
             <div class="alert alert-warning" role="status">
-                {{ $unconfirmedCurrencyCount }} payments have no confirmed
-                currency and are excluded from summary totals.
+                {{ $unconfirmedCurrencyCount }} patient payments have no
+                confirmed currency and are excluded from summary totals.
             </div>
         @endif
 
         <section class="payment-summary-grid">
             <article class="payment-summary-card">
-                <span>Today's receipts</span>
+                <span>Today's patient receipts</span>
                 <strong>
                     {{ $currency }}
-                    {{ number_format($todayReceived, $moneyDecimals) }}
+                    {{ number_format((float) $todaySummary['patient'], $moneyDecimals) }}
                 </strong>
-                <small class="stat-success">Patient payments received today</small>
+                <small>Patient payments received today</small>
             </article>
 
             <article class="payment-summary-card">
-                <span>This month's receipts</span>
+                <span>Today's order receipts</span>
                 <strong>
                     {{ $currency }}
-                    {{ number_format($monthReceived, $moneyDecimals) }}
+                    {{ number_format((float) $todaySummary['orders'], $moneyDecimals) }}
                 </strong>
-                <small>{{ $monthLabel }}</small>
+                <small>Nuskha collections before refunds</small>
             </article>
 
             <article class="payment-summary-card">
-                <span>Total received</span>
+                <span>Today's refunds</span>
                 <strong>
                     {{ $currency }}
-                    {{ number_format($totalReceived, $moneyDecimals) }}
+                    {{ number_format((float) $todaySummary['refunds'], $moneyDecimals) }}
                 </strong>
-                <small>All recorded patient payments</small>
+                <small class="stat-warning">Deducted from received income</small>
             </article>
 
             <article class="payment-summary-card">
-                <span>Outstanding bills</span>
+                <span>Today's net receipts</span>
                 <strong>
                     {{ $currency }}
-                    {{ number_format($outstandingBalance, $moneyDecimals) }}
+                    {{ number_format((float) $todaySummary['net'], $moneyDecimals) }}
                 </strong>
-                <small class="stat-warning">Excludes unallocated payments</small>
+                <small class="stat-success">
+                    Patient + order receipts − refunds
+                </small>
+            </article>
+        </section>
+
+        <section class="payment-summary-grid">
+            <article class="payment-summary-card">
+                <span>This month's net receipts</span>
+                <strong>
+                    {{ $currency }}
+                    {{ number_format((float) $monthSummary['net'], $moneyDecimals) }}
+                </strong>
+                <small>{{ $monthLabel }} · After refunds</small>
+            </article>
+
+            <article class="payment-summary-card">
+                <span>All-time net receipts</span>
+                <strong>
+                    {{ $currency }}
+                    {{ number_format((float) $allTimeSummary['net'], $moneyDecimals) }}
+                </strong>
+                <small>Patient and order receipts after refunds</small>
+            </article>
+
+            <article class="payment-summary-card">
+                <span>Outstanding patient bills</span>
+                <strong>
+                    {{ $currency }}
+                    {{ number_format((float) $outstandingBalance, $moneyDecimals) }}
+                </strong>
+                <small class="stat-warning">
+                    Remaining patient bill balances
+                </small>
+            </article>
+
+            <article class="payment-summary-card">
+                <span>Unallocated patient receipts</span>
+                <strong>
+                    {{ $currency }}
+                    {{ number_format((float) $unallocatedReceived, $moneyDecimals) }}
+                </strong>
+                <small>Included in receipts; not assigned to bills</small>
             </article>
         </section>
 
         <p class="text-muted small">
-            Summary cards include only {{ $currency }} patient records.
-            Order collections appear in Orders and Reports.
-            Unallocated payments:
-            <strong>
-                {{ $currency }}
-                {{ number_format($unallocatedReceived, $moneyDecimals) }}
-            </strong>,
-            included in received totals but not deducted from bill balances.
+            Summary cards show this clinic's {{ $currency }} records.
+            These are received amounts after refunds, before expenses.
+            Filters below apply to the patient payment table.
+            <a href="{{ route('orders.index') }}">View nuskha orders</a>.
         </p>
 
         <section class="payments-panel">
             <div class="payments-toolbar">
                 <div>
-                    <h2>Payment records</h2>
+                    <h2>Patient payment records</h2>
                     <p>Records retain their original currencies.</p>
                 </div>
 
@@ -170,7 +208,10 @@
                         Search
                     </button>
 
-                    <a href="{{ route('payments.index') }}" class="btn btn-light btn-sm">
+                    <a
+                        href="{{ route('payments.index') }}"
+                        class="btn btn-light btn-sm"
+                    >
                         Clear
                     </a>
                 </div>
@@ -238,6 +279,7 @@
                                     <span class="payment-method {{ $methodClass }}">
                                         {{ $methodLabel }}
                                     </span>
+
                                     @if (!$payment->bill_id)
                                         <small>Unallocated</small>
                                     @endif
@@ -246,9 +288,9 @@
                                 <td class="payment-amount">
                                     @if ($payment->currency)
                                         {{ strtoupper($payment->currency) }}
-                                        {{ number_format($payment->amount, $moneyDecimals) }}
+                                        {{ number_format((float) $payment->amount, $moneyDecimals) }}
                                     @else
-                                        {{ number_format($payment->amount, $moneyDecimals) }}
+                                        {{ number_format((float) $payment->amount, $moneyDecimals) }}
                                         <small class="d-block text-muted">
                                             Currency not recorded
                                         </small>
@@ -269,7 +311,7 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center py-4">
-                                    No payments match your filters.
+                                    No patient payments match your filters.
                                 </td>
                             </tr>
                         @endforelse
@@ -281,8 +323,9 @@
                 <span>
                     Showing {{ $payments->firstItem() ?? 0 }}
                     to {{ $payments->lastItem() ?? 0 }}
-                    of {{ $payments->total() }} payments
+                    of {{ $payments->total() }} patient payments
                 </span>
+
                 <div>{{ $payments->links() }}</div>
             </div>
         </section>
