@@ -2643,3 +2643,218 @@ if (document.readyState === 'loading') {
 } else {
     initializeOrderEditor();
 }
+
+/* Prescription patient lookup: remote prefix search, scoped by the server. */
+function initializePrescriptionPatientSearch() {
+    const root = document.querySelector('[data-rx-patient-search]');
+    if (!root || root.dataset.initialized === '1') return;
+    root.dataset.initialized = '1';
+
+    const form = root.closest('form');
+    const input = root.querySelector('[data-rx-patient-query]');
+    const selected = root.querySelector('[data-rx-patient]');
+    const results = root.querySelector('[data-rx-patient-results]');
+    const feedback = root.querySelector('[data-rx-patient-feedback]');
+    const visit = form.querySelector('[data-rx-visit]');
+    if (root.dataset.locked === '1') return;
+
+    let matches = [];
+    let active = -1;
+    let timer;
+    let searchRequest;
+    let visitsRequest;
+    let generation = 0;
+    let selectedName = root.dataset.selectedName || '';
+
+    const close = () => {
+        results.hidden = true;
+        input.setAttribute('aria-expanded', 'false');
+        input.removeAttribute('aria-activedescendant');
+        active = -1;
+    };
+
+    const setValidity = () => {
+        input.setCustomValidity(selected.value && input.value === selectedName
+            ? '' : 'Select a patient from the search results.');
+    };
+
+    const emptyVisits = () => {
+        visitsRequest?.abort();
+        visit.replaceChildren(new Option('No linked visit', ''));
+        visit.disabled = true;
+        visit.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    const loadVisits = async (patientId) => {
+        emptyVisits();
+        visitsRequest = new AbortController();
+        try {
+            const response = await fetch(root.dataset.visitsUrl.replace('__PATIENT__', encodeURIComponent(patientId)), {
+                signal: visitsRequest.signal,
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { Accept: 'application/json' },
+            });
+            if (!response.ok) throw new Error('Visits unavailable');
+            const data = await response.json();
+            if (selected.value !== String(patientId)) return;
+            data.visits.forEach((item) => {
+                const option = new Option(item.label, String(item.id));
+                option.dataset.patientId = String(item.patient_id);
+                option.dataset.doctorId = item.doctor_id ? String(item.doctor_id) : '';
+                visit.add(option);
+            });
+            visit.disabled = false;
+        } catch (error) {
+            if (error.name !== 'AbortError' && selected.value === String(patientId)) {
+                feedback.textContent = 'Patient selected. Visits could not load; reselect the patient to retry.';
+            }
+        }
+    };
+
+    const choose = (patient) => {
+        if (!patient) return;
+        generation++;
+        clearTimeout(timer);
+        searchRequest?.abort();
+        selected.value = String(patient.id);
+        selectedName = patient.name;
+        input.value = patient.name;
+        feedback.textContent = `Selected: ${patient.code || ''}${patient.phone ? ' · ' + patient.phone : ''}`;
+        close();
+        setValidity();
+        selected.dispatchEvent(new Event('change', { bubbles: true }));
+        loadVisits(patient.id);
+        input.focus();
+    };
+
+    const render = (data) => {
+        matches = data.patients;
+        active = -1;
+        results.replaceChildren();
+        matches.forEach((patient, index) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'rx-patient-result';
+            button.id = `rx-patient-result-${index}`;
+            button.dataset.resultIndex = String(index);
+            button.setAttribute('role', 'option');
+            button.setAttribute('aria-selected', 'false');
+            button.tabIndex = -1;
+            const name = document.createElement('strong');
+            name.textContent = patient.name;
+            const detail = document.createElement('small');
+            detail.textContent = `${patient.code || ''}${patient.phone ? ' · ' + patient.phone : ''}`;
+            button.append(name, detail);
+            results.appendChild(button);
+        });
+        results.hidden = matches.length === 0;
+        input.setAttribute('aria-expanded', matches.length ? 'true' : 'false');
+        feedback.textContent = !matches.length
+            ? 'No matching patients. Check the name or register the patient first.'
+            : data.has_more
+                ? 'Showing the first 20 matches. Type more of the name to narrow the list.'
+                : `${matches.length} matching ${matches.length === 1 ? 'patient' : 'patients'}. Select one.`;
+    };
+
+    const search = async (text, currentGeneration) => {
+        searchRequest?.abort();
+        searchRequest = new AbortController();
+        feedback.textContent = 'Searching patients…';
+        try {
+            const url = new URL(root.dataset.searchUrl, window.location.origin);
+            url.searchParams.set('q', text);
+            const response = await fetch(url, {
+                signal: searchRequest.signal,
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { Accept: 'application/json' },
+            });
+            if (!response.ok) throw new Error('Search unavailable');
+            const data = await response.json();
+            if (currentGeneration === generation) render(data);
+        } catch (error) {
+            if (error.name !== 'AbortError' && currentGeneration === generation) {
+                close();
+                feedback.textContent = 'Patient search could not load. Type again to retry.';
+            }
+        }
+    };
+
+    input.addEventListener('input', () => {
+        generation++;
+        clearTimeout(timer);
+        searchRequest?.abort();
+        selected.value = '';
+        selectedName = '';
+        close();
+        matches = [];
+        emptyVisits();
+        selected.dispatchEvent(new Event('change', { bubbles: true }));
+        setValidity();
+        const text = input.value.trim().replace(/\s+/g, ' ');
+        if (!text) {
+            feedback.textContent = 'Type a name, then select the matching patient.';
+            return;
+        }
+        const current = generation;
+        timer = setTimeout(() => search(text, current), 200);
+    });
+
+    input.addEventListener('focus', () => {
+        if (input.value.trim() && !selected.value) {
+            clearTimeout(timer);
+            search(input.value.trim().replace(/\s+/g, ' '), generation);
+        }
+    });
+
+    input.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            generation++;
+            clearTimeout(timer);
+            searchRequest?.abort();
+            close();
+            return;
+        }
+        if (results.hidden || !matches.length) return;
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            choose(matches[active < 0 ? 0 : active]);
+        } else if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
+            event.preventDefault();
+            active = event.key === 'ArrowDown'
+                ? (active + 1) % matches.length
+                : (active <= 0 ? matches.length - 1 : active - 1);
+            Array.from(results.children).forEach((button, index) => {
+                button.setAttribute('aria-selected', index === active ? 'true' : 'false');
+            });
+            const button = results.children[active];
+            input.setAttribute('aria-activedescendant', button.id);
+            button.scrollIntoView?.({ block: 'nearest' });
+        }
+    });
+
+    results.addEventListener('mousedown', (event) => event.preventDefault());
+    results.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-result-index]');
+        if (button) choose(matches[Number(button.dataset.resultIndex)]);
+    });
+    input.addEventListener('blur', close);
+    document.addEventListener('click', (event) => {
+        if (!root.contains(event.target)) close();
+    });
+    form.addEventListener('submit', (event) => {
+        setValidity();
+        if (!input.checkValidity()) {
+            event.preventDefault();
+            input.reportValidity();
+        }
+    });
+    setValidity();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePrescriptionPatientSearch);
+} else {
+    initializePrescriptionPatientSearch();
+}

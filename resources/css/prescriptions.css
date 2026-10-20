@@ -1367,3 +1367,61 @@
         padding: 14px;
     }
 }
+
+/* Remote patient name suggestions for prescriptions. */
+.rx-patient-search {
+    position: relative;
+    min-width: 0;
+}
+
+.rx-patient-results {
+    position: absolute;
+    z-index: 30;
+    top: 76px;
+    inset-inline: 0;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 5px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.rx-patient-results[hidden] {
+    display: none !important;
+}
+
+.rx-patient-result {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-main);
+    text-align: start;
+    cursor: pointer;
+}
+
+.rx-patient-result strong,
+.rx-patient-result small {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.rx-patient-result strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.rx-patient-result small {
+    margin-top: 3px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.rx-patient-result:hover,
+.rx-patient-result[aria-selected="true"] {
+    background: #e6f7f5;
+}

@@ -131,6 +131,59 @@ class PrescriptionController extends Controller
         ));
     }
 
+    public function searchPatients(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => ['required', 'string', 'max:160'],
+        ]);
+        $search = preg_replace('/\s+/u', ' ', trim($validated['q']));
+
+        if ($search === '') {
+            return response()->json(['patients' => [], 'has_more' => false])
+                ->header('Cache-Control', 'no-store, private');
+        }
+
+        // Treat SQL wildcard characters literally, not as a match-all query.
+        $prefix = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search).'%';
+        $matches = Patient::query()
+            ->where('clinic_id', Auth::user()->clinic_id)
+            ->whereRaw("full_name LIKE ? ESCAPE '!'", [$prefix])
+            ->orderBy('full_name')->orderBy('patient_id')
+            ->limit(21)
+            ->get(['patient_id', 'full_name', 'patient_code', 'phone']);
+
+        return response()->json([
+            'patients' => $matches->take(20)->values()->map(fn ($patient) => [
+                'id' => $patient->patient_id,
+                'name' => $patient->full_name,
+                'code' => $patient->patient_code,
+                'phone' => $patient->phone,
+            ]),
+            'has_more' => $matches->count() > 20,
+        ])->header('Cache-Control', 'no-store, private');
+    }
+
+    public function patientVisits(Patient $patient)
+    {
+        abort_unless((int) $patient->clinic_id === (int) Auth::user()->clinic_id, 404);
+
+        $visits = Visit::where('clinic_id', Auth::user()->clinic_id)
+            ->where('patient_id', $patient->patient_id)
+            ->orderByDesc('visit_date')->orderByDesc('visit_id')
+            ->get(['visit_id', 'patient_id', 'visit_date', 'visit_reason', 'doctor_user_id'])
+            ->map(fn ($visit) => [
+                'id' => $visit->visit_id,
+                'patient_id' => $visit->patient_id,
+                'doctor_id' => $visit->doctor_user_id,
+                'label' => '#'.$visit->visit_id.' — '
+                    .$visit->visit_date->format('d M Y, h:i A')
+                    .' — '.$visit->visit_reason,
+            ]);
+
+        return response()->json(['visits' => $visits])
+            ->header('Cache-Control', 'no-store, private');
+    }
+
     public function create()
     {
         return view('prescriptions.create', $this->formData());
@@ -258,20 +311,28 @@ class PrescriptionController extends Controller
     {
         $clinicId = (int) Auth::user()->clinic_id;
 
+        $selectedPatientId = $prescription?->patient_id
+            ?? filter_var(old('patient_id', request('patient_id')), FILTER_VALIDATE_INT);
+
+        if (! $selectedPatientId) {
+            $visitId = filter_var(old('visit_id', request('visit_id')), FILTER_VALIDATE_INT);
+            $selectedPatientId = $visitId
+                ? Visit::where('clinic_id', $clinicId)->whereKey($visitId)->value('patient_id')
+                : null;
+        }
+
+        // Only hydrate the selected patient. All other choices use remote search.
         $patients = Patient::query()
             ->where('clinic_id', $clinicId)
-            ->orderBy('full_name')
-            ->get(['patient_id', 'patient_code', 'full_name']);
+            ->whereKey($selectedPatientId ?: 0)
+            ->get(['patient_id', 'patient_code', 'full_name', 'phone']);
 
         $visits = Visit::query()
             ->where('clinic_id', $clinicId)
+            ->where('patient_id', $patients->first()?->patient_id ?? 0)
             ->orderByDesc('visit_date')
             ->get([
-                'visit_id',
-                'patient_id',
-                'visit_date',
-                'visit_reason',
-                'doctor_user_id',
+                'visit_id', 'patient_id', 'visit_date', 'visit_reason', 'doctor_user_id',
             ]);
 
         $roleIds = Role::query()

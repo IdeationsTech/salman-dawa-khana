@@ -105,6 +105,13 @@ Route::middleware([
     Route::resource('prescriptions/templates', NuskhaTemplateController::class)
         ->names('prescriptions.templates');
 
+    Route::get('/prescriptions/patient-search', [PrescriptionController::class, 'searchPatients'])
+        ->middleware('throttle:120,1')->name('prescriptions.patients.search');
+
+    Route::get('/prescriptions/patients/{patient}/visits', [PrescriptionController::class, 'patientVisits'])
+        ->whereNumber('patient')->middleware('throttle:120,1')
+        ->name('prescriptions.patients.visits');
+
     Route::resource('prescriptions', PrescriptionController::class);
 
     Route::get('/orders', [NuskhaOrderController::class, 'index'])->name('orders.index');

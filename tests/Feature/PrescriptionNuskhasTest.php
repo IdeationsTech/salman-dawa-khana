@@ -191,4 +191,74 @@ class PrescriptionNuskhasTest extends TestCase
         $this->assertDatabaseHas('prescription_items', ['item_name' => 'LEGACY SECRET', 'quantity' => 900]);
         $this->assertCount(2, $rx->fresh()->nuskhas);
     }
+
+    public function test_patient_search_narrows_prefixes_and_excludes_other_clinics(): void
+    {
+        foreach (['Adnan Ali', 'Adnan Ahmed', 'Adil Khan', 'Ali Raza', 'Badnan Ali'] as $index => $name) {
+            DB::table('patients')->insert([
+                'clinic_id' => $this->clinic, 'full_name' => $name,
+                'patient_code' => 'SEARCH-'.$index, 'phone' => '+971501234567',
+                'created_at' => now(),
+            ]);
+        }
+        $other = DB::table('clinics')->insertGetId([
+            'name' => 'Other Clinic', 'created_at' => now(),
+        ], 'clinic_id');
+        DB::table('patients')->insert([
+            'clinic_id' => $other, 'full_name' => 'Adnan Secret',
+            'patient_code' => 'PRIVATE', 'created_at' => now(),
+        ]);
+
+        foreach ([
+            'a' => ['Adil Khan', 'Adnan Ahmed', 'Adnan Ali', 'Ali Raza'],
+            'ad' => ['Adil Khan', 'Adnan Ahmed', 'Adnan Ali'],
+            'adnan' => ['Adnan Ahmed', 'Adnan Ali'],
+            'adnan a' => ['Adnan Ahmed', 'Adnan Ali'],
+            'adnan ali' => ['Adnan Ali'],
+        ] as $search => $names) {
+            $response = $this->getJson(route('prescriptions.patients.search', ['q' => $search]));
+            $response->assertOk()->assertJsonPath('has_more', false);
+            $this->assertSame($names, array_column($response->json('patients'), 'name'));
+            $response->assertDontSee('Adnan Secret');
+        }
+
+        $this->getJson(route('prescriptions.patients.search', ['q' => 'ad%']))
+            ->assertOk()->assertJsonCount(0, 'patients');
+        $this->getJson(route('prescriptions.patients.search', ['q' => 'ad_']))
+            ->assertOk()->assertJsonCount(0, 'patients');
+    }
+
+    public function test_patient_search_is_bounded_and_create_only_loads_the_selected_patient(): void
+    {
+        foreach (range(1, 35) as $index) {
+            DB::table('patients')->insert([
+                'clinic_id' => $this->clinic, 'full_name' => 'Adnan '.str_pad($index, 2, '0', STR_PAD_LEFT),
+                'patient_code' => 'MANY-'.$index, 'created_at' => now(),
+            ]);
+        }
+        $this->getJson(route('prescriptions.patients.search', ['q' => 'Adnan']))
+            ->assertOk()->assertJsonCount(20, 'patients')->assertJsonPath('has_more', true);
+        $this->get(route('prescriptions.create'))->assertOk()
+            ->assertViewHas('patients', fn ($patients) => $patients->isEmpty())
+            ->assertDontSee('Adnan 35');
+        $this->get(route('prescriptions.create', ['patient_id' => $this->patient]))
+            ->assertOk()->assertViewHas('patients', fn ($patients) => $patients->count() === 1)
+            ->assertSee('value="Patient One"', false);
+    }
+
+    public function test_patient_visits_lookup_is_clinic_scoped_and_search_requires_login(): void
+    {
+        $this->getJson(route('prescriptions.patients.visits', $this->patient))
+            ->assertOk()->assertJsonCount(0, 'visits');
+        $other = DB::table('clinics')->insertGetId([
+            'name' => 'Other Clinic', 'created_at' => now(),
+        ], 'clinic_id');
+        $patient = DB::table('patients')->insertGetId([
+            'clinic_id' => $other, 'full_name' => 'Other Patient',
+            'patient_code' => 'FOREIGN', 'created_at' => now(),
+        ], 'patient_id');
+        $this->getJson(route('prescriptions.patients.visits', $patient))->assertNotFound();
+        auth()->logout();
+        $this->getJson(route('prescriptions.patients.search', ['q' => 'a']))->assertUnauthorized();
+    }
 }

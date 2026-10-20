@@ -119,33 +119,51 @@
                 </div>
 
                 <div class="template-form-grid">
-                    <div class="form-field">
-                        <label for="patient" class="form-label">Patient *</label>
-                        @if ($editing)
-                            <input type="hidden" name="patient_id" value="{{ $prescription->patient_id }}">
-                        @endif
-
-                        <select
-                            id="patient"
-                            name="{{ $editing ? 'patient_display' : 'patient_id' }}"
-                            class="form-select"
+                    @php
+                        $currentPatient = $patients->firstWhere('patient_id', (int) $selectedPatient);
+                    @endphp
+                    <div
+                        class="form-field rx-patient-search"
+                        data-rx-patient-search
+                        data-search-url="{{ route('prescriptions.patients.search') }}"
+                        data-visits-url="{{ route('prescriptions.patients.visits', ['patient' => '__PATIENT__']) }}"
+                        data-selected-name="{{ $currentPatient?->full_name ?? '' }}"
+                        data-locked="{{ $editing ? '1' : '0' }}"
+                    >
+                        <label for="rx-patient-search" class="form-label">Patient *</label>
+                        <input
+                            type="hidden"
+                            name="patient_id"
+                            value="{{ $currentPatient?->patient_id ?? '' }}"
                             data-rx-patient
-                            required
-                            @disabled($editing)
                         >
-                            <option value="">Select patient</option>
-                            @foreach ($patients as $patient)
-                                <option
-                                    value="{{ $patient->patient_id }}"
-                                    @selected(
-                                        (string) ($editing ? $prescription->patient_id : $selectedPatient)
-                                        === (string) $patient->patient_id
-                                    )
-                                >
-                                    {{ $patient->full_name }} — {{ $patient->patient_code }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <input
+                            type="text"
+                            id="rx-patient-search"
+                            name="patient_search"
+                            class="form-control"
+                            value="{{ $currentPatient?->full_name ?? old('patient_search', '') }}"
+                            placeholder="Start typing a patient name..."
+                            maxlength="160"
+                            autocomplete="off"
+                            role="combobox"
+                            aria-autocomplete="list"
+                            aria-expanded="false"
+                            aria-controls="rx-patient-results"
+                            aria-describedby="rx-patient-search-help"
+                            data-rx-patient-query
+                            @readonly($editing)
+                            required
+                        >
+                        <div class="rx-patient-results" id="rx-patient-results" role="listbox" aria-label="Matching patients" data-rx-patient-results hidden></div>
+                        <small id="rx-patient-search-help" class="form-help" data-rx-patient-feedback role="status" aria-live="polite">
+                            @if ($currentPatient)
+                                Selected: {{ $currentPatient->patient_code }}{{ $currentPatient->phone ? ' · '.$currentPatient->phone : '' }}
+                                {{ $editing ? ' · Patient cannot be changed on an existing prescription.' : '' }}
+                            @else
+                                Type a name, then select the matching patient.
+                            @endif
+                        </small>
                     </div>
 
                     <div class="form-field">
