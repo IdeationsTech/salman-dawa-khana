@@ -440,10 +440,12 @@ class PatientController extends Controller
         $idInput = $request->input('national_id_number');
 
         if (is_string($idInput)) {
+            $idInput = $country === 'ZZ'
+                ? trim($idInput)
+                : preg_replace('/[\s-]+/', '', $idInput);
+
             $request->merge([
-                'national_id_number' => $country === 'ZZ'
-                    ? trim($idInput)
-                    : preg_replace('/[\s-]+/', '', $idInput),
+                'national_id_number' => $idInput === '' ? null : $idInput,
             ]);
         }
 
@@ -457,7 +459,7 @@ class PatientController extends Controller
         }
 
         $idRules = [
-            'bail', 'required', 'string', 'max:40',
+            'bail', 'nullable', 'string', 'max:40',
             match ($country) {
                 'PK' => 'regex:/^[0-9]{13}$/',
                 'AE' => 'regex:/^784[0-9]{12}$/',
@@ -491,7 +493,7 @@ class PatientController extends Controller
             ],
             'national_id_number' => $idRules,
             'date_of_birth' => [
-                'bail', 'required', 'date_format:Y-m-d', 'before_or_equal:today',
+                'bail', 'nullable', 'date_format:Y-m-d', 'before_or_equal:today',
             ],
             'gender' => ['required', Rule::in(['Male', 'Female', 'Other'])],
             'marital_status' => ['required', Rule::in(['married', 'unmarried'])],
@@ -508,18 +510,12 @@ class PatientController extends Controller
         ], [
             'full_name.required' => 'Please enter the patient’s full name.',
             'phone.required' => 'Please enter the phone number.',
-            'national_id_number.required' => match ($country) {
-                'PK' => 'Please enter the CNIC.',
-                'AE' => 'Please enter the Emirates ID.',
-                default => 'Please enter the patient ID.',
-            },
             'national_id_number.regex' => $country === 'PK'
                 ? 'Enter a 13-digit CNIC.'
                 : 'Enter a 15-digit Emirates ID starting with 784.',
             'national_id_number.not_regex' => 'The ID cannot contain control characters.',
             'national_id_number.max' => 'The ID must not exceed 40 characters.',
             'national_id_number.unique' => 'This ID is already registered in your clinic.',
-            'date_of_birth.required' => 'Please enter the date of birth.',
             'date_of_birth.date_format' => 'Please enter a valid date of birth.',
             'date_of_birth.before_or_equal' => 'Date of birth cannot be in the future.',
             'gender.required' => 'Please select the gender.',
@@ -531,6 +527,8 @@ class PatientController extends Controller
             'children_count.min' => 'Enter at least 1 child when Yes is selected.',
         ]);
 
+        $validated['national_id_number'] = $validated['national_id_number'] ?? null;
+        $validated['date_of_birth'] = $validated['date_of_birth'] ?? null;
         $validated['national_id_country'] = $country;
         $validated['national_id_type'] = $idType;
         $validated['emirates_id'] = $country === 'AE'

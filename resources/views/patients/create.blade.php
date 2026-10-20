@@ -129,7 +129,7 @@
 
                     <div class="form-field">
                         <label for="national_id_number" class="form-label">
-                            {{ $idLabel }} *
+                            {{ $idLabel }} (optional)
                         </label>
 
                         <input
@@ -152,7 +152,6 @@
                                 data-id-country="{{ $idCountry }}"
                             @endif
                             autocomplete="off"
-                            required
                         >
 
                         <small class="text-muted">
@@ -185,7 +184,7 @@
 
                     <div class="form-field">
                         <label for="date_of_birth" class="form-label">
-                            Date of Birth *
+                            Date of Birth (optional)
                         </label>
                         <input
                             type="date"
@@ -195,7 +194,6 @@
                             value="{{ old('date_of_birth', $birthDate) }}"
                             max="{{ now()->format('Y-m-d') }}"
                             autocomplete="bday"
-                            required
                         >
                     </div>
                 </div>
