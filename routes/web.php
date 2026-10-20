@@ -202,3 +202,43 @@ Route::prefix('platform-admin')->name('platform-admin.')->group(function () {
         Route::post('/logout', [PlatformAdminLoginController::class, 'logout'])->name('logout');
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Platform Admin Password Recovery
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('platform-admin')
+    ->name('platform-admin.')
+    ->group(function () {
+        Route::get('/', function () {
+            return redirect()->route(
+                auth('platform_admin')->check()
+                    ? 'platform-admin.dashboard'
+                    : 'platform-admin.login'
+            );
+        })->name('home');
+
+        Route::get('/forgot-password', [
+            \App\Http\Controllers\PlatformAdmin\PasswordResetController::class,
+            'request',
+        ])->name('password.request');
+
+        Route::post('/forgot-password', [
+            \App\Http\Controllers\PlatformAdmin\PasswordResetController::class,
+            'email',
+        ])->middleware('throttle:5,1')
+            ->name('password.email');
+
+        Route::get('/reset-password/{token}', [
+            \App\Http\Controllers\PlatformAdmin\PasswordResetController::class,
+            'form',
+        ])->name('password.reset');
+
+        Route::post('/reset-password', [
+            \App\Http\Controllers\PlatformAdmin\PasswordResetController::class,
+            'reset',
+        ])->middleware('throttle:5,1')
+            ->name('password.update');
+    });

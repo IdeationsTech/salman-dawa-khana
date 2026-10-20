@@ -44,6 +44,13 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+
+        'platform_admins' => [
+            'provider' => 'platform_admins',
+            'table' => 'platform_admin_password_reset_tokens',
+            'expire' => 30,
+            'throttle' => 60,
+        ],
     ],
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
