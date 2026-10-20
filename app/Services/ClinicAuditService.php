@@ -56,7 +56,7 @@ class ClinicAuditService
     ): void {
         $actorId ??= Auth::guard('web')->id();
 
-        if (!$actorId) {
+        if (! $actorId) {
             return;
         }
 
@@ -65,7 +65,7 @@ class ClinicAuditService
             ->where('clinic_id', $clinicId)
             ->exists();
 
-        if (!$belongsToClinic) {
+        if (! $belongsToClinic) {
             return;
         }
 
@@ -99,13 +99,13 @@ class ClinicAuditService
 
         $actor = Auth::guard('web')->user();
 
-        if (!$actor) {
+        if (! $actor) {
             return;
         }
 
         $clinicId = $this->modelClinicId($model);
 
-        if (!$clinicId || $clinicId !== (int) $actor->clinic_id) {
+        if (! $clinicId || $clinicId !== (int) $actor->clinic_id) {
             return;
         }
 
@@ -137,7 +137,7 @@ class ClinicAuditService
 
         $this->record(
             $clinicId,
-            $model->getTable() . '.' . $event,
+            $model->getTable().'.'.$event,
             $model->getTable(),
             (int) $model->getKey(),
             [
@@ -161,12 +161,13 @@ class ClinicAuditService
         $parent = match ($model->getTable()) {
             'bill_items' => ['bills', 'bill_id'],
             'prescription_items' => ['prescriptions', 'prescription_id'],
+            'prescription_nuskhas' => ['prescriptions', 'prescription_id'],
             'nuskha_items' => ['nuskha_templates', 'nuskha_template_id'],
             'nuskha_order_items' => ['nuskha_orders', 'nuskha_order_id'],
             default => null,
         };
 
-        if (!$parent) {
+        if (! $parent) {
             return null;
         }
 

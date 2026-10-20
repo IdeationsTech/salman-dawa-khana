@@ -10,6 +10,7 @@
         'visit',
         'doctor',
         'createdBy',
+        'nuskhas',
     ]);
 @endphp
 
@@ -80,11 +81,34 @@
                 <span class="clh-rx" aria-label="Prescription">℞</span>
 
                 <div class="clh-nuskha">
-                    <h3 class="clh-section-title">Prescribed nuskha</h3>
+                    <h3 class="clh-section-title">Prescribed nuskhay</h3>
 
-                    <h3 class="clh-nuskha-name">
-                        {{ $prescription->nuskha_name ?: 'Custom nuskha' }}
-                    </h3>
+                    @forelse ($prescription->nuskhas as $nuskha)
+                        <div class="rx-patient-nuskha">
+                            <h3 class="clh-nuskha-name">
+                                {{ $loop->iteration }}. {{ $nuskha->nuskha_name }}
+                            </h3>
+                            <p class="rx-patient-quantity">
+                                Total quantity:
+                                <strong>{{ rtrim(rtrim((string) $nuskha->quantity, '0'), '.') }} {{ $nuskha->unit }}</strong>
+                            </p>
+                            @if ($nuskha->frequency || $nuskha->duration || $nuskha->timing)
+                                <p class="rx-patient-directions">
+                                    @if ($nuskha->frequency)<span>Frequency: {{ $nuskha->frequency }}</span>@endif
+                                    @if ($nuskha->duration)<span>Duration: {{ $nuskha->duration }}</span>@endif
+                                    @if ($nuskha->timing)<span>Timing: {{ $nuskha->timing }}</span>@endif
+                                </p>
+                            @endif
+                            @if ($nuskha->instructions)
+                                <p class="rx-patient-directions">{{ $nuskha->instructions }}</p>
+                            @endif
+                        </div>
+                    @empty
+                        {{-- Legacy ingredient rows must never appear in a patient copy. --}}
+                        <h3 class="clh-nuskha-name">
+                            {{ $prescription->nuskha_name ?: 'Nuskha name not recorded' }}
+                        </h3>
+                    @endforelse
                 </div>
             </div>
 

@@ -84,6 +84,15 @@ class Prescription extends Model
         );
     }
 
+    public function nuskhas()
+    {
+        return $this->hasMany(
+            PrescriptionNuskha::class,
+            'prescription_id',
+            'prescription_id'
+        )->orderBy('sort_order')->orderBy('prescription_nuskha_id');
+    }
+
     public function items()
     {
         return $this->hasMany(

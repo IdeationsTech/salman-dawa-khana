@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\NuskhaItem;
 use App\Models\NuskhaTemplate;
 use App\Models\Patient;
 use App\Models\Prescription;
+use App\Models\PrescriptionNuskha;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Visit;
@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PrescriptionController extends Controller
 {
@@ -38,14 +39,11 @@ class PrescriptionController extends Controller
         $query = Prescription::query()
             ->where('clinic_id', $clinicId)
             ->with([
-                'patient' => fn ($query) =>
-                    $query->where('clinic_id', $clinicId),
-                'createdBy' => fn ($query) =>
-                    $query->where('clinic_id', $clinicId),
-                'doctor' => fn ($query) =>
-                    $query->where('clinic_id', $clinicId),
+                'patient' => fn ($query) => $query->where('clinic_id', $clinicId),
+                'createdBy' => fn ($query) => $query->where('clinic_id', $clinicId),
+                'doctor' => fn ($query) => $query->where('clinic_id', $clinicId),
             ])
-            ->withCount('items');
+            ->withCount('nuskhas');
 
         $search = trim($filters['search'] ?? '');
 
@@ -53,6 +51,8 @@ class PrescriptionController extends Controller
             $query->where(function ($query) use ($search, $clinicId) {
                 $query
                     ->where('prescription_no', 'like', "%{$search}%")
+                    ->orWhere('nuskha_name', 'like', "%{$search}%")
+                    ->orWhereHas('nuskhas', fn ($nuskhas) => $nuskhas->where('nuskha_name', 'like', "%{$search}%"))
                     ->orWhereHas('patient', function ($patients) use (
                         $search,
                         $clinicId
@@ -139,58 +139,50 @@ class PrescriptionController extends Controller
     public function store(Request $request)
     {
         $data = $this->validatePrescription($request);
-        $nuskhaName = $this->resolveNuskhaName($data);
 
-        $prescription = DB::transaction(function () use ($data, $nuskhaName) {
+        $prescription = DB::transaction(function () use ($data) {
+            $rows = $this->resolveNuskhas($data['nuskhas']);
+
             $prescription = Prescription::create([
                 'clinic_id' => Auth::user()->clinic_id,
                 'patient_id' => $data['patient_id'],
                 'visit_id' => $data['visit_id'] ?? null,
                 'created_by_user_id' => Auth::id(),
                 'doctor_user_id' => $data['doctor_user_id'],
-                'prescription_no' => 'TMP-' . (string) Str::ulid(),
-                'nuskha_name' => $nuskhaName,
+                'prescription_no' => 'TMP-'.(string) Str::ulid(),
+                'nuskha_name' => $this->summaryName($rows),
                 'prescribed_at' => $data['prescribed_at'],
                 'general_instructions' => $data['general_instructions'] ?? null,
                 'status' => $data['status'],
             ]);
 
             $prescription->update([
-                'prescription_no' => 'RX' . str_pad(
-                    (string) $prescription->prescription_id,
-                    2,
-                    '0',
-                    STR_PAD_LEFT
+                'prescription_no' => 'RX'.str_pad(
+                    (string) $prescription->prescription_id, 2, '0', STR_PAD_LEFT
                 ),
             ]);
 
-            $this->saveItems($prescription, $data['items']);
+            $this->saveNuskhas($prescription, $rows);
 
             return $prescription;
-        });
+        }, 3);
 
-        return redirect()
-            ->route('prescriptions.show', $prescription)
+        return redirect()->route('prescriptions.show', $prescription)
             ->with('success', 'Prescription created successfully.');
     }
 
     public function show(Prescription $prescription)
     {
         $this->ensureClinicAccess($prescription);
-
         $clinicId = (int) Auth::user()->clinic_id;
 
         $prescription->load([
             'clinic',
-            'patient' => fn ($query) =>
-                $query->where('clinic_id', $clinicId),
-            'visit' => fn ($query) =>
-                $query->where('clinic_id', $clinicId),
-            'createdBy' => fn ($query) =>
-                $query->where('clinic_id', $clinicId),
-            'doctor' => fn ($query) =>
-                $query->where('clinic_id', $clinicId)->with('role'),
-            'items',
+            'patient' => fn ($query) => $query->where('clinic_id', $clinicId),
+            'visit' => fn ($query) => $query->where('clinic_id', $clinicId),
+            'createdBy' => fn ($query) => $query->where('clinic_id', $clinicId),
+            'doctor' => fn ($query) => $query->where('clinic_id', $clinicId)->with('role'),
+            'nuskhas',
         ]);
 
         return view('prescriptions.show', compact('prescription'));
@@ -199,8 +191,7 @@ class PrescriptionController extends Controller
     public function edit(Prescription $prescription)
     {
         $this->ensureClinicAccess($prescription);
-
-        $prescription->load(['items', 'createdBy', 'doctor']);
+        $prescription->load(['nuskhas', 'createdBy', 'doctor']);
 
         return view('prescriptions.create', [
             ...$this->formData($prescription),
@@ -211,33 +202,32 @@ class PrescriptionController extends Controller
     public function update(Request $request, Prescription $prescription)
     {
         $this->ensureClinicAccess($prescription);
-
         $data = $this->validatePrescription($request, $prescription);
-        $nuskhaName = $this->resolveNuskhaName($data);
 
-        DB::transaction(function () use ($prescription, $data, $nuskhaName) {
+        DB::transaction(function () use ($prescription, $data) {
             $locked = Prescription::query()
                 ->where('clinic_id', Auth::user()->clinic_id)
                 ->whereKey($prescription->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
+                ->lockForUpdate()->firstOrFail();
+
+            $rows = $this->resolveNuskhas($data['nuskhas'], $locked);
 
             $locked->update([
                 'patient_id' => $data['patient_id'],
                 'visit_id' => $data['visit_id'] ?? null,
                 'doctor_user_id' => $data['doctor_user_id'],
-                'nuskha_name' => $nuskhaName,
+                'nuskha_name' => $this->summaryName($rows),
                 'prescribed_at' => $data['prescribed_at'],
                 'general_instructions' => $data['general_instructions'] ?? null,
                 'status' => $data['status'],
             ]);
 
-            $locked->items()->delete();
-            $this->saveItems($locked, $data['items']);
-        });
+            $this->saveNuskhas($locked, $rows);
+            // Historical prescription_items contain ingredients. Preserve them;
+            // they are never used as patient nuskhas or shown in patient output.
+        }, 3);
 
-        return redirect()
-            ->route('prescriptions.show', $prescription)
+        return redirect()->route('prescriptions.show', $prescription)
             ->with('success', 'Prescription updated successfully.');
     }
 
@@ -246,12 +236,21 @@ class PrescriptionController extends Controller
         $this->ensureClinicAccess($prescription);
 
         DB::transaction(function () use ($prescription) {
-            $prescription->items()->delete();
-            $prescription->delete();
+            $locked = Prescription::where('clinic_id', Auth::user()->clinic_id)
+                ->whereKey($prescription->getKey())->lockForUpdate()->firstOrFail();
+
+            foreach ($locked->nuskhas as $row) {
+                $row->delete();
+            }
+
+            foreach ($locked->items as $item) {
+                $item->delete();
+            }
+
+            $locked->delete();
         });
 
-        return redirect()
-            ->route('prescriptions.index')
+        return redirect()->route('prescriptions.index')
             ->with('success', 'Prescription deleted successfully.');
     }
 
@@ -299,42 +298,26 @@ class PrescriptionController extends Controller
             ->orderBy('name')
             ->get(['user_id', 'name', 'is_active']);
 
+        $existingTemplateIds = $prescription
+            ? $prescription->nuskhas->pluck('nuskha_template_id')->filter()->all()
+            : [];
+
+        // Do not fetch ingredient relationships or expose recipes in form JSON.
         $templates = NuskhaTemplate::query()
             ->where('clinic_id', $clinicId)
-            ->where('is_active', true)
-            ->with('items')
+            ->where(function ($query) use ($existingTemplateIds) {
+                $query->where('is_active', true);
+
+                if ($existingTemplateIds) {
+                    $query->orWhereIn('nuskha_template_id', $existingTemplateIds);
+                }
+            })
             ->orderBy('name')
-            ->get();
+            ->get(['nuskha_template_id', 'name', 'is_active']);
 
-        $templateData = $templates->map(fn ($template) => [
-            'id' => $template->nuskha_template_id,
-            'instructions' => $template->instructions,
-            'items' => $template->items->map(
-                fn ($item) => $item->only(NuskhaItem::ITEM_FIELDS)
-            )->values()->all(),
-        ])->values()->all();
+        $units = PrescriptionNuskha::UNITS;
 
-        return compact(
-            'patients',
-            'visits',
-            'doctors',
-            'templates',
-            'templateData'
-        );
-    }
-
-    private function resolveNuskhaName(array $data): ?string
-    {
-        if ($data['prescription_type'] === 'template') {
-            return NuskhaTemplate::query()
-                ->where('clinic_id', Auth::user()->clinic_id)
-                ->whereKey($data['template_id'])
-                ->value('name');
-        }
-
-        $name = trim((string) ($data['nuskha_name'] ?? ''));
-
-        return $name !== '' ? $name : null;
+        return compact('patients', 'visits', 'doctors', 'templates', 'units');
     }
 
     private function validatePrescription(
@@ -359,8 +342,7 @@ class PrescriptionController extends Controller
         ], [
             'patient_id.required' => 'Please select a patient.',
             'patient_id.exists' => 'Select a patient from your clinic.',
-            'patient_id.in' =>
-                'The patient cannot be changed on an existing prescription.',
+            'patient_id.in' => 'The patient cannot be changed on an existing prescription.',
         ]);
 
         $roleIds = Role::query()
@@ -406,81 +388,147 @@ class PrescriptionController extends Controller
 
             'status' => ['required', Rule::in(['issued', 'draft', 'cancelled'])],
 
-            'prescription_type' => [
-                'required',
-                Rule::in(['custom', 'template']),
-            ],
-
-            'nuskha_name' => ['nullable', 'string', 'max:160'],
-
-            'template_id' => [
-                'exclude_unless:prescription_type,template',
-                'required',
-                'integer',
-                Rule::exists('nuskha_templates', 'nuskha_template_id')
-                    ->where('clinic_id', $clinicId)
-                    ->where('is_active', true),
-            ],
-
             'general_instructions' => ['nullable', 'string', 'max:10000'],
-
-            'items' => ['required', 'array', 'min:1', 'max:100'],
-            'items.*' => ['required', 'array'],
-            'items.*.item_name' => ['required', 'string', 'max:160'],
-
-            'items.*.quantity' => [
-                'nullable',
-                'required_with:items.*.unit',
-                'numeric',
-                'min:0.001',
-                'max:999999999.999',
-                'decimal:0,3',
+            'nuskhas' => ['required', 'array', 'min:1', 'max:30'],
+            'nuskhas.*' => [
+                'required',
+                'array:assignment_id,source,nuskha_template_id,nuskha_name,quantity,unit,frequency,duration,timing,instructions',
             ],
-
-            'items.*.unit' => [
-                'nullable',
-                'required_with:items.*.quantity',
-                Rule::in(array_keys(NuskhaItem::UNITS)),
+            'nuskhas.*.assignment_id' => ['nullable', 'integer', 'min:1', 'distinct'],
+            'nuskhas.*.source' => ['required', Rule::in(['template', 'custom'])],
+            'nuskhas.*.nuskha_template_id' => [
+                'nullable', 'required_if:nuskhas.*.source,template', 'integer',
+                Rule::exists('nuskha_templates', 'nuskha_template_id')
+                    ->where('clinic_id', $clinicId),
             ],
-
-            'items.*.dosage' => ['nullable', 'string', 'max:80'],
-            'items.*.frequency' => ['nullable', 'string', 'max:80'],
-            'items.*.duration' => ['nullable', 'string', 'max:80'],
-            'items.*.timing' => ['nullable', 'string', 'max:80'],
-            'items.*.instructions' => ['nullable', 'string', 'max:255'],
+            'nuskhas.*.nuskha_name' => [
+                'nullable', 'required_if:nuskhas.*.source,custom', 'string', 'max:160',
+            ],
+            'nuskhas.*.quantity' => [
+                'bail', 'required', 'numeric', 'min:0.001',
+                'max:999999999.999', 'regex:/^\d{1,9}(?:\.\d{1,3})?$/',
+            ],
+            'nuskhas.*.unit' => ['required', Rule::in(array_keys(PrescriptionNuskha::UNITS))],
+            'nuskhas.*.frequency' => ['nullable', 'string', 'max:80'],
+            'nuskhas.*.duration' => ['nullable', 'string', 'max:80'],
+            'nuskhas.*.timing' => ['nullable', 'string', 'max:80'],
+            'nuskhas.*.instructions' => ['nullable', 'string', 'max:255'],
+            // Reject stale ingredient-based forms instead of silently saving them.
+            'items' => ['prohibited'],
+            'template_id' => ['prohibited'],
+            'prescription_type' => ['prohibited'],
         ], [
-            'doctor_user_id.required' =>
-                'Please select the treating Doctor/Hakeem.',
-            'doctor_user_id.exists' =>
-                'Select an active Owner or Doctor from your clinic.',
-            'visit_id.exists' =>
-                'Select a visit belonging to the selected patient.',
-            'template_id.required' => 'Please select a saved nuskha template.',
-            'template_id.exists' => 'The selected template is unavailable.',
-            'items.*.item_name.required' =>
-                'Every prescription item must have a name.',
-            'items.*.quantity.required_with' =>
-                'Enter a quantity when a unit is selected.',
-            'items.*.unit.required_with' =>
-                'Select a unit when a quantity is entered.',
+            'doctor_user_id.required' => 'Please select the treating Doctor/Hakeem.',
+            'doctor_user_id.exists' => 'Select an active Owner or Doctor from your clinic.',
+            'visit_id.exists' => 'Select a visit belonging to the selected patient.',
+            'nuskhas.required' => 'Add at least one nuskha to the prescription.',
+            'nuskhas.*.nuskha_template_id.required_if' => 'Select a saved nuskha.',
+            'nuskhas.*.nuskha_template_id.exists' => 'Select a template from your clinic.',
+            'nuskhas.*.nuskha_name.required_if' => 'Enter the custom nuskha name.',
+            'nuskhas.*.quantity.required' => 'Enter the total quantity or weight for each nuskha.',
+            'nuskhas.*.unit.required' => 'Select a unit for each nuskha.',
+            'items.prohibited' => 'This form is outdated. Reload the prescription page.',
         ]);
 
         $data['patient_id'] = $patientData['patient_id'];
         $data['doctor_user_id'] = (int) $data['doctor_user_id'];
 
         $data['prescribed_at'] =
-            str_replace('T', ' ', $data['prescribed_at']) . ':00';
+            str_replace('T', ' ', $data['prescribed_at']).':00';
 
         return $data;
     }
 
-    private function saveItems(Prescription $prescription, array $items): void
+    private function resolveNuskhas(array $rows, ?Prescription $prescription = null): array
     {
-        foreach (array_values($items) as $index => $item) {
-            $prescription->items()->create([
-                ...Arr::only($item, NuskhaItem::ITEM_FIELDS),
+        $existing = $prescription
+            ? $prescription->nuskhas()->lockForUpdate()->get()->keyBy('prescription_nuskha_id')
+            : collect();
+
+        $templates = NuskhaTemplate::where('clinic_id', Auth::user()->clinic_id)
+            ->whereIn('nuskha_template_id', collect($rows)->pluck('nuskha_template_id')->filter())
+            ->lockForUpdate()->get(['nuskha_template_id', 'name', 'is_active'])
+            ->keyBy('nuskha_template_id');
+
+        $resolved = [];
+
+        foreach (array_values($rows) as $index => $row) {
+            $id = ! empty($row['assignment_id']) ? (int) $row['assignment_id'] : null;
+            $original = $id ? $existing->get($id) : null;
+
+            if ($id && ! $original) {
+                throw ValidationException::withMessages([
+                    "nuskhas.{$index}.assignment_id" => 'This nuskha does not belong to this prescription. Reload the page.',
+                ]);
+            }
+
+            $templateId = null;
+            $name = trim((string) ($row['nuskha_name'] ?? ''));
+
+            if ($row['source'] === 'template') {
+                $templateId = (int) $row['nuskha_template_id'];
+                $template = $templates->get($templateId);
+                $unchanged = $original
+                    && (int) $original->nuskha_template_id === $templateId;
+
+                if (! $template || (! $template->is_active && ! $unchanged)) {
+                    throw ValidationException::withMessages([
+                        "nuskhas.{$index}.nuskha_template_id" => 'Select an active nuskha template from your clinic.',
+                    ]);
+                }
+
+                // Preserve the name actually prescribed, even if the library is renamed.
+                $name = $unchanged ? $original->nuskha_name : $template->name;
+            }
+
+            if (trim($name) === '') {
+                throw ValidationException::withMessages([
+                    "nuskhas.{$index}.nuskha_name" => 'Enter a nuskha name.',
+                ]);
+            }
+
+            $resolved[] = [
+                ...Arr::only($row, ['quantity', 'unit', 'frequency', 'duration', 'timing', 'instructions']),
+                'assignment_id' => $id,
+                'nuskha_template_id' => $templateId,
+                'nuskha_name' => $name,
                 'sort_order' => $index + 1,
-            ]);
+            ];
+        }
+
+        return $resolved;
+    }
+
+    private function summaryName(array $rows): string
+    {
+        // Compatibility summary for existing patient history widgets.
+        // Complete names always remain in prescription_nuskhas.
+        return Str::limit(implode(' / ', array_column($rows, 'nuskha_name')), 160, '');
+    }
+
+    private function saveNuskhas(Prescription $prescription, array $rows): void
+    {
+        $existing = $prescription->nuskhas()->get()->keyBy('prescription_nuskha_id');
+        $kept = [];
+
+        foreach ($rows as $row) {
+            $id = $row['assignment_id'];
+            unset($row['assignment_id']);
+
+            if ($id !== null) {
+                $assignment = $existing->get($id);
+                $assignment->update($row);
+            } else {
+                $assignment = $prescription->nuskhas()->create($row);
+            }
+
+            $kept[] = $assignment->getKey();
+        }
+
+        foreach ($existing as $assignment) {
+            if (! in_array($assignment->getKey(), $kept, true)) {
+                $assignment->delete();
+            }
         }
     }
 

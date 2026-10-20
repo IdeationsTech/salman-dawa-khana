@@ -1102,162 +1102,122 @@ if (document.readyState === 'loading') {
 */
 
 function initializeDynamicPrescriptionForm() {
-    const form = document.querySelector('[data-prescription-form]');
+    const form = document.querySelector('[data-multiple-nuskhas]');
+    if (!form || form.dataset.dynamicPrescriptionInitialized === 'true') return;
 
-    if (!form || form.dataset.dynamicPrescriptionInitialized === 'true') {
-        return;
-    }
-
-    const patientSelect = form.querySelector('[data-rx-patient]');
-    const visitSelect = form.querySelector('[data-rx-visit]');
-    const templateSelect = form.querySelector('[data-rx-template]');
-    const templateSection = form.querySelector('[data-rx-template-section]');
-    const applyButton = form.querySelector('[data-rx-apply-template]');
-    const itemList = form.querySelector('[data-prescription-item-list]');
-    const instructions = form.querySelector('[data-rx-instructions]');
-    const message = form.querySelector('[data-rx-template-message]');
-    const dataElement = form.querySelector('[data-rx-template-data]');
-    const modeInputs = form.querySelectorAll('[name="prescription_type"]');
-
-    if (
-        !patientSelect || !visitSelect || !templateSelect ||
-        !templateSection || !applyButton || !itemList ||
-        !instructions || !message || !dataElement
-    ) {
-        return;
-    }
+    const list = form.querySelector('[data-rx-nuskha-list]');
+    const prototype = form.querySelector('[data-rx-nuskha-prototype]');
+    const add = form.querySelector('[data-rx-add-nuskha]');
+    const patient = form.querySelector('[data-rx-patient]');
+    const visit = form.querySelector('[data-rx-visit]');
+    const count = form.querySelector('[data-rx-nuskha-count]');
+    if (!list || !prototype || !add || !patient || !visit || !count) return;
 
     form.dataset.dynamicPrescriptionInitialized = 'true';
 
-    /*
-    | Patient → matching visits
-    */
+    const field = (row, key) => row.querySelector(`[data-rxn-field="${key}"]`);
 
-    function updatePatientVisits() {
-        const patientId = patientSelect.value;
+    const syncRow = (row) => {
+        const fromTemplate = field(row, 'source').value === 'template';
+        const template = field(row, 'nuskha_template_id');
+        const name = field(row, 'nuskha_name');
 
-        Array.from(visitSelect.options).forEach((option) => {
-            if (option.value === '') {
-                return;
-            }
+        row.querySelector('[data-rxn-template-section]').hidden = !fromTemplate;
+        template.disabled = !fromTemplate;
+        template.required = fromTemplate;
+        name.readOnly = fromTemplate;
+        name.required = !fromTemplate;
 
-            const belongsToPatient =
-                option.dataset.patientId === patientId;
-
-            option.hidden = !belongsToPatient;
-            option.disabled = !belongsToPatient;
-
-            if (!belongsToPatient && option.selected) {
-                visitSelect.value = '';
-            }
+        Array.from(template.options).forEach((option) => {
+            option.disabled = option.dataset.active === '0'
+                && option.value !== row.dataset.originalTemplate;
         });
-    }
 
-    patientSelect.addEventListener('change', updatePatientVisits);
-    updatePatientVisits();
-
-    /*
-    | Custom/template mode
-    */
-
-    function updatePrescriptionMode() {
-        const mode = form.querySelector(
-            '[name="prescription_type"]:checked'
-        )?.value;
-
-        const usingTemplate = mode === 'template';
-
-        templateSection.classList.toggle('d-none', !usingTemplate);
-        templateSelect.disabled = !usingTemplate;
-        templateSelect.required = usingTemplate;
-
-        modeInputs.forEach((input) => {
-            input.closest('.prescription-choice')
-                ?.classList.toggle('active', input.checked);
-        });
-    }
-
-    modeInputs.forEach((input) => {
-        input.addEventListener('change', updatePrescriptionMode);
-    });
-
-    updatePrescriptionMode();
-
-    /*
-    | Load saved template into editable item rows
-    */
-
-    let templates = [];
-
-    try {
-        templates = JSON.parse(dataElement.textContent);
-    } catch {
-        message.textContent = 'Template data could not be loaded.';
-        applyButton.disabled = true;
-        return;
-    }
-
-    applyButton.addEventListener('click', () => {
-        const template = templates.find(
-            (entry) => String(entry.id) === templateSelect.value
-        );
-
-        if (!template) {
-            message.textContent = 'Please select a saved template.';
-            return;
+        if (fromTemplate && !name.value && template.value) {
+            name.value = template.selectedOptions[0]?.dataset.templateName || '';
         }
+    };
 
-        if (!Array.isArray(template.items) || template.items.length === 0) {
-            message.textContent = 'This template has no items.';
-            return;
-        }
-
-        const firstRow = itemList.querySelector('.prescription-item-row');
-
-        if (!firstRow) {
-            message.textContent = 'An item row is required to load the template.';
-            return;
-        }
-
-        const hasCurrentContent =
-            instructions.value.trim() !== '' ||
-            Array.from(itemList.querySelectorAll('input')).some(
-                (input) => input.value.trim() !== ''
-            );
-
-        if (
-            hasCurrentContent &&
-            !window.confirm(
-                'Replace the current items and patient instructions with this template?'
-            )
-        ) {
-            return;
-        }
-
-        const fragment = document.createDocumentFragment();
-
-        template.items.forEach((item, index) => {
-            const row = firstRow.cloneNode(true);
-
-            row.querySelector('.item-number').textContent = index + 1;
-
-            row.querySelectorAll('[data-rx-field]').forEach((input) => {
-                const field = input.dataset.rxField;
-
-                input.name = `items[${index}][${field}]`;
-                input.value = item[field] ?? '';
-                input.classList.remove('is-invalid');
+    const refresh = () => {
+        const rows = list.querySelectorAll('[data-rx-nuskha-row]');
+        rows.forEach((row, index) => {
+            row.querySelector('[data-rx-nuskha-number]').textContent = index + 1;
+            row.querySelector('[data-rx-remove-nuskha]').disabled = rows.length === 1;
+            row.querySelectorAll('[data-rxn-field]').forEach((input) => {
+                const key = input.dataset.rxnField;
+                input.name = `nuskhas[${index}][${key}]`;
+                input.id = `rx-nuskha-${index}-${key}`;
+                const label = input.closest('.form-field')?.querySelector('label');
+                if (label) label.htmlFor = input.id;
             });
-
-            fragment.appendChild(row);
+            syncRow(row);
         });
+        add.disabled = rows.length >= 30;
+        count.textContent = `${rows.length} ${rows.length === 1 ? 'nuskha' : 'nuskhay'} assigned. Maximum 30 per prescription.`;
+    };
 
-        itemList.replaceChildren(fragment);
-        instructions.value = template.instructions ?? '';
+    const filterVisits = () => {
+        let resetVisit = false;
+        Array.from(visit.options).forEach((option) => {
+            if (!option.value) return;
+            const belongs = option.dataset.patientId === patient.value;
+            option.hidden = !belongs;
+            option.disabled = !belongs;
+            if (!belongs && option.selected) resetVisit = true;
+        });
+        if (resetVisit) {
+            visit.value = '';
+            visit.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    };
 
-        message.textContent =
-            'Template loaded. Review or edit the items before saving.';
+    patient.addEventListener('change', filterVisits);
+
+    add.addEventListener('click', () => {
+        if (list.querySelectorAll('[data-rx-nuskha-row]').length >= 30) return;
+        const fragment = prototype.content.cloneNode(true);
+        const row = fragment.querySelector('[data-rx-nuskha-row]');
+        list.appendChild(fragment);
+        refresh();
+        field(row, 'source').focus();
     });
+
+    list.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-rx-remove-nuskha]');
+        if (!button || list.querySelectorAll('[data-rx-nuskha-row]').length <= 1) return;
+        button.closest('[data-rx-nuskha-row]').remove();
+        refresh();
+    });
+
+    list.addEventListener('change', (event) => {
+        const input = event.target;
+        const row = input.closest('[data-rx-nuskha-row]');
+        if (!row) return;
+        const name = field(row, 'nuskha_name');
+        const template = field(row, 'nuskha_template_id');
+        if (input.dataset.rxnField === 'source') {
+            if (input.value === 'custom') {
+                name.value = row.dataset.customName || '';
+            } else {
+                row.dataset.customName = name.value;
+                name.value = template.selectedOptions[0]?.dataset.templateName || '';
+            }
+        } else if (input.dataset.rxnField === 'nuskha_template_id') {
+            name.value = template.selectedOptions[0]?.dataset.templateName || '';
+        }
+        syncRow(row);
+    });
+
+    form.addEventListener('submit', (event) => {
+        refresh();
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+        }
+    });
+
+    refresh();
+    filterVisits();
 }
 
 if (document.readyState === 'loading') {

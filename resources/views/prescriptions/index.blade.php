@@ -179,7 +179,7 @@
                             <th>Patient</th>
                             <th>Date &amp; time</th>
                             <th>Prepared by</th>
-                            <th>Items</th>
+                            <th>Nuskhas</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
                         </tr>
@@ -236,8 +236,12 @@
                                 </td>
 
                                 <td>
-                                    {{ $prescription->items_count }}
-                                    {{ $prescription->items_count === 1 ? 'item' : 'items' }}
+                                    @php
+                                        $nuskhaCount = $prescription->nuskhas_count
+                                            ?: ($prescription->nuskha_name ? 1 : 0);
+                                    @endphp
+                                    {{ $nuskhaCount }}
+                                    {{ $nuskhaCount === 1 ? 'nuskha' : 'nuskhas' }}
                                 </td>
 
                                 <td>

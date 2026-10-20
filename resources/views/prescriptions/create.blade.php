@@ -6,19 +6,30 @@
 @php
     $editing = isset($prescription) && $prescription->exists;
 
-    $defaultItems = $editing
-        ? $prescription->items->map(
-            fn ($item) => $item->only(\App\Models\NuskhaItem::ITEM_FIELDS)
-        )->all()
-        : [[]];
+    $legacyPrescription = $editing && $prescription->nuskhas->isEmpty();
 
-    $items = old('items', $defaultItems);
-    $items = is_array($items)
-        ? array_values(array_filter($items, 'is_array'))
+    $defaultNuskhas = $editing && !$legacyPrescription
+        ? $prescription->nuskhas->map(fn ($nuskha) => [
+            'assignment_id' => $nuskha->prescription_nuskha_id,
+            'source' => $nuskha->nuskha_template_id ? 'template' : 'custom',
+            ...$nuskha->only([
+                'nuskha_template_id', 'nuskha_name', 'quantity', 'unit',
+                'frequency', 'duration', 'timing', 'instructions',
+            ]),
+        ])->all()
+        : [[
+            'source' => $legacyPrescription ? 'custom' : 'template',
+            'nuskha_name' => $legacyPrescription ? $prescription->nuskha_name : '',
+            'nuskha_template_id' => $editing ? null : request('template_id'),
+        ]];
+
+    $nuskhas = old('nuskhas', $defaultNuskhas);
+    $nuskhas = is_array($nuskhas)
+        ? array_values(array_filter($nuskhas, 'is_array'))
         : [];
 
-    if (!$items) {
-        $items = [[]];
+    if (!$nuskhas) {
+        $nuskhas = [['source' => 'template']];
     }
 
     $selectedVisit = old(
@@ -46,13 +57,6 @@
 
     $selectedDoctor = old('doctor_user_id', $defaultDoctor);
 
-    $selectedTemplate = old('template_id', request('template_id'));
-
-    $mode = old(
-        'prescription_type',
-        !$editing && request()->filled('template_id') ? 'template' : 'custom'
-    );
-
     $dateValue = old(
         'prescribed_at',
         $editing
@@ -71,7 +75,7 @@
                 Back to prescriptions
             </a>
             <h1>{{ $editing ? 'Edit prescription' : 'Create prescription' }}</h1>
-            <p>Prepare a nuskha for a patient.</p>
+            <p>Assign one or more nuskhay with their total quantities and patient instructions.</p>
         </div>
 
         @if ($errors->any())
@@ -98,6 +102,7 @@
                 : route('prescriptions.store') }}"
             method="POST"
             data-prescription-form
+            data-multiple-nuskhas
         >
             @csrf
             @if ($editing)
@@ -234,134 +239,42 @@
                 <div class="template-form-heading">
                     <div class="form-section-number">02</div>
                     <div>
-                        <h2>Choose a nuskha</h2>
-                        <p>Load a template or enter ingredients manually.</p>
+                        <h2>Prescribed nuskhay</h2>
+                        <p>Select a template or enter a custom name for each nuskha.</p>
                     </div>
                 </div>
 
-                <div class="prescription-choice-grid">
-                    @foreach ([
-                        'template' => ['Use saved template', 'Select from your nuskha library'],
-                        'custom' => ['Create custom nuskha', 'Add items manually'],
-                    ] as $value => [$heading, $description])
-                        <label class="prescription-choice {{ $mode === $value ? 'active' : '' }}">
-                            <input
-                                type="radio"
-                                name="prescription_type"
-                                value="{{ $value }}"
-                                @checked($mode === $value)
-                            >
-                            <span class="choice-content">
-                                <strong>{{ $heading }}</strong>
-                                <small>{{ $description }}</small>
-                            </span>
-                        </label>
+                @if ($legacyPrescription)
+                    <div class="alert alert-info" role="status">
+                        This older prescription has no recorded finished-nuskha quantity.
+                        Confirm its name, total quantity and unit before saving.
+                        Historical ingredient quantities are not used as the nuskha's weight.
+                    </div>
+                @endif
+
+                <div class="rx-nuskha-list" data-rx-nuskha-list>
+                    @foreach ($nuskhas as $index => $row)
+                        @include('prescriptions._nuskha-fields', compact('row', 'index'))
                     @endforeach
                 </div>
 
-                <div
-                    class="form-field template-selection-field {{ $mode === 'template' ? '' : 'd-none' }}"
-                    data-rx-template-section
-                >
-                    <label for="template" class="form-label">Saved nuskha template</label>
-                    <select
-                        id="template"
-                        name="template_id"
-                        class="form-select"
-                        data-rx-template
-                        @required($mode === 'template')
-                        @disabled($mode !== 'template')
-                    >
-                        <option value="">Select a saved template</option>
-                        @foreach ($templates as $template)
-                            <option
-                                value="{{ $template->nuskha_template_id }}"
-                                @selected((string) $selectedTemplate === (string) $template->nuskha_template_id)
-                            >
-                                {{ $template->name }} — {{ $template->items->count() }} items
-                            </option>
-                        @endforeach
-                    </select>
+                <template data-rx-nuskha-prototype>
+                    @include('prescriptions._nuskha-fields', [
+                        'row' => ['source' => 'template'],
+                        'index' => '__INDEX__',
+                    ])
+                </template>
 
-                    <div class="d-flex flex-wrap gap-2 mt-2">
-                        <button type="button" class="btn btn-outline-primary" data-rx-apply-template>
-                            Load template items
-                        </button>
-                        <a href="{{ route('prescriptions.templates.index') }}" class="btn btn-light">
-                            Manage templates
-                        </a>
-                    </div>
-
-                    <small class="form-help">
-                        Loading replaces current items and instructions.
-                    </small>
-                    <p class="small mt-2 mb-0" data-rx-template-message role="status"></p>
-                </div>
-
-                <div class="form-field mt-3">
-                    <label for="nuskha_name" class="form-label">
-                        Custom nuskha name — patient copy
-                    </label>
-                    <input
-                        type="text"
-                        id="nuskha_name"
-                        name="nuskha_name"
-                        class="form-control"
-                        value="{{ old('nuskha_name', $prescription->nuskha_name ?? '') }}"
-                        maxlength="160"
-                    >
-                    <small class="form-help">
-                        Saved-template mode uses the selected template's name.
-                        Patient copies show the nuskha name, not ingredients.
-                    </small>
-                </div>
+                <button type="button" class="btn btn-outline-primary add-item-button" data-rx-add-nuskha>
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                    Add another nuskha
+                </button>
+                <p class="form-help mt-2" data-rx-nuskha-count role="status"></p>
             </section>
 
             <section class="template-form-panel">
                 <div class="template-form-heading">
                     <div class="form-section-number">03</div>
-                    <div>
-                        <h2>Prescription items</h2>
-                        <p>Review ingredient quantities and dosage.</p>
-                    </div>
-                </div>
-
-                <div class="prescription-item-list" data-prescription-item-list>
-                    @foreach ($items as $index => $item)
-                        <div class="prescription-item-row">
-                            <div class="item-number">{{ $index + 1 }}</div>
-
-                            @include('prescriptions._item-fields', [
-                                'item' => $item,
-                                'index' => $index,
-                                'quantityRequired' => false,
-                            ])
-
-                            <button
-                                type="button"
-                                class="remove-item-button"
-                                data-remove-prescription-item
-                                aria-label="Remove item"
-                            >
-                                <i class="bi bi-x-lg" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                    @endforeach
-                </div>
-
-                <button
-                    type="button"
-                    class="btn btn-outline-primary add-item-button"
-                    data-add-prescription-item
-                >
-                    <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                    Add custom item
-                </button>
-            </section>
-
-            <section class="template-form-panel">
-                <div class="template-form-heading">
-                    <div class="form-section-number">04</div>
                     <div>
                         <h2>Instructions and notes</h2>
                         <p>Add patient-specific instructions.</p>
@@ -403,9 +316,7 @@
                 </button>
             </div>
 
-            <script type="application/json" data-rx-template-data>
-                @json($templateData)
-            </script>
+
         </form>
     </main>
 </div>

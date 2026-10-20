@@ -1301,3 +1301,69 @@
     height: 16px;
     accent-color: var(--brand-teal);
 }
+
+/* Finished nuskhas assigned to a patient, independent of template ingredients. */
+.rx-nuskha-list {
+    display: grid;
+    gap: 16px;
+}
+
+.rx-nuskha-card {
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.rx-nuskha-card-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.rx-nuskha-card-heading h3 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.rx-nuskha-card [hidden] {
+    display: none !important;
+}
+
+.rx-patient-nuskha {
+    margin: 0 0 14px;
+    padding: 0 0 12px;
+    border-bottom: 1px solid #dce5ed;
+    break-inside: avoid;
+}
+
+.rx-patient-nuskha:last-child {
+    border-bottom: 0;
+}
+
+.rx-patient-quantity,
+.rx-patient-directions {
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.rx-patient-directions {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 16px;
+    row-gap: 2px;
+}
+
+@media (max-width: 575px) {
+    .rx-nuskha-card {
+        padding: 14px;
+    }
+}

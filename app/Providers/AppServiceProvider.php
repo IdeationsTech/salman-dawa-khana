@@ -2,6 +2,23 @@
 
 namespace App\Providers;
 
+use App\Models\Bill;
+use App\Models\BillItem;
+use App\Models\Clinic;
+use App\Models\Expense;
+use App\Models\NuskhaItem;
+use App\Models\NuskhaOrder;
+use App\Models\NuskhaOrderItem;
+use App\Models\NuskhaOrderPayment;
+use App\Models\NuskhaTemplate;
+use App\Models\Patient;
+use App\Models\Payment;
+use App\Models\Prescription;
+use App\Models\PrescriptionItem;
+use App\Models\PrescriptionNuskha;
+use App\Models\Setting;
+use App\Models\User;
+use App\Models\Visit;
 use App\Services\ClinicAuditService;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Pagination\Paginator;
@@ -22,41 +39,39 @@ class AppServiceProvider extends ServiceProvider
             $path = route('password.reset', ['token' => $token], false);
 
             return rtrim(config('app.url'), '/')
-                . $path
-                . '?'
-                . http_build_query([
+                .$path
+                .'?'
+                .http_build_query([
                     'email' => $user->getEmailForPasswordReset(),
                 ]);
         });
 
         $models = [
-            \App\Models\Clinic::class,
-            \App\Models\User::class,
-            \App\Models\Patient::class,
-            \App\Models\Visit::class,
-            \App\Models\Prescription::class,
-            \App\Models\PrescriptionItem::class,
-            \App\Models\NuskhaTemplate::class,
-            \App\Models\NuskhaItem::class,
-            \App\Models\Bill::class,
-            \App\Models\BillItem::class,
-            \App\Models\Payment::class,
-            \App\Models\Expense::class,
-            \App\Models\Setting::class,
-            \App\Models\NuskhaOrder::class,
-            \App\Models\NuskhaOrderItem::class,
-            \App\Models\NuskhaOrderPayment::class,
+            Clinic::class,
+            User::class,
+            Patient::class,
+            Visit::class,
+            Prescription::class,
+            PrescriptionItem::class,
+            PrescriptionNuskha::class,
+            NuskhaTemplate::class,
+            NuskhaItem::class,
+            Bill::class,
+            BillItem::class,
+            Payment::class,
+            Expense::class,
+            Setting::class,
+            NuskhaOrder::class,
+            NuskhaOrderItem::class,
+            NuskhaOrderPayment::class,
         ];
 
         foreach ($models as $modelClass) {
-            $modelClass::created(fn ($model) =>
-                app(ClinicAuditService::class)->capture($model, 'created'));
+            $modelClass::created(fn ($model) => app(ClinicAuditService::class)->capture($model, 'created'));
 
-            $modelClass::updated(fn ($model) =>
-                app(ClinicAuditService::class)->capture($model, 'updated'));
+            $modelClass::updated(fn ($model) => app(ClinicAuditService::class)->capture($model, 'updated'));
 
-            $modelClass::deleted(fn ($model) =>
-                app(ClinicAuditService::class)->capture($model, 'deleted'));
+            $modelClass::deleted(fn ($model) => app(ClinicAuditService::class)->capture($model, 'deleted'));
         }
     }
 }
