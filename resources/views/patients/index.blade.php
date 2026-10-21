@@ -171,7 +171,7 @@
                                     <small>{{ $patient->gender ?: '—' }}</small>
                                 </td>
 
-                                <td>{{ $patient->phone ?: '—' }}</td>
+                                <td><bdi class="phone-number" dir="ltr">{{ $patient->phone ?: '—' }}</bdi></td>
 
                                 <td>
                                     {{ $patient->last_visit_at?->format('d M Y') ?? '—' }}
