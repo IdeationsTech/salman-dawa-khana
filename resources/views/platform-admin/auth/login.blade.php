@@ -13,7 +13,7 @@
 
     <div class="mb-3">
         <label for="admin-email" class="form-label">
-            Email address *
+            {{ __('Email address') }} *
         </label>
 
         <input
@@ -31,7 +31,7 @@
 
     <div class="mb-3">
         <label for="admin-password" class="form-label">
-            Password *
+            {{ __('Password') }} *
         </label>
 
         <input
@@ -52,19 +52,19 @@
                 value="1"
                 @checked(old('remember'))
             >
-            <span>Remember me</span>
+            <span>{{ __('Remember me') }}</span>
         </label>
 
         <a
             href="{{ route('platform-admin.password.request') }}"
             class="auth-link"
         >
-            Forgot password?
+            {{ __('Forgot password?') }}
         </a>
     </div>
 
     <button type="submit" class="btn btn-primary w-100">
-        Sign in
+        {{ __('Sign in') }}
     </button>
 </form>
 @endsection

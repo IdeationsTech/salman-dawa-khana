@@ -16,7 +16,7 @@
             'nuskha_template_id' => '',
             'nuskha_name' => '',
             'quantity' => '1',
-            'unit' => 'pack',
+            'unit' => __('pack'),
             'unit_price' => '',
             'instructions' => '',
         ]];
@@ -25,18 +25,18 @@
     $currency = $editing ? $order->currency : $clinic->currency;
 
     $methodLabels = [
-        'cash' => 'Cash',
-        'bank' => 'Bank transfer',
-        'card' => 'Card',
+        'cash' => __('Cash'),
+        'bank' => __('Bank transfer'),
+        'card' => __('Card'),
     ];
 @endphp
 
 @if ($errors->any())
     <div class="alert alert-danger" role="alert">
-        <strong>Please correct the following:</strong>
+        <strong>{{ __('Please correct the following:') }}</strong>
         <ul class="mb-0 mt-2">
             @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
+                <li>{{ __($error) }}</li>
             @endforeach
         </ul>
     </div>
@@ -59,14 +59,14 @@
         <div class="payment-form-heading">
             <div class="form-section-number">01</div>
             <div>
-                <h2>Customer details</h2>
-                <p>Order currency: {{ $currency }}</p>
+                <h2>{{ __('Customer details') }}</h2>
+                <p>{{ __('Order currency:') }} {{ $currency }}</p>
             </div>
         </div>
 
         <div class="payment-form-grid">
             <label class="form-field">
-                <span class="form-label">Customer name *</span>
+                <span class="form-label">{{ __('Customer name') }} *</span>
                 <input
                     type="text"
                     name="customer_name"
@@ -78,7 +78,7 @@
             </label>
 
             <div class="form-field">
-                <label for="customer_phone" class="form-label">Customer phone *</label>
+                <label for="customer_phone" class="form-label">{{ __('Customer phone') }} *</label>
                 <x-phone-input
                     name="customer_phone"
                     id="customer_phone"
@@ -88,7 +88,7 @@
             </div>
 
             <label class="form-field">
-                <span class="form-label">Order date/time *</span>
+                <span class="form-label">{{ __('Order date/time') }} *</span>
                 <input
                     type="datetime-local"
                     name="ordered_at"
@@ -101,31 +101,31 @@
             </label>
 
             <label class="form-field">
-                <span class="form-label">Order source *</span>
+                <span class="form-label">{{ __('Order source') }} *</span>
                 <select name="order_source" class="form-select" required>
                     <option value="walk_in" @selected(old('order_source', $order->order_source ?? 'walk_in') === 'walk_in')>
-                        Walk-in
+                        {{ __('Walk-in') }}
                     </option>
                     <option value="phone" @selected(old('order_source', $order->order_source ?? '') === 'phone')>
-                        Phone order
+                        {{ __('Phone order') }}
                     </option>
                 </select>
             </label>
 
             <label class="form-field">
-                <span class="form-label">Fulfillment *</span>
+                <span class="form-label">{{ __('Fulfillment') }} *</span>
                 <select name="fulfillment_method" class="form-select" data-oe-fulfillment required>
                     <option value="pickup" @selected(old('fulfillment_method', $order->fulfillment_method ?? 'pickup') === 'pickup')>
-                        Pickup
+                        {{ __('Pickup') }}
                     </option>
                     <option value="delivery" @selected(old('fulfillment_method', $order->fulfillment_method ?? '') === 'delivery')>
-                        Delivery
+                        {{ __('Delivery') }}
                     </option>
                 </select>
             </label>
 
             <label class="form-field payment-field-wide" data-oe-address>
-                <span class="form-label">Delivery address *</span>
+                <span class="form-label">{{ __('Delivery address') }} *</span>
                 <textarea
                     name="delivery_address"
                     class="form-control"
@@ -140,8 +140,8 @@
         <div class="payment-form-heading">
             <div class="form-section-number">02</div>
             <div>
-                <h2>Ordered nuskhas</h2>
-                <p>Add, remove or replace nuskhas.</p>
+                <h2>{{ __('Ordered nuskhas') }}</h2>
+                <p>{{ __('Add, remove or replace nuskhas.') }}</p>
             </div>
         </div>
 
@@ -156,22 +156,22 @@
                     >
 
                     <div class="order-item-heading">
-                        <strong>Nuskha <span data-oe-number>{{ $index + 1 }}</span></strong>
+                        <strong>{{ __('Nuskha') }} <span data-oe-number>{{ $index + 1 }}</span></strong>
                         <button type="button" class="btn btn-sm btn-outline-danger" data-oe-remove>
                             <i class="bi bi-trash" aria-hidden="true"></i>
-                            Remove
+                            {{ __('Remove') }}
                         </button>
                     </div>
 
                     <div class="payment-form-grid">
                         <label class="form-field">
-                            <span class="form-label">Saved template</span>
+                            <span class="form-label">{{ __('Saved template') }}</span>
                             <select
                                 name="items[{{ $index }}][nuskha_template_id]"
                                 class="form-select"
                                 data-oe-field="nuskha_template_id"
                             >
-                                <option value="">Manual nuskha</option>
+                                <option value="">{{ __('Manual nuskha') }}</option>
                                 @foreach ($templates as $template)
                                     <option
                                         value="{{ $template->nuskha_template_id }}"
@@ -185,7 +185,7 @@
                         </label>
 
                         <label class="form-field">
-                            <span class="form-label">Nuskha name</span>
+                            <span class="form-label">{{ __('Nuskha name') }}</span>
                             <input
                                 type="text"
                                 name="items[{{ $index }}][nuskha_name]"
@@ -197,7 +197,7 @@
                         </label>
 
                         <label class="form-field">
-                            <span class="form-label">Quantity *</span>
+                            <span class="form-label">{{ __('Quantity') }} *</span>
                             <input
                                 type="number"
                                 name="items[{{ $index }}][quantity]"
@@ -212,7 +212,7 @@
                         </label>
 
                         <label class="form-field">
-                            <span class="form-label">Unit *</span>
+                            <span class="form-label">{{ __('Unit') }} *</span>
                             <select
                                 name="items[{{ $index }}][unit]"
                                 class="form-select"
@@ -228,7 +228,7 @@
                         </label>
 
                         <label class="form-field">
-                            <span class="form-label">Unit price ({{ $currency }}) *</span>
+                            <span class="form-label">{{ __('Unit price (') }}{{ $currency }}) *</span>
                             <input
                                 type="number"
                                 name="items[{{ $index }}][unit_price]"
@@ -243,7 +243,7 @@
                         </label>
 
                         <label class="form-field">
-                            <span class="form-label">Packing/instructions</span>
+                            <span class="form-label">{{ __('Packing/instructions') }}</span>
                             <input
                                 type="text"
                                 name="items[{{ $index }}][instructions]"
@@ -260,7 +260,7 @@
 
         <button type="button" class="btn btn-outline-secondary" data-oe-add>
             <i class="bi bi-plus-circle" aria-hidden="true"></i>
-            Add another nuskha
+            {{ __('Add another nuskha') }}
         </button>
     </section>
 
@@ -268,7 +268,7 @@
         <div class="payment-form-heading">
             <div class="form-section-number">03</div>
             <div>
-                <h2>Amount and payment</h2>
+                <h2>{{ __('Amount and payment') }}</h2>
                 <p>
                     {{ $editing
                         ? 'Existing payments and refunds remain recorded.'
@@ -279,7 +279,7 @@
 
         <div class="payment-form-grid">
             <label class="form-field">
-                <span class="form-label">Discount *</span>
+                <span class="form-label">{{ __('Discount') }} *</span>
                 <input
                     type="number"
                     name="discount"
@@ -293,7 +293,7 @@
             </label>
 
             <label class="form-field" data-oe-fee>
-                <span class="form-label">Delivery fee *</span>
+                <span class="form-label">{{ __('Delivery fee') }} *</span>
                 <input
                     type="number"
                     name="delivery_fee"
@@ -308,7 +308,7 @@
 
             @if (!$editing)
                 <label class="form-field">
-                    <span class="form-label">Amount received *</span>
+                    <span class="form-label">{{ __('Amount received') }} *</span>
                     <input
                         type="number"
                         name="payment_amount"
@@ -322,19 +322,19 @@
                 </label>
 
                 <label class="form-field">
-                    <span class="form-label">Payment method</span>
+                    <span class="form-label">{{ __('Payment method') }}</span>
                     <select name="payment_method" class="form-select">
-                        <option value="">Select method</option>
+                        <option value="">{{ __('Select method') }}</option>
                         @foreach ($enabledMethods as $method)
                             <option value="{{ $method }}" @selected(old('payment_method') === $method)>
-                                {{ $methodLabels[$method] }}
+                                {{ __($methodLabels[$method]) }}
                             </option>
                         @endforeach
                     </select>
                 </label>
 
                 <label class="form-field payment-field-wide">
-                    <span class="form-label">Bank/card reference</span>
+                    <span class="form-label">{{ __('Bank/card reference') }}</span>
                     <input
                         type="text"
                         name="reference_no"
@@ -346,7 +346,7 @@
             @endif
 
             <label class="form-field payment-field-wide">
-                <span class="form-label">Internal notes</span>
+                <span class="form-label">{{ __('Internal notes') }}</span>
                 <textarea
                     name="notes"
                     class="form-control"
@@ -357,9 +357,9 @@
         </div>
 
         <div class="balance-summary-grid mt-4">
-            <div><span>Subtotal</span><strong data-oe-subtotal>—</strong></div>
-            <div><span>Order total</span><strong data-oe-total>—</strong></div>
-            <div><span>Remaining balance</span><strong data-oe-due>—</strong></div>
+            <div><span>{{ __('Subtotal') }}</span><strong data-oe-subtotal>—</strong></div>
+            <div><span>{{ __('Order total') }}</span><strong data-oe-total>—</strong></div>
+            <div><span>{{ __('Remaining balance') }}</span><strong data-oe-due>—</strong></div>
         </div>
 
         <small class="text-danger d-block mt-2" data-oe-error></small>
@@ -367,7 +367,7 @@
 
     <div class="payment-form-actions">
         <a href="{{ $editing ? route('orders.show', $order) : route('orders.index') }}" class="btn btn-light">
-            Cancel
+            {{ __('Cancel') }}
         </a>
         <button type="submit" class="btn btn-primary">
             {{ $editing ? 'Update order' : 'Save order' }}

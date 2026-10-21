@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ur' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,9 +8,12 @@
     <title>@yield('title', 'Platform Admin') | Platform Console</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('layouts._language-script')
 </head>
 
 <body class="pa-app">
+<div class="public-language-switcher"><x-language-switcher /></div>
+
     @php
         $platformAdmin = auth('platform_admin')->user();
 
@@ -19,13 +22,13 @@
                 'route' => 'platform-admin.dashboard',
                 'match' => 'platform-admin.dashboard',
                 'icon' => 'pa-icon-dashboard',
-                'label' => 'Dashboard',
+                'label' => __('Dashboard'),
             ],
             [
                 'route' => 'platform-admin.clinics.index',
                 'match' => 'platform-admin.clinics.*',
                 'icon' => 'pa-icon-clinic',
-                'label' => 'Clinics',
+                'label' => __('Clinics'),
             ],
             [
                 'route' => 'platform-admin.licenses.index',
@@ -37,25 +40,25 @@
                 'route' => 'platform-admin.payments.index',
                 'match' => 'platform-admin.payments.*',
                 'icon' => 'pa-icon-payments',
-                'label' => 'Payments',
+                'label' => __('Payments'),
             ],
             [
                 'route' => 'platform-admin.plans.index',
                 'match' => 'platform-admin.plans.*',
                 'icon' => 'pa-icon-plans',
-                'label' => 'Subscription plans',
+                'label' => __('Subscription plans'),
             ],
             [
                 'route' => 'platform-admin.audit.index',
                 'match' => 'platform-admin.audit.*',
                 'icon' => 'pa-icon-clock',
-                'label' => 'Audit log',
+                'label' => __('Audit log'),
             ],
             [
                 'route' => 'platform-admin.account.index',
                 'match' => 'platform-admin.account.*',
                 'icon' => 'pa-icon-shield',
-                'label' => 'Admin account',
+                'label' => __('Admin account'),
             ],
         ];
     @endphp
@@ -118,18 +121,18 @@
 
                 <span>
                     <span class="pa-brand-name">
-                        Platform Console
+                        {{ __('Platform Console') }}
                     </span>
 
                     <span class="pa-brand-caption">
-                        Clinic management platform
+                        {{ __('Clinic management platform') }}
                     </span>
                 </span>
             </a>
 
-            <p class="pa-nav-label">Overview</p>
+            <p class="pa-nav-label">{{ __('Overview') }}</p>
 
-            <nav class="pa-nav" aria-label="Platform navigation">
+            <nav class="pa-nav" aria-label="{{ __('Platform navigation') }}">
                 @foreach($navigation as $item)
                     <a
                         href="{{ route($item['route']) }}"
@@ -142,13 +145,13 @@
                             <use href="#{{ $item['icon'] }}"></use>
                         </svg>
 
-                        <span>{{ $item['label'] }}</span>
+                        <span>{{ __($item['label']) }}</span>
                     </a>
                 @endforeach
             </nav>
 
             <div class="pa-sidebar-footer">
-                Platform administration
+                {{ __('Platform administration') }}
             </div>
         </aside>
 
@@ -160,7 +163,7 @@
                     </p>
 
                     <p class="pa-topbar-caption">
-                        Clinics, subscriptions and licenses
+                        {{ __('Clinics, subscriptions and licenses') }}
                     </p>
                 </div>
 
@@ -171,7 +174,7 @@
                         </span>
 
                         <span class="pa-account-role">
-                            Platform administrator
+                            {{ __('Platform administrator') }}
                         </span>
                     </div>
 
@@ -186,7 +189,7 @@
                                 <use href="#pa-icon-logout"></use>
                             </svg>
 
-                            <span>Sign out</span>
+                            <span>{{ __('Sign out') }}</span>
                         </button>
                     </form>
                 </div>

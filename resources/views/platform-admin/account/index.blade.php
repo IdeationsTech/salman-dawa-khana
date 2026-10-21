@@ -7,24 +7,24 @@
     {{-- Admin Account — Page Heading --}}
     <div class="pa-page-heading">
         <div>
-            <h1>Admin account</h1>
-            <p>Manage your profile and account password.</p>
+            <h1>{{ __('Admin account') }}</h1>
+            <p>{{ __('Manage your profile and account password.') }}</p>
         </div>
     </div>
 
     @if(session('success'))
         <div class="pa-notice pa-notice-success" role="status">
-            {{ session('success') }}
+            {{ __(session('success')) }}
         </div>
     @endif
 
     @if($errors->any())
         <div class="pa-notice pa-notice-error" role="alert">
-            <strong>Please correct the following:</strong>
+            <strong>{{ __('Please correct the following:') }}</strong>
 
             <ul>
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    <li>{{ __($error) }}</li>
                 @endforeach
             </ul>
         </div>
@@ -34,8 +34,8 @@
         {{-- Admin Account — Profile Settings --}}
         <section class="pa-panel">
             <div class="pa-panel-header">
-                <h2>Profile details</h2>
-                <p>Update the name and email used for your admin account.</p>
+                <h2>{{ __('Profile details') }}</h2>
+                <p>{{ __('Update the name and email used for your admin account.') }}</p>
             </div>
 
             <div class="pa-panel-body">
@@ -48,7 +48,7 @@
                     @method('PUT')
 
                     <div class="pa-field">
-                        <label for="admin-name">Full name *</label>
+                        <label for="admin-name">{{ __('Full name') }} *</label>
 
                         <input
                             type="text"
@@ -63,7 +63,7 @@
                     </div>
 
                     <div class="pa-field">
-                        <label for="admin-email">Email address *</label>
+                        <label for="admin-email">{{ __('Email address') }} *</label>
 
                         <input
                             type="email"
@@ -79,7 +79,7 @@
 
                     <div class="pa-field">
                         <label for="profile-current-password">
-                            Current password *
+                            {{ __('Current password') }} *
                         </label>
 
                         <input
@@ -97,7 +97,7 @@
                             type="submit"
                             class="pa-button pa-button-primary"
                         >
-                            Save profile
+                            {{ __('Save profile') }}
                         </button>
                     </div>
                 </form>
@@ -107,8 +107,8 @@
         {{-- Admin Account — Password Settings --}}
         <section class="pa-panel">
             <div class="pa-panel-header">
-                <h2>Change password</h2>
-                <p>Your new password must contain at least 12 characters.</p>
+                <h2>{{ __('Change password') }}</h2>
+                <p>{{ __('Your new password must contain at least 12 characters.') }}</p>
             </div>
 
             <div class="pa-panel-body">
@@ -122,7 +122,7 @@
 
                     <div class="pa-field">
                         <label for="current-password">
-                            Current password *
+                            {{ __('Current password') }} *
                         </label>
 
                         <input
@@ -136,7 +136,7 @@
                     </div>
 
                     <div class="pa-field">
-                        <label for="new-password">New password *</label>
+                        <label for="new-password">{{ __('New password') }} *</label>
 
                         <input
                             type="password"
@@ -151,7 +151,7 @@
 
                     <div class="pa-field">
                         <label for="password-confirmation">
-                            Confirm new password *
+                            {{ __('Confirm new password') }} *
                         </label>
 
                         <input
@@ -170,7 +170,7 @@
                             type="submit"
                             class="pa-button pa-button-primary"
                         >
-                            Change password
+                            {{ __('Change password') }}
                         </button>
                     </div>
                 </form>

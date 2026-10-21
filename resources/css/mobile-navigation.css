@@ -1,0 +1,114 @@
+/* Shared clinic navigation: desktop sidebar and mobile overlay drawer. */
+.clinic-mobile-bar,
+.clinic-sidebar-close {
+    display: none;
+}
+
+.app-sidebar.offcanvas-lg {
+    --bs-offcanvas-width: min(290px, 86vw);
+    --bs-offcanvas-bg: var(--brand-navy);
+    --bs-offcanvas-color: #fff;
+    background-color: var(--brand-navy) !important;
+}
+
+.clinic-sidebar-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.clinic-sidebar-heading .sidebar-brand {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.clinic-sidebar-heading .sidebar-logo {
+    flex-shrink: 0;
+}
+
+.clinic-sidebar-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+@media screen and (max-width: 991.98px) {
+    .app-shell {
+        display: block;
+    }
+
+    .clinic-mobile-bar {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 60px;
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--brand-navy);
+        font-weight: 600;
+    }
+
+    .clinic-mobile-bar > span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .clinic-menu-toggle {
+        display: grid;
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: transparent;
+        color: var(--brand-navy);
+        font-size: 27px;
+    }
+
+    .clinic-sidebar-close {
+        display: block;
+        flex-shrink: 0;
+        margin: 6px 0 0;
+        padding: 10px;
+    }
+
+    .app-sidebar.offcanvas-lg {
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        padding: 24px 14px max(18px, env(safe-area-inset-bottom));
+    }
+
+    .clinic-sidebar-body {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .app-sidebar .sidebar-nav {
+        flex-direction: column;
+        overflow-x: visible;
+    }
+
+    .app-sidebar .sidebar-footer {
+        display: flex;
+        margin-top: auto;
+        padding-top: 24px;
+    }
+
+    .app-sidebar .sidebar-divider {
+        display: block;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-sidebar.offcanvas-lg {
+        transition: none;
+    }
+}

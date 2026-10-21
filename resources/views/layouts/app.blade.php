@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ur' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @stack('styles')
+    @include('layouts._language-script')
 </head>
 
 @php
@@ -29,6 +30,7 @@
     data-can-access-expenses="{{ $canAccessExpenses ? '1' : '0' }}"
     data-users-url="{{ $canManageUsers ? route('users.index') : '' }}"
 >
+    @guest('web')<div class="public-language-switcher"><x-language-switcher /></div>@endguest
     @yield('content')
 
     {{-- Prescriptions — Shared Sidebar Submenu --}}
@@ -39,26 +41,26 @@
         >
             <div
                 class="sidebar-subnav"
-                aria-label="Prescription navigation"
+                aria-label="{{ __('Prescription navigation') }}"
             >
                 <a
                     href="{{ route('prescriptions.index') }}"
-                    class="sidebar-subnav-link {{ !request()->routeIs('prescriptions.templates.*') ? 'active' : '' }}"
+                    class="sidebar-subnav-link {{ !request()->routeIs('prescriptions.templates.*') ? __('active') : '' }}"
                     @if(!request()->routeIs('prescriptions.templates.*'))
                         aria-current="page"
                     @endif
                 >
-                    Patient prescriptions
+                    {{ __('Patient prescriptions') }}
                 </a>
 
                 @clinicCan('prescriptions.templates.index')<a
                     href="{{ route('prescriptions.templates.index') }}"
-                    class="sidebar-subnav-link {{ request()->routeIs('prescriptions.templates.*') ? 'active' : '' }}"
+                    class="sidebar-subnav-link {{ request()->routeIs('prescriptions.templates.*') ? __('active') : '' }}"
                     @if(request()->routeIs('prescriptions.templates.*'))
                         aria-current="page"
                     @endif
                 >
-                    Nuskha templates
+                    {{ __('Nuskha templates') }}
                 </a>@endclinicCan
             </div>
         </template>

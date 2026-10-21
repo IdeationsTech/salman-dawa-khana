@@ -10,23 +10,23 @@
                 <i class="bi bi-heart-pulse" aria-hidden="true"></i>
             </div>
             <h1>Clinicora</h1>
-            <p class="brand-tagline">Clinic Management, Simplified.</p>
+            <p class="brand-tagline">{{ __('Clinic Management, Simplified.') }}</p>
             <div class="brand-divider"></div>
             <p class="brand-description">
-                Recover access to your clinic account.
+                {{ __('Recover access to your clinic account.') }}
             </p>
         </div>
 
         <div class="auth-form-panel">
             <div class="auth-form-content">
                 <div class="auth-heading">
-                    <p class="eyebrow">ACCOUNT RECOVERY</p>
-                    <h2>Forgot your password?</h2>
-                    <p>Enter your clinic account email.</p>
+                    <p class="eyebrow">{{ __('ACCOUNT RECOVERY') }}</p>
+                    <h2>{{ __('Forgot your password?') }}</h2>
+                    <p>{{ __('Enter your clinic account email.') }}</p>
                 </div>
 
                 @if (session('status'))
-                    <div class="alert alert-success">{{ session('status') }}</div>
+                    <div class="alert alert-success">{{ __(session('status')) }}</div>
                 @endif
 
                 @if ($errors->any())
@@ -36,7 +36,7 @@
                 <form method="POST" action="{{ route('password.email') }}">
                     @csrf
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email address *</label>
+                        <label for="email" class="form-label">{{ __('Email address') }} *</label>
                         <input
                             type="email"
                             id="email"
@@ -50,12 +50,12 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">
-                        Send reset link
+                        {{ __('Send reset link') }}
                     </button>
                 </form>
 
                 <div class="auth-footer">
-                    <a href="{{ route('login') }}" class="auth-link">Back to sign in</a>
+                    <a href="{{ route('login') }}" class="auth-link">{{ __('Back to sign in') }}</a>
                 </div>
             </div>
         </div>

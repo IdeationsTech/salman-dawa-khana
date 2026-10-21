@@ -49,18 +49,18 @@
         <div class="form-page-header">
             <a href="{{ route('payments.index') }}" class="back-link">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to payments
+                {{ __('Back to payments') }}
             </a>
-            <h1>{{ $editing ? 'Edit payment' : 'Bill and payment' }}</h1>
-            <p>Create a bill or receive payment against an existing bill.</p>
+            <h1>{{ $editing ? __('Edit payment') : 'Bill and payment' }}</h1>
+            <p>{{ __('Create a bill or receive payment against an existing bill.') }}</p>
         </div>
 
         @if ($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
                 <ul class="mb-0 mt-2">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -94,9 +94,9 @@
                 <div class="payment-form-heading">
                     <div class="form-section-number">01</div>
                     <div>
-                        <h2>Patient and billing option</h2>
+                        <h2>{{ __('Patient and billing option') }}</h2>
                         <p>
-                            Currency:
+                            {{ __('Currency') }}:
                             <strong data-cp-currency>{{ $currency }}</strong>
                         </p>
                     </div>
@@ -104,7 +104,7 @@
 
                 <div class="payment-form-grid">
                     <div class="form-field">
-                        <label for="billing_mode" class="form-label">Billing option *</label>
+                        <label for="billing_mode" class="form-label">{{ __('Billing option') }} *</label>
                         <select
                             id="billing_mode"
                             name="{{ $editing ? 'mode_display' : 'mode' }}"
@@ -115,17 +115,17 @@
                         >
                             @if (!$editing)
                                 <option value="new_bill" @selected($mode === 'new_bill')>
-                                    New bill + payment
+                                    {{ __('New bill + payment') }}
                                 </option>
                             @endif
 
                             <option value="existing_bill" @selected($mode === 'existing_bill')>
-                                Pay existing bill
+                                {{ __('Pay existing bill') }}
                             </option>
 
                             @if ($editing && $mode === 'unallocated')
                                 <option value="unallocated" selected>
-                                    Existing unallocated payment
+                                    {{ __('Existing unallocated payment') }}
                                 </option>
                             @endif
                         </select>
@@ -136,7 +136,7 @@
 
                 @if ($editing)
                     <small class="text-muted d-block mt-3">
-                        Patient, bill and original payment currency remain fixed.
+                        {{ __('Patient, bill and original payment currency remain fixed.') }}
                     </small>
                 @endif
             </section>
@@ -145,15 +145,15 @@
                 <div class="payment-form-heading">
                     <div class="form-section-number">02</div>
                     <div>
-                        <h2>New bill</h2>
-                        <p>New bills use {{ $clinicCurrency }}.</p>
+                        <h2>{{ __('New bill') }}</h2>
+                        <p>{{ __('New bills use') }} {{ $clinicCurrency }}.</p>
                     </div>
                 </div>
 
                 <fieldset data-cp-new-fields @disabled($mode !== 'new_bill')>
                     <div class="payment-form-grid">
                         <div class="form-field payment-field-wide">
-                            <label for="description" class="form-label">Charges description *</label>
+                            <label for="description" class="form-label">{{ __('Charges description') }} *</label>
                             <input
                                 type="text"
                                 id="description"
@@ -166,7 +166,7 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="subtotal" class="form-label">Charges amount *</label>
+                            <label for="subtotal" class="form-label">{{ __('Charges amount') }} *</label>
                             <div class="amount-input">
                                 <span>{{ $clinicCurrency }}</span>
                                 <input
@@ -185,7 +185,7 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="discount" class="form-label">Discount</label>
+                            <label for="discount" class="form-label">{{ __('Discount') }}</label>
                             <div class="amount-input">
                                 <span>{{ $clinicCurrency }}</span>
                                 <input
@@ -210,14 +210,14 @@
                 <div class="payment-form-heading">
                     <div class="form-section-number">02</div>
                     <div>
-                        <h2>Existing bill</h2>
-                        <p>Payment uses the selected bill's original currency.</p>
+                        <h2>{{ __('Existing bill') }}</h2>
+                        <p>{{ __('Payment uses the selected bill\'s original currency.') }}</p>
                     </div>
                 </div>
 
                 <div class="payment-form-grid">
                     <div class="form-field">
-                        <label for="bill" class="form-label">Bill *</label>
+                        <label for="bill" class="form-label">{{ __('Bill') }} *</label>
                         <select
                             id="bill"
                             name="{{ $editing ? 'bill_display' : 'bill_id' }}"
@@ -226,16 +226,16 @@
                             data-selected-bill="{{ $selectedBill }}"
                             @disabled($editing || $mode !== 'existing_bill')
                         >
-                            <option value="">Select bill</option>
+                            <option value="">{{ __('Select bill') }}</option>
                         </select>
                     </div>
 
                     <div class="form-field">
                         <p class="text-muted" data-cp-empty hidden>
-                            No outstanding bills for this patient.
+                            {{ __('No outstanding bills for this patient.') }}
                         </p>
                         <a class="btn btn-outline-secondary" data-cp-receipt hidden>
-                            View selected bill
+                            {{ __('View selected bill') }}
                         </a>
                     </div>
                 </div>
@@ -245,33 +245,33 @@
                 <div class="payment-form-heading">
                     <div class="form-section-number">03</div>
                     <div>
-                        <h2>Balance summary</h2>
-                        <p>Balances include only the displayed currency.</p>
+                        <h2>{{ __('Balance summary') }}</h2>
+                        <p>{{ __('Balances include only the displayed currency.') }}</p>
                     </div>
                 </div>
 
                 <div class="balance-summary-grid">
                     <div>
-                        <span>Other outstanding bills</span>
+                        <span>{{ __('Other outstanding bills') }}</span>
                         <strong data-cp-other>—</strong>
                     </div>
                     <div>
-                        <span>New / selected bill due</span>
+                        <span>{{ __('New / selected bill due') }}</span>
                         <strong data-cp-current>—</strong>
                     </div>
                     <div>
-                        <span>Total outstanding before payment</span>
+                        <span>{{ __('Total outstanding before payment') }}</span>
                         <strong data-cp-total>—</strong>
                     </div>
                 </div>
 
                 <p class="text-muted small mt-3 mb-0" data-cp-help>
-                    Payment applies only to the new or selected bill.
+                    {{ __('Payment applies only to the new or selected bill.') }}
                 </p>
 
                 @if ($editing)
                     <small class="text-muted d-block mt-2">
-                        Preview excludes the payment being edited.
+                        {{ __('Preview excludes the payment being edited.') }}
                     </small>
                 @endif
             </section>
@@ -280,14 +280,14 @@
                 <div class="payment-form-heading">
                     <div class="form-section-number">04</div>
                     <div>
-                        <h2>Payment received</h2>
-                        <p>For a new bill, enter 0 if nothing has been received.</p>
+                        <h2>{{ __('Payment received') }}</h2>
+                        <p>{{ __('For a new bill, enter 0 if nothing has been received.') }}</p>
                     </div>
                 </div>
 
                 <div class="payment-form-grid">
                     <div class="form-field">
-                        <label for="amount" class="form-label">Amount received *</label>
+                        <label for="amount" class="form-label">{{ __('Amount received') }} *</label>
                         <div class="amount-input">
                             <span data-cp-currency>{{ $currency }}</span>
                             <input
@@ -306,7 +306,7 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="payment_date" class="form-label">Bill / payment date *</label>
+                        <label for="payment_date" class="form-label">{{ __('Bill / payment date') }} *</label>
                         <input
                             type="datetime-local"
                             id="payment_date"
@@ -317,18 +317,18 @@
                             max="9999-12-31T23:59"
                             required
                         >
-                        <small class="text-muted">UAE local time.</small>
+                        <small class="text-muted">{{ __('UAE local time.') }}</small>
                     </div>
 
                     <div class="form-field">
-                        <label for="method" class="form-label">Payment method</label>
+                        <label for="method" class="form-label">{{ __('Payment method') }}</label>
                         <select
                             id="method"
                             name="method"
                             class="form-select"
                             data-cp-method
                         >
-                            <option value="">Select payment method</option>
+                            <option value="">{{ __('Select payment method') }}</option>
                             @foreach ([
                                 'cash' => 'Cash',
                                 'bank' => 'Bank transfer',
@@ -336,7 +336,7 @@
                             ] as $value => $label)
                                 @if (in_array($value, $enabledMethods, true))
                                     <option value="{{ $value }}" @selected($selectedMethod === $value)>
-                                        {{ $label }}
+                                        {{ __($label) }}
                                     </option>
                                 @endif
                             @endforeach
@@ -345,7 +345,7 @@
 
                     <div class="form-field">
                         <label for="reference" class="form-label">
-                            Transaction reference
+                            {{ __('Transaction reference') }}
                             <span data-cp-reference-star hidden>*</span>
                         </label>
                         <input
@@ -360,7 +360,7 @@
                     </div>
 
                     <div class="form-field payment-field-wide">
-                        <label for="notes" class="form-label">Payment notes</label>
+                        <label for="notes" class="form-label">{{ __('Payment notes') }}</label>
                         <textarea
                             id="notes"
                             name="notes"
@@ -373,20 +373,20 @@
                 </div>
 
                 <div class="remaining-balance-box">
-                    <span>This bill's remaining balance</span>
+                    <span>{{ __('This bill\'s remaining balance') }}</span>
                     <strong data-cp-remaining aria-live="polite">—</strong>
                 </div>
 
                 <p class="text-muted small mt-3 mb-0">
-                    Outstanding after payment, same currency:
+                    {{ __('Outstanding after payment, same currency:') }}
                     <strong data-cp-patient-remaining>—</strong>
                 </p>
             </section>
 
             <div class="payment-form-actions">
-                <a href="{{ route('payments.index') }}" class="btn btn-light">Cancel</a>
+                <a href="{{ route('payments.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
                 <button type="submit" class="btn btn-primary" data-cp-submit>
-                    {{ $editing ? 'Update payment' : 'Save bill and payment' }}
+                    {{ $editing ? __('Update payment') : __('Save bill and payment') }}
                 </button>
             </div>
 

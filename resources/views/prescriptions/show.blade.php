@@ -20,7 +20,7 @@
     <main class="dashboard-main">
         @if (session('success'))
             <div class="alert alert-success no-print" role="alert">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
@@ -30,7 +30,7 @@
                 class="back-link"
             >
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to prescriptions
+                {{ __('Back to prescriptions') }}
             </a>
 
             <div class="clh-toolbar-actions">
@@ -39,7 +39,7 @@
                     class="btn btn-outline-secondary"
                 >
                     <i class="bi bi-pencil" aria-hidden="true"></i>
-                    Edit prescription
+                    {{ __('Edit prescription') }}
                 </a>@endclinicCan
 
                 <button
@@ -48,15 +48,14 @@
                     data-print-page
                 >
                     <i class="bi bi-printer" aria-hidden="true"></i>
-                    Print / Save PDF
+                    {{ __('Print / Save PDF') }}
                 </button>
             </div>
         </div>
 
         @if (!$prescription->doctor)
             <div class="alert alert-warning clh-screen-notice no-print">
-                No doctor is assigned to this prescription.
-                Open Edit prescription to select the treating Doctor / Hakeem.
+                {{ __('No doctor is assigned to this prescription. Open Edit prescription to select the treating Doctor / Hakeem.') }}
             </div>
         @endif
 
@@ -70,7 +69,7 @@
             :visit-type="$prescription->visit?->visit_reason"
         >
             <div class="clh-diagnosis-block">
-                <h3 class="clh-section-title">Tashkhees / Diagnosis</h3>
+                <h3 class="clh-section-title">{{ __('Tashkhees / Diagnosis') }}</h3>
 
                 <p class="clh-diagnosis">
                     {{ $prescription->visit?->diagnosis_name ?: '—' }}
@@ -78,10 +77,10 @@
             </div>
 
             <div class="clh-prescription-area">
-                <span class="clh-rx" aria-label="Prescription">℞</span>
+                <span class="clh-rx" aria-label="{{ __('Prescription') }}">℞</span>
 
                 <div class="clh-nuskha">
-                    <h3 class="clh-section-title">Prescribed nuskhay</h3>
+                    <h3 class="clh-section-title">{{ __('Prescribed nuskhay') }}</h3>
 
                     @forelse ($prescription->nuskhas as $nuskha)
                         <div class="rx-patient-nuskha">
@@ -89,14 +88,14 @@
                                 {{ $loop->iteration }}. {{ $nuskha->nuskha_name }}
                             </h3>
                             <p class="rx-patient-quantity">
-                                Total quantity:
+                                {{ __('Total quantity:') }}
                                 <strong>{{ rtrim(rtrim((string) $nuskha->quantity, '0'), '.') }} {{ $nuskha->unit }}</strong>
                             </p>
                             @if ($nuskha->frequency || $nuskha->duration || $nuskha->timing)
                                 <p class="rx-patient-directions">
-                                    @if ($nuskha->frequency)<span>Frequency: {{ $nuskha->frequency }}</span>@endif
-                                    @if ($nuskha->duration)<span>Duration: {{ $nuskha->duration }}</span>@endif
-                                    @if ($nuskha->timing)<span>Timing: {{ $nuskha->timing }}</span>@endif
+                                    @if ($nuskha->frequency)<span>{{ __('Frequency') }}: {{ $nuskha->frequency }}</span>@endif
+                                    @if ($nuskha->duration)<span>{{ __('Duration') }}: {{ $nuskha->duration }}</span>@endif
+                                    @if ($nuskha->timing)<span>{{ __('Timing') }}: {{ $nuskha->timing }}</span>@endif
                                 </p>
                             @endif
                             @if ($nuskha->instructions)
@@ -112,7 +111,7 @@
                 </div>
             </div>
 
-            <h3 class="clh-section-title">Patient instructions</h3>
+            <h3 class="clh-section-title">{{ __('Patient instructions') }}</h3>
 
             <p class="clh-instructions">{{ $prescription->general_instructions }}</p>
 
@@ -125,28 +124,28 @@
             <div class="visit-form-panel">
                 <div class="visit-form-heading">
                     <div>
-                        <h2>Prescription information</h2>
-                        <p>Practitioner and record details.</p>
+                        <h2>{{ __('Prescription information') }}</h2>
+                        <p>{{ __('Practitioner and record details.') }}</p>
                     </div>
                 </div>
 
                 <div class="visit-form-grid">
                     <div class="form-field">
-                        <span class="form-label d-block">Doctor / Hakeem</span>
+                        <span class="form-label d-block">{{ __('Doctor / Hakeem') }}</span>
                         <strong>
                             {{ $prescription->doctor?->name ?: 'Not assigned' }}
                         </strong>
                     </div>
 
                     <div class="form-field">
-                        <span class="form-label d-block">Recorded by</span>
+                        <span class="form-label d-block">{{ __('Recorded by') }}</span>
                         <strong>
                             {{ $prescription->createdBy?->name ?: '—' }}
                         </strong>
                     </div>
 
                     <div class="form-field">
-                        <span class="form-label d-block">Status</span>
+                        <span class="form-label d-block">{{ __('Status') }}</span>
                         <strong>
                             {{ ucfirst($prescription->status ?? '—') }}
                         </strong>
@@ -154,10 +153,10 @@
 
                     @if ($prescription->visit)
                         <div class="form-field">
-                            <span class="form-label d-block">Linked visit</span>
+                            <span class="form-label d-block">{{ __('Linked visit') }}</span>
 
                             <a href="{{ route('visits.show', $prescription->visit) }}">
-                                Visit #{{ $prescription->visit->visit_id }}
+                                {{ __('Visit #') }}{{ $prescription->visit->visit_id }}
                             </a>
                         </div>
                     @endif

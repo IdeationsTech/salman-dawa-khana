@@ -15,7 +15,7 @@
 
     <div class="mb-3">
         <label for="admin-reset-email" class="form-label">
-            Email address *
+            {{ __('Email address') }} *
         </label>
 
         <input
@@ -32,7 +32,7 @@
 
     <div class="mb-3">
         <label for="admin-new-password" class="form-label">
-            New password *
+            {{ __('New password') }} *
         </label>
 
         <input
@@ -49,7 +49,7 @@
 
     <div class="mb-4">
         <label for="admin-confirm-password" class="form-label">
-            Confirm password *
+            {{ __('Confirm password') }} *
         </label>
 
         <input
@@ -65,7 +65,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary w-100">
-        Reset password
+        {{ __('Reset password') }}
     </button>
 </form>
 
@@ -74,7 +74,7 @@
         href="{{ route('platform-admin.login') }}"
         class="auth-link"
     >
-        Back to admin sign in
+        {{ __('Back to admin sign in') }}
     </a>
 </div>
 @endsection

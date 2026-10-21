@@ -1,6 +1,6 @@
 @extends('platform-admin.layouts.app')
 
-@section('title', 'Dashboard')
+@section('title', __('Dashboard'))
 @section('page_title', 'Dashboard')
 
 @section('content')
@@ -9,9 +9,9 @@
 
         $statCards = [
             [
-                'label' => 'Total clinics',
+                'label' => __('Total clinics'),
                 'value' => $stats['total_clinics'],
-                'note' => 'All registered clinics',
+                'note' => __('All registered clinics'),
                 'icon' => 'clinic',
             ],
             [
@@ -39,11 +39,11 @@
     <div class="pa-page-heading">
         <div>
             <h1 class="pa-page-title">
-                Platform overview
+                {{ __('Platform overview') }}
             </h1>
 
             <p class="pa-page-description">
-                Monitor clinic registrations, licenses and subscription payments.
+                {{ __('Monitor clinic registrations, licenses and subscription payments.') }}
             </p>
         </div>
 
@@ -53,7 +53,7 @@
     </div>
 
     {{-- DASHBOARD — Statistics --}}
-    <section class="pa-stats" aria-label="Platform statistics">
+    <section class="pa-stats" aria-label="{{ __('Platform statistics') }}">
         @foreach($statCards as $card)
             <article class="pa-stat">
                 <div class="pa-stat-top">
@@ -88,11 +88,11 @@
         <header class="pa-panel-header">
             <div>
                 <h2 class="pa-panel-title" id="recent-clinics-title">
-                    Latest clinics
+                    {{ __('Latest clinics') }}
                 </h2>
 
                 <p class="pa-panel-description">
-                    The eight most recently registered clinics.
+                    {{ __('The eight most recently registered clinics.') }}
                 </p>
             </div>
         </header>
@@ -100,11 +100,11 @@
         @if($recentClinics->isEmpty())
             <div class="pa-empty">
                 <p class="pa-empty-title">
-                    No clinics registered yet
+                    {{ __('No clinics registered yet') }}
                 </p>
 
                 <p class="pa-empty-description">
-                    New clinic registrations will appear here.
+                    {{ __('New clinic registrations will appear here.') }}
                 </p>
             </div>
         @else
@@ -112,11 +112,11 @@
                 <table class="pa-table">
                     <thead>
                         <tr>
-                            <th scope="col">Clinic</th>
-                            <th scope="col">Customer</th>
-                            <th scope="col">Approval</th>
-                            <th scope="col">License</th>
-                            <th scope="col">Registered</th>
+                            <th scope="col">{{ __('Clinic') }}</th>
+                            <th scope="col">{{ __('Customer') }}</th>
+                            <th scope="col">{{ __('Approval') }}</th>
+                            <th scope="col">{{ __('License') }}</th>
+                            <th scope="col">{{ __('Registered') }}</th>
                         </tr>
                     </thead>
 
@@ -161,7 +161,7 @@
                                     </span>
 
                                     <span class="pa-cell-subtitle">
-                                        Clinic #{{ $clinic->clinic_id }}
+                                        {{ __('Clinic #') }}{{ $clinic->clinic_id }}
                                     </span>
                                 </td>
 
@@ -217,11 +217,11 @@
         <header class="pa-panel-header">
             <div>
                 <h2 class="pa-panel-title" id="recent-payments-title">
-                    Latest subscription payments
+                    {{ __('Latest subscription payments') }}
                 </h2>
 
                 <p class="pa-panel-description">
-                    The six latest payments recorded for clinic licenses.
+                    {{ __('The six latest payments recorded for clinic licenses.') }}
                 </p>
             </div>
         </header>
@@ -229,11 +229,11 @@
         @if($recentPayments->isEmpty())
             <div class="pa-empty">
                 <p class="pa-empty-title">
-                    No subscription payments recorded
+                    {{ __('No subscription payments recorded') }}
                 </p>
 
                 <p class="pa-empty-description">
-                    Payments will appear here once they are recorded.
+                    {{ __('Payments will appear here once they are recorded.') }}
                 </p>
             </div>
         @else
@@ -241,12 +241,12 @@
                 <table class="pa-table">
                     <thead>
                         <tr>
-                            <th scope="col">Payment</th>
-                            <th scope="col">Clinic</th>
-                            <th scope="col">Method</th>
-                            <th scope="col">Paid on</th>
-                            <th scope="col">Status</th>
-                            <th scope="col" class="pa-amount">Amount</th>
+                            <th scope="col">{{ __('Payment') }}</th>
+                            <th scope="col">{{ __('Clinic') }}</th>
+                            <th scope="col">{{ __('Method') }}</th>
+                            <th scope="col">{{ __('Paid on') }}</th>
+                            <th scope="col">{{ __('Status') }}</th>
+                            <th scope="col" class="pa-amount">{{ __('Amount') }}</th>
                         </tr>
                     </thead>
 

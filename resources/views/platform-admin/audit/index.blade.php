@@ -6,19 +6,19 @@
 @section('content')
     <div class="pa-page-heading">
         <div>
-            <h1 class="pa-page-title">Audit log</h1>
+            <h1 class="pa-page-title">{{ __('Audit log') }}</h1>
             <p class="pa-page-description">
-                Recorded changes to clinics, subscriptions and payments.
+                {{ __('Recorded changes to clinics, subscriptions and payments.') }}
             </p>
         </div>
     </div>
 
     @if($errors->any())
         <div class="pa-notice pa-notice-error" role="alert">
-            <strong>Please correct the following:</strong>
+            <strong>{{ __('Please correct the following:') }}</strong>
             <ul>
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    <li>{{ __($error) }}</li>
                 @endforeach
             </ul>
         </div>
@@ -27,9 +27,9 @@
     <section class="pa-panel">
         <header class="pa-panel-header">
             <div>
-                <h2 class="pa-panel-title">Activity history</h2>
+                <h2 class="pa-panel-title">{{ __('Activity history') }}</h2>
                 <p class="pa-panel-description">
-                    {{ $logs->total() }} matching events
+                    {{ $logs->total() }} {{ __('matching events') }}
                 </p>
             </div>
         </header>
@@ -42,26 +42,26 @@
             >
                 <div class="pa-form-grid">
                     <div class="pa-field">
-                        <label for="audit-search">Search</label>
+                        <label for="audit-search">{{ __('Search') }}</label>
                         <input
                             id="audit-search"
                             type="search"
                             name="search"
                             class="pa-input"
                             maxlength="160"
-                            placeholder="Clinic, admin, action or event ID"
+                            placeholder="{{ __('Clinic, admin, action or event ID') }}"
                             value="{{ $filters['search'] }}"
                         >
                     </div>
 
                     <div class="pa-field">
-                        <label for="audit-action">Action</label>
+                        <label for="audit-action">{{ __('Action') }}</label>
                         <select
                             id="audit-action"
                             name="action"
                             class="pa-input"
                         >
-                            <option value="">All actions</option>
+                            <option value="">{{ __('All actions') }}</option>
 
                             @foreach($actions as $action)
                                 <option
@@ -75,13 +75,13 @@
                     </div>
 
                     <div class="pa-field">
-                        <label for="audit-admin">Administrator</label>
+                        <label for="audit-admin">{{ __('Administrator') }}</label>
                         <select
                             id="audit-admin"
                             name="admin_id"
                             class="pa-input"
                         >
-                            <option value="">All administrators</option>
+                            <option value="">{{ __('All administrators') }}</option>
 
                             @foreach($admins as $admin)
                                 <option
@@ -98,7 +98,7 @@
                     </div>
 
                     <div class="pa-field">
-                        <label for="audit-from">From</label>
+                        <label for="audit-from">{{ __('From') }}</label>
                         <input
                             id="audit-from"
                             type="date"
@@ -109,7 +109,7 @@
                     </div>
 
                     <div class="pa-field">
-                        <label for="audit-to">To</label>
+                        <label for="audit-to">{{ __('To') }}</label>
                         <input
                             id="audit-to"
                             type="date"
@@ -125,14 +125,14 @@
                         type="submit"
                         class="pa-button pa-button-primary"
                     >
-                        Apply filters
+                        {{ __('Apply filters') }}
                     </button>
 
                     <a
                         href="{{ route('platform-admin.audit.index') }}"
                         class="pa-button"
                     >
-                        Clear
+                        {{ __('Clear') }}
                     </a>
                 </div>
             </form>
@@ -140,9 +140,9 @@
 
         @if($logs->isEmpty())
             <div class="pa-empty">
-                <p class="pa-empty-title">No activity found</p>
+                <p class="pa-empty-title">{{ __('No activity found') }}</p>
                 <p class="pa-empty-description">
-                    Try changing the search or filters.
+                    {{ __('Try changing the search or filters.') }}
                 </p>
             </div>
         @else
@@ -150,12 +150,12 @@
                 <table class="pa-table">
                     <thead>
                         <tr>
-                            <th>Event</th>
-                            <th>Action</th>
-                            <th>Administrator</th>
-                            <th>Clinic</th>
-                            <th>Date & time</th>
-                            <th>Details</th>
+                            <th>{{ __('Event') }}</th>
+                            <th>{{ __('Action') }}</th>
+                            <th>{{ __('Administrator') }}</th>
+                            <th>{{ __('Clinic') }}</th>
+                            <th>{{ __('Date & time') }}</th>
+                            <th>{{ __('Details') }}</th>
                         </tr>
                     </thead>
 
@@ -190,7 +190,7 @@
                                         </a>
                                     @else
                                         <span class="pa-cell-subtitle">
-                                            Platform activity
+                                            {{ __('Platform activity') }}
                                         </span>
                                     @endif
                                 </td>
@@ -204,7 +204,7 @@
                                         href="{{ route('platform-admin.audit.show', $log->platform_audit_log_id) }}"
                                         class="pa-link"
                                     >
-                                        View
+                                        {{ __('View') }}
                                     </a>
                                 </td>
                             </tr>

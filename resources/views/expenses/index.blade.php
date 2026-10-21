@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Expenses')
+@section('title', __('Expenses'))
 
 @section('content')
 @php
@@ -14,22 +14,22 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Clinic finances</p>
-                <h1>Expenses</h1>
+                <p class="dashboard-date">{{ __('Clinic finances') }}</p>
+                <h1>{{ __('Expenses') }}</h1>
                 <p class="page-subtitle">
-                    Record and monitor clinic operating expenses.
+                    {{ __('Record and monitor clinic operating expenses.') }}
                 </p>
             </div>
 
             @clinicCan('expenses.create')<a href="{{ route('expenses.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                Add expense
+                {{ __('Add expense') }}
             </a>@endclinicCan
         </header>
 
         @if (session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
@@ -37,34 +37,33 @@
             <div class="alert alert-danger" role="alert">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
                 <a href="{{ route('expenses.index') }}" class="alert-link">
-                    Reset filters
+                    {{ __('Reset filters') }}
                 </a>
             </div>
         @endif
 
         @if ($unconfirmedCurrencyCount > 0)
             <div class="alert alert-warning" role="status">
-                {{ $unconfirmedCurrencyCount }} expense records have no confirmed
-                currency. They are excluded from summary totals.
+                {{ $unconfirmedCurrencyCount }} {{ __('expense records have no confirmed currency. They are excluded from summary totals.') }}
             </div>
         @endif
 
         <section class="expense-summary-grid">
             <article class="expense-summary-card">
-                <span>Today's expenses</span>
+                <span>{{ __('Today\'s expenses') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format($todayExpenses, $moneyDecimals) }}
                 </strong>
-                <small>{{ $todayExpenseCount }} transactions</small>
+                <small>{{ $todayExpenseCount }} {{ __('transactions') }}</small>
             </article>
 
             <article class="expense-summary-card">
-                <span>This month's expenses</span>
+                <span>{{ __('This month\'s expenses') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format($monthExpenses, $moneyDecimals) }}
@@ -73,7 +72,7 @@
             </article>
 
             <article class="expense-summary-card">
-                <span>Highest category</span>
+                <span>{{ __('Highest category') }}</span>
                 <strong>{{ $highestExpenseCategory ?? '—' }}</strong>
                 <small>
                     {{ $currency }}
@@ -82,25 +81,24 @@
             </article>
 
             <article class="expense-summary-card">
-                <span>Net income</span>
+                <span>{{ __('Net income') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format($netIncome, $moneyDecimals) }}
                 </strong>
-                <small>Received payments minus expenses this month</small>
+                <small>{{ __('Received payments minus expenses this month') }}</small>
             </article>
         </section>
 
         <p class="text-muted small">
-            Summary cards include only {{ $currency }} records.
-            The list includes records in their original currencies.
+            {{ __('Summary cards include only') }} {{ $currency }} {{ __('records. The list includes records in their original currencies.') }}
         </p>
 
         <section class="expenses-panel">
             <div class="expenses-toolbar">
                 <div>
-                    <h2>Expense records</h2>
-                    <p>Search and filter all clinic expense records.</p>
+                    <h2>{{ __('Expense records') }}</h2>
+                    <p>{{ __('Search and filter all clinic expense records.') }}</p>
                 </div>
 
                 <div class="expenses-toolbar-actions">
@@ -108,10 +106,10 @@
                         name="category"
                         class="form-select"
                         form="expense-filter-form"
-                        aria-label="Expense category"
+                        aria-label="{{ __('Expense category') }}"
                     >
                         <option value="all" @selected($selectedCategory === 'all')>
-                            All categories
+                            {{ __('All categories') }}
                         </option>
 
                         @foreach ($categories as $category)
@@ -128,7 +126,7 @@
                         name="date_range"
                         class="form-select"
                         form="expense-filter-form"
-                        aria-label="Expense date range"
+                        aria-label="{{ __('Expense date range') }}"
                     >
                         @foreach ([
                             'all time' => 'All time',
@@ -140,7 +138,7 @@
                                 value="{{ $value }}"
                                 @selected($selectedDateRange === $value)
                             >
-                                {{ $label }}
+                                {{ __($label) }}
                             </option>
                         @endforeach
                     </select>
@@ -163,16 +161,16 @@
                         name="search"
                         value="{{ request('search') }}"
                         maxlength="160"
-                        aria-label="Search expenses"
-                        placeholder="Search by description, category or expense ID"
+                        aria-label="{{ __('Search expenses') }}"
+                        placeholder="{{ __('Search by description, category or expense ID') }}"
                     >
 
                     <button type="submit" class="btn btn-primary btn-sm">
-                        Search
+                        {{ __('Search') }}
                     </button>
 
                     <a href="{{ route('expenses.index') }}" class="btn btn-light btn-sm">
-                        Clear
+                        {{ __('Clear') }}
                     </a>
                 </div>
             </form>
@@ -181,13 +179,13 @@
                 <table class="table expenses-table align-middle">
                     <thead>
                         <tr>
-                            <th>Expense ID</th>
-                            <th>Description</th>
-                            <th>Category</th>
-                            <th>Date</th>
-                            <th>Method</th>
-                            <th>Amount</th>
-                            <th class="text-end">Action</th>
+                            <th>{{ __('Expense ID') }}</th>
+                            <th>{{ __('Description') }}</th>
+                            <th>{{ __('Category') }}</th>
+                            <th>{{ __('Date') }}</th>
+                            <th>{{ __('Method') }}</th>
+                            <th>{{ __('Amount') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
                         </tr>
                     </thead>
 
@@ -204,9 +202,9 @@
                                 $methodLabel = match (
                                     strtolower(trim($expense->payment_method ?? ''))
                                 ) {
-                                    'bank', 'bank transfer', 'bank_transfer' => 'Bank transfer',
-                                    'cash' => 'Cash',
-                                    'card' => 'Card',
+                                    'bank', 'bank transfer', 'bank_transfer' => __('Bank transfer'),
+                                    'cash' => __('Cash'),
+                                    'card' => __('Card'),
                                     default => $expense->payment_method ?: '—',
                                 };
                             @endphp
@@ -214,7 +212,7 @@
                             <tr>
                                 <td>{{ $expense->expense_id }}</td>
 
-                                <td>{{ $expense->description ?: 'Not recorded' }}</td>
+                                <td>{{ $expense->description ?: __('Not recorded') }}</td>
 
                                 <td>
                                     <span class="expense-category {{ $categoryClass }}">
@@ -226,7 +224,7 @@
                                     {{ $expense->expense_date?->format('d M Y') ?? '—' }}
                                 </td>
 
-                                <td>{{ $methodLabel }}</td>
+                                <td>{{ __($methodLabel) }}</td>
 
                                 <td class="expense-amount">
                                     @if ($expense->currency)
@@ -235,7 +233,7 @@
                                     @else
                                         {{ number_format($expense->amount, $moneyDecimals) }}
                                         <small class="d-block text-muted">
-                                            Currency not recorded
+                                            {{ __('Currency not recorded') }}
                                         </small>
                                     @endif
                                 </td>
@@ -245,14 +243,14 @@
                                         href="{{ route('expenses.show', $expense) }}"
                                         class="table-action"
                                     >
-                                        View
+                                        {{ __('View') }}
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center py-4">
-                                    No expenses match your search and filters.
+                                    {{ __('No expenses match your search and filters.') }}
                                 </td>
                             </tr>
                         @endforelse
@@ -262,9 +260,9 @@
 
             <div class="patients-pagination">
                 <span>
-                    Showing {{ $expenses->firstItem() ?? 0 }}
-                    to {{ $expenses->lastItem() ?? 0 }}
-                    of {{ $expenses->total() }} expenses
+                    {{ __('Showing') }} {{ $expenses->firstItem() ?? 0 }}
+                    {{ __('to') }} {{ $expenses->lastItem() ?? 0 }}
+                    {{ __('of') }} {{ $expenses->total() }} {{ __('expenses') }}
                 </span>
                 <div>{{ $expenses->links() }}</div>
             </div>

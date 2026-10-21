@@ -42,7 +42,7 @@
                     {{ \App\Support\ClinicClock::now()->format('l, d F Y') }}
                 </p>
 
-                <h1>Welcome, {{ $signedInUser->name }}</h1>
+                <h1>{{ __('Welcome,') }} {{ $signedInUser->name }}</h1>
             </div>
 
             <div class="topbar-user">
@@ -69,8 +69,8 @@
         <section class="dashboard-section">
             <div class="section-heading">
                 <div>
-                    <p class="eyebrow">OVERVIEW</p>
-                    <h2>Clinic summary</h2>
+                    <p class="eyebrow">{{ __('OVERVIEW') }}</p>
+                    <h2>{{ __('Clinic summary') }}</h2>
                 </div>
 
                 @clinicCan('patients.create')<a
@@ -87,14 +87,14 @@
                     <div class="summary-icon teal-icon"><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></div>
 
                     <div>
-                        <p>Total Patients</p>
+                        <p>{{ __('Total Patients') }}</p>
 
                         <h3>
                             {{ number_format($totalPatients ?? 0) }}
                         </h3>
 
                         <span class="summary-positive">
-                            Registered patients
+                            {{ __('Registered patients') }}
                         </span>
                     </div>
                 </article>
@@ -103,14 +103,14 @@
                     <div class="summary-icon blue-icon"><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></div>
 
                     <div>
-                        <p>Today's Visits</p>
+                        <p>{{ __('Today\'s Visits') }}</p>
 
                         <h3>
                             {{ number_format($todaysVisits ?? 0) }}
                         </h3>
 
                         <span class="summary-positive">
-                            Current day
+                            {{ __('Current day') }}
                         </span>
                     </div>
                 </article>
@@ -119,14 +119,14 @@
                     <div class="summary-icon orange-icon"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></div>
 
                     <div>
-                        <p>Today's Income</p>
+                        <p>{{ __('Today\'s Income') }}</p>
 
                         <h3>
                             {{ $currency }} {{ number_format($todaysIncome ?? 0, $moneyDecimals) }}
                         </h3>
 
                         <span class="summary-positive">
-                            Received payments
+                            {{ __('Received payments') }}
                         </span>
                     </div>
                 </article>
@@ -135,7 +135,7 @@
                     <div class="summary-icon purple-icon">◷</div>
 
                     <div>
-                        <p>Outstanding</p>
+                        <p>{{ __('Outstanding') }}</p>
 
                         <h3>
                             {{ $currency }}
@@ -143,7 +143,7 @@
                         </h3>
 
                         <span class="summary-warning">
-                            Patient balances due
+                            {{ __('Patient balances due') }}
                         </span>
                     </div>
                 </article>
@@ -157,15 +157,15 @@
             <div class="dashboard-panel">
                 <div class="panel-heading">
                     <div>
-                        <h2>Recent patients</h2>
-                        <p>Latest patient records added to the clinic.</p>
+                        <h2>{{ __('Recent patients') }}</h2>
+                        <p>{{ __('Latest patient records added to the clinic.') }}</p>
                     </div>
 
                     <a
                         href="{{ route('patients.index') }}"
                         class="panel-link"
                     >
-                        View all
+                        {{ __('View all') }}
                     </a>
                 </div>
 
@@ -173,10 +173,10 @@
                     <table class="table dashboard-table align-middle">
                         <thead>
                             <tr>
-                                <th>Patient</th>
-                                <th>Phone</th>
-                                <th>Registered</th>
-                                <th>Status</th>
+                                <th>{{ __('Patient') }}</th>
+                                <th>{{ __('Phone') }}</th>
+                                <th>{{ __('Registered') }}</th>
+                                <th>{{ __('Status') }}</th>
                             </tr>
                         </thead>
 
@@ -200,14 +200,14 @@
 
                                     <td>
                                         <span class="status-badge active-badge">
-                                            Active
+                                            {{ __('Active') }}
                                         </span>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
                                     <td colspan="4" class="text-center">
-                                        No patients found.
+                                        {{ __('No patients found.') }}
                                     </td>
                                 </tr>
                             @endforelse
@@ -219,8 +219,8 @@
             <div class="dashboard-panel">
                 <div class="panel-heading">
                     <div>
-                        <h2>Quick actions</h2>
-                        <p>Common clinic tasks.</p>
+                        <h2>{{ __('Quick actions') }}</h2>
+                        <p>{{ __('Common clinic tasks.') }}</p>
                     </div>
                 </div>
 
@@ -232,8 +232,8 @@
                         <span class="quick-action-icon"><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
 
                         <span>
-                            <strong>Add patient</strong>
-                            <small>Create a new patient record</small>
+                            <strong>{{ __('Add patient') }}</strong>
+                            <small>{{ __('Create a new patient record') }}</small>
                         </span>
 
                         <span>›</span>
@@ -246,8 +246,8 @@
                         <span class="quick-action-icon"><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
 
                         <span>
-                            <strong>Create visit</strong>
-                            <small>Record a patient visit</small>
+                            <strong>{{ __('Create visit') }}</strong>
+                            <small>{{ __('Record a patient visit') }}</small>
                         </span>
 
                         <span>›</span>
@@ -260,8 +260,8 @@
                         <span class="quick-action-icon"><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
 
                         <span>
-                            <strong>Create prescription</strong>
-                            <small>Prepare a patient nuskha</small>
+                            <strong>{{ __('Create prescription') }}</strong>
+                            <small>{{ __('Prepare a patient nuskha') }}</small>
                         </span>
 
                         <span>›</span>
@@ -274,8 +274,8 @@
                         <span class="quick-action-icon"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
 
                         <span>
-                            <strong>Record payment</strong>
-                            <small>Add cash or bank payment</small>
+                            <strong>{{ __('Record payment') }}</strong>
+                            <small>{{ __('Add cash or bank payment') }}</small>
                         </span>
 
                         <span>›</span>

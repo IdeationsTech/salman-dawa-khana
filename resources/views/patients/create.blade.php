@@ -11,8 +11,8 @@
     $isOtherId = $idCountry === 'ZZ';
 
     $idLabel = match ($idCountry) {
-        'PK' => 'CNIC',
-        'AE' => 'Emirates ID',
+        'PK' => __('CNIC'),
+        'AE' => __('Emirates ID'),
         default => 'Patient ID / Passport',
     };
 
@@ -43,10 +43,10 @@
             <div>
                 <a href="{{ route('patients.index') }}" class="back-link">
                     <i class="bi bi-arrow-left app-icon" aria-hidden="true"></i>
-                    Back to patients
+                    {{ __('Back to patients') }}
                 </a>
 
-                <h1>{{ $editing ? 'Edit patient' : 'Add new patient' }}</h1>
+                <h1>{{ $editing ? __('Edit patient') : __('Add new patient') }}</h1>
                 <p>
                     {{ $editing
                         ? 'Update the patient’s record.'
@@ -57,10 +57,10 @@
 
         @if ($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
                 <ul class="mb-0 mt-2">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -80,14 +80,14 @@
                 <div class="form-section-heading">
                     <div class="form-section-number">01</div>
                     <div>
-                        <h2>Basic information</h2>
-                        <p>Fields marked with * are required.</p>
+                        <h2>{{ __('Basic information') }}</h2>
+                        <p>{{ __('Fields marked with * are required.') }}</p>
                     </div>
                 </div>
 
                 <div class="patient-form-grid">
                     <div class="form-field">
-                        <label for="full_name" class="form-label">Full Name *</label>
+                        <label for="full_name" class="form-label">{{ __('Full Name') }} *</label>
                         <input
                             type="text"
                             id="full_name"
@@ -99,13 +99,13 @@
                             required
                         >
                         @error('full_name')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
 
                     <div class="form-field">
                         <label for="father_or_husband_name" class="form-label">
-                            Father / Husband Name
+                            {{ __('Father / Husband Name') }}
                         </label>
                         <input
                             type="text"
@@ -118,7 +118,7 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="phone" class="form-label">Phone Number *</label>
+                        <label for="phone" class="form-label">{{ __('Phone Number') }} *</label>
                         <x-phone-input
                             name="phone"
                             id="phone"
@@ -129,7 +129,7 @@
 
                     <div class="form-field">
                         <label for="national_id_number" class="form-label">
-                            {{ $idLabel }} (optional)
+                            {{ __($idLabel) }} (optional)
                         </label>
 
                         <input
@@ -139,14 +139,14 @@
                             class="form-control @error('national_id_number') is-invalid @enderror"
                             value="{{ old('national_id_number', $existingId) }}"
                             @if ($isOtherId)
-                                placeholder="Enter national ID, passport or another ID"
+                                placeholder="{{ __('Enter national ID, passport or another ID') }}"
                                 maxlength="40"
                                 inputmode="text"
                             @else
                                 placeholder="{{ $isPakistan ? '12345-1234567-1' : '784-1234-1234567-1' }}"
                                 maxlength="{{ $isPakistan ? 15 : 18 }}"
                                 pattern="{{ $isPakistan ? '[0-9]{13}|[0-9]{5}-[0-9]{7}-[0-9]' : '784[0-9]{12}|784-[0-9]{4}-[0-9]{7}-[0-9]' }}"
-                                title="{{ $isPakistan ? 'Enter a 13-digit CNIC.' : 'Enter a 15-digit Emirates ID starting with 784.' }}"
+                                title="{{ $isPakistan ? __('Enter a 13-digit CNIC.') : __('Enter a 15-digit Emirates ID starting with 784.') }}"
                                 inputmode="numeric"
                                 data-national-id
                                 data-id-country="{{ $idCountry }}"
@@ -163,20 +163,20 @@
                         </small>
 
                         @error('national_id_number')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
 
                     <div class="form-field">
-                        <label for="gender" class="form-label">Gender *</label>
+                        <label for="gender" class="form-label">{{ __('Gender') }} *</label>
                         <select id="gender" name="gender" class="form-select" required>
-                            <option value="">Select gender</option>
+                            <option value="">{{ __('Select gender') }}</option>
                             @foreach (['Male', 'Female', 'Other'] as $gender)
                                 <option
-                                    value="{{ $gender }}"
+                                    value="{{ __($gender) }}"
                                     @selected(strtolower(old('gender', $patient->gender ?? '')) === strtolower($gender))
                                 >
-                                    {{ $gender }}
+                                    {{ __($gender) }}
                                 </option>
                             @endforeach
                         </select>
@@ -184,7 +184,7 @@
 
                     <div class="form-field">
                         <label for="date_of_birth" class="form-label">
-                            Date of Birth (optional)
+                            {{ __('Date of Birth (optional)') }}
                         </label>
                         <input
                             type="date"
@@ -203,15 +203,15 @@
                 <div class="form-section-heading">
                     <div class="form-section-number">02</div>
                     <div>
-                        <h2>Family details</h2>
-                        <p>Select marital status and applicable family information.</p>
+                        <h2>{{ __('Family details') }}</h2>
+                        <p>{{ __('Select marital status and applicable family information.') }}</p>
                     </div>
                 </div>
 
                 <div class="patient-form-grid">
                     <div class="form-field">
                         <label for="marital_status" class="form-label">
-                            Marital Status *
+                            {{ __('Marital Status') }} *
                         </label>
                         <select
                             id="marital_status"
@@ -219,12 +219,12 @@
                             class="form-select"
                             required
                         >
-                            <option value="">Select marital status</option>
+                            <option value="">{{ __('Select marital status') }}</option>
                             <option value="unmarried" @selected($maritalStatus === 'unmarried')>
-                                Unmarried
+                                {{ __('Unmarried') }}
                             </option>
                             <option value="married" @selected($maritalStatus === 'married')>
-                                Married
+                                {{ __('Married') }}
                             </option>
                         </select>
                     </div>
@@ -234,7 +234,7 @@
                         data-children-question
                     >
                         <fieldset>
-                            <legend class="form-label fs-6">Has Children? *</legend>
+                            <legend class="form-label fs-6">{{ __('Has Children?') }} *</legend>
 
                             <div class="d-flex gap-4">
                                 @foreach (['1' => 'Yes', '0' => 'No'] as $value => $label)
@@ -253,7 +253,7 @@
                                             class="form-check-label"
                                             for="{{ $value == '1' ? 'has_children_yes' : 'has_children_no' }}"
                                         >
-                                            {{ $label }}
+                                            {{ __($label) }}
                                         </label>
                                     </div>
                                 @endforeach
@@ -266,7 +266,7 @@
                         data-children-count-field
                     >
                         <label for="children_count" class="form-label">
-                            Number of Children *
+                            {{ __('Number of Children') }} *
                         </label>
                         <input
                             type="number"
@@ -288,14 +288,14 @@
                 <div class="form-section-heading">
                     <div class="form-section-number">03</div>
                     <div>
-                        <h2>Contact details</h2>
-                        <p>Add the patient’s residential address.</p>
+                        <h2>{{ __('Contact details') }}</h2>
+                        <p>{{ __('Add the patient’s residential address.') }}</p>
                     </div>
                 </div>
 
                 <div class="patient-form-grid">
                     <div class="form-field form-field-wide">
-                        <label for="address" class="form-label">Address</label>
+                        <label for="address" class="form-label">{{ __('Address') }}</label>
                         <input
                             type="text"
                             id="address"
@@ -313,13 +313,13 @@
                 <div class="form-section-heading">
                     <div class="form-section-number">04</div>
                     <div>
-                        <h2>Additional notes</h2>
-                        <p>Add useful information about the patient.</p>
+                        <h2>{{ __('Additional notes') }}</h2>
+                        <p>{{ __('Add useful information about the patient.') }}</p>
                     </div>
                 </div>
 
                 <div class="form-field">
-                    <label for="notes" class="form-label">Notes</label>
+                    <label for="notes" class="form-label">{{ __('Notes') }}</label>
                     <textarea
                         id="notes"
                         name="notes"
@@ -330,7 +330,7 @@
             </section>
 
             <div class="patient-form-actions">
-                <a href="{{ route('patients.index') }}" class="btn btn-light">Cancel</a>
+                <a href="{{ route('patients.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
                     {{ $editing ? 'Update Patient' : 'Save Patient' }}

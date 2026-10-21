@@ -32,10 +32,10 @@
     >
 
     <small id="{{ $inputId }}_help" class="text-muted">
-        Select the country, then enter the phone number.
+        {{ __('Select the country, then enter the phone number.') }}
     </small>
 
     @error($name)
-        <div class="text-danger small">{{ $message }}</div>
+        <div class="text-danger small">{{ __($message) }}</div>
     @enderror
 </div>

@@ -10,10 +10,10 @@
         <div class="form-page-header">
             <a href="{{ route('orders.show', $order) }}" class="back-link">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to order
+                {{ __('Back to order') }}
             </a>
 
-            <h1>Refund {{ $order->order_no }}</h1>
+            <h1>{{ __('Refund') }} {{ $order->order_no }}</h1>
             <p>
                 {{ $order->customer_name }}
                 · Available to refund:
@@ -25,7 +25,7 @@
             <div class="alert alert-danger" role="alert">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -43,14 +43,14 @@
             <section class="payment-form-panel">
                 <div class="payment-form-heading">
                     <div>
-                        <h2>Refund details</h2>
-                        <p>Record money actually returned to the customer.</p>
+                        <h2>{{ __('Refund details') }}</h2>
+                        <p>{{ __('Record money actually returned to the customer.') }}</p>
                     </div>
                 </div>
 
                 <div class="payment-form-grid">
                     <label class="form-field">
-                        <span class="form-label">Amount ({{ $order->currency }}) *</span>
+                        <span class="form-label">{{ __('Amount (') }}{{ $order->currency }}) *</span>
                         <input
                             type="number"
                             name="amount"
@@ -64,7 +64,7 @@
                     </label>
 
                     <label class="form-field">
-                        <span class="form-label">Refund date/time *</span>
+                        <span class="form-label">{{ __('Refund date/time') }} *</span>
                         <input
                             type="datetime-local"
                             name="refunded_at"
@@ -77,17 +77,17 @@
                     </label>
 
                     <label class="form-field">
-                        <span class="form-label">Refund method *</span>
+                        <span class="form-label">{{ __('Refund method') }} *</span>
                         <select name="method" class="form-select" required>
-                            <option value="">Select method</option>
-                            <option value="cash" @selected(old('method') === 'cash')>Cash</option>
-                            <option value="bank" @selected(old('method') === 'bank')>Bank transfer</option>
-                            <option value="card" @selected(old('method') === 'card')>Card</option>
+                            <option value="">{{ __('Select method') }}</option>
+                            <option value="cash" @selected(old('method') === 'cash')>{{ __('Cash') }}</option>
+                            <option value="bank" @selected(old('method') === 'bank')>{{ __('Bank transfer') }}</option>
+                            <option value="card" @selected(old('method') === 'card')>{{ __('Card') }}</option>
                         </select>
                     </label>
 
                     <label class="form-field">
-                        <span class="form-label">Bank/card refund reference</span>
+                        <span class="form-label">{{ __('Bank/card refund reference') }}</span>
                         <input
                             type="text"
                             name="reference_no"
@@ -95,11 +95,11 @@
                             value="{{ old('reference_no') }}"
                             maxlength="100"
                         >
-                        <small class="text-muted">Required for bank/card refunds.</small>
+                        <small class="text-muted">{{ __('Required for bank/card refunds.') }}</small>
                     </label>
 
                     <label class="form-field payment-field-wide">
-                        <span class="form-label">Reason *</span>
+                        <span class="form-label">{{ __('Reason') }} *</span>
                         <textarea
                             name="reason"
                             class="form-control"
@@ -121,24 +121,23 @@
                         @checked((string) old('cancel_order', '1') === '1')
                     >
                     <label for="cancel_order" class="form-check-label">
-                        Cancel the order after refunding the full available amount.
+                        {{ __('Cancel the order after refunding the full available amount.') }}
                     </label>
                 </div>
 
                 <p class="text-muted small mt-3 mb-0">
-                    For a partial refund, uncheck cancellation.
-                    The net received amount decreases; adjust the order total separately if needed.
+                    {{ __('For a partial refund, uncheck cancellation. The net received amount decreases; adjust the order total separately if needed.') }}
                 </p>
             </section>
 
             <div class="payment-form-actions">
                 <a href="{{ route('orders.show', $order) }}" class="btn btn-light">
-                    Back
+                    {{ __('Back') }}
                 </a>
 
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-arrow-return-left" aria-hidden="true"></i>
-                    Record refund
+                    {{ __('Record refund') }}
                 </button>
             </div>
         </form>

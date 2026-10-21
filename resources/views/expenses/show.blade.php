@@ -20,9 +20,9 @@
     $methodLabel = match (
         strtolower(trim($expense->payment_method ?? ''))
     ) {
-        'cash' => 'Cash',
-        'bank', 'bank transfer', 'bank_transfer' => 'Bank transfer',
-        'card' => 'Card',
+        'cash' => __('Cash'),
+        'bank', 'bank transfer', 'bank_transfer' => __('Bank transfer'),
+        'card' => __('Card'),
         default => $expense->payment_method ?: 'Not recorded',
     };
 
@@ -40,14 +40,14 @@
     <main class="dashboard-main">
         @if (session('success'))
             <div class="alert alert-success no-print" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         <div class="expense-detail-toolbar no-print">
             <a href="{{ route('expenses.index') }}" class="back-link">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to expenses
+                {{ __('Back to expenses') }}
             </a>
 
             <div class="expense-toolbar-actions">
@@ -56,12 +56,12 @@
                     class="btn btn-outline-secondary"
                 >
                     <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                    Edit expense
+                    {{ __('Edit expense') }}
                 </a>@endclinicCan
 
                 <button type="button" class="btn btn-primary" data-print-page>
                     <i class="bi bi-printer" aria-hidden="true"></i>
-                    Print details
+                    {{ __('Print details') }}
                 </button>
             </div>
         </div>
@@ -74,16 +74,16 @@
                     </div>
 
                     <div>
-                        <span>EXPENSE RECORD</span>
+                        <span>{{ __('EXPENSE RECORD') }}</span>
                         <h1>{{ $expense->category }}</h1>
                         <p>Expense ID: EXP-{{ $expense->expense_id }}</p>
                     </div>
                 </div>
 
                 <div class="expense-detail-date">
-                    <span>Expense date</span>
+                    <span>{{ __('Expense date') }}</span>
                     <strong>
-                        {{ $expense->expense_date?->format('d F Y') ?? 'Not recorded' }}
+                        {{ $expense->expense_date?->format('d F Y') ?? __('Not recorded') }}
                     </strong>
                 </div>
             </header>
@@ -92,18 +92,18 @@
 
             <section class="expense-detail-summary">
                 <div>
-                    <span>Amount</span>
+                    <span>{{ __('Amount') }}</span>
                     <strong class="expense-detail-amount">
                         {{ $currency }}
                         {{ number_format($expense->amount, $moneyDecimals) }}
                     </strong>
                     @if (!$currency)
-                        <small>Currency not recorded</small>
+                        <small>{{ __('Currency not recorded') }}</small>
                     @endif
                 </div>
 
                 <div>
-                    <span>Category</span>
+                    <span>{{ __('Category') }}</span>
                     <strong>
                         <span class="expense-category {{ $categoryClass }}">
                             {{ $expense->category }}
@@ -112,53 +112,53 @@
                 </div>
 
                 <div>
-                    <span>Payment method</span>
-                    <strong>{{ $methodLabel }}</strong>
+                    <span>{{ __('Payment method') }}</span>
+                    <strong>{{ __($methodLabel) }}</strong>
                 </div>
 
                 <div>
-                    <span>Recorded by</span>
+                    <span>{{ __('Recorded by') }}</span>
                     <strong>
-                        {{ $expense->recordedBy?->name ?? 'Not recorded' }}
+                        {{ $expense->recordedBy?->name ?? __('Not recorded') }}
                     </strong>
                 </div>
             </section>
 
             <section class="expense-detail-section">
                 <div class="expense-section-heading">
-                    <h2>Expense information</h2>
+                    <h2>{{ __('Expense information') }}</h2>
                 </div>
 
                 <div class="expense-info-grid">
                     <div>
-                        <span>Description</span>
+                        <span>{{ __('Description') }}</span>
                         <p class="mb-0">
-                            {{ $expense->description ?: 'Not recorded' }}
+                            {{ $expense->description ?: __('Not recorded') }}
                         </p>
                     </div>
 
                     <div>
-                        <span>Clinic</span>
-                        <strong>{{ $clinic?->name ?? 'Not recorded' }}</strong>
+                        <span>{{ __('Clinic') }}</span>
+                        <strong>{{ $clinic?->name ?? __('Not recorded') }}</strong>
                     </div>
 
                     <div>
-                        <span>Expense date</span>
+                        <span>{{ __('Expense date') }}</span>
                         <strong>
-                            {{ $expense->expense_date?->format('d M Y') ?? 'Not recorded' }}
+                            {{ $expense->expense_date?->format('d M Y') ?? __('Not recorded') }}
                         </strong>
                     </div>
 
                     <div>
-                        <span>Original currency</span>
-                        <strong>{{ $currency ?: 'Not recorded' }}</strong>
+                        <span>{{ __('Original currency') }}</span>
+                        <strong>{{ $currency ?: __('Not recorded') }}</strong>
                     </div>
                 </div>
             </section>
 
             <footer class="expense-detail-footer">
                 <p>{{ $clinic?->name }} · Clinic expense record</p>
-                <small>This is a computer-generated expense detail.</small>
+                <small>{{ __('This is a computer-generated expense detail.') }}</small>
             </footer>
         </article>
     </main>

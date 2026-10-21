@@ -42,6 +42,8 @@ use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\PreventDuplicateSubmission;
 use Illuminate\Support\Facades\Route;
 
+Route::post('/language', [\App\Http\Controllers\LanguageController::class, 'update'])->middleware('throttle:30,1')->name('language.update');
+
 Route::get('/', fn () => redirect()->route('login'));
 
 Route::get('/login', [LoginController::class, 'show'])->name('login');

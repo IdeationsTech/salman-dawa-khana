@@ -36,10 +36,10 @@
     ];
 
     $statusOptions = [
-        'in_progress' => 'In progress',
-        'completed' => 'Completed',
-        'follow_up_required' => 'Follow-up required',
-        'cancelled' => 'Cancelled',
+        'in_progress' => __('In progress'),
+        'completed' => __('Completed'),
+        'follow_up_required' => __('Follow-up required'),
+        'cancelled' => __('Cancelled'),
     ];
 @endphp
 
@@ -50,18 +50,18 @@
         <div class="form-page-header">
             <a href="{{ route('visits.index') }}" class="back-link">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to visits
+                {{ __('Back to visits') }}
             </a>
-            <h1>{{ $editing ? 'Edit visit' : 'Create new visit' }}</h1>
-            <p>Record the patient, treating practitioner and consultation details.</p>
+            <h1>{{ $editing ? __('Edit visit') : __('Create new visit') }}</h1>
+            <p>{{ __('Record the patient, treating practitioner and consultation details.') }}</p>
         </div>
 
         @if ($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
                 <ul class="mb-0 mt-2">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -69,8 +69,7 @@
 
         @if ($doctors->isEmpty())
             <div class="alert alert-warning" role="status">
-                No active Owner/Doctor is available.
-                The clinic owner must activate or add a practitioner first.
+                {{ __('No active Owner/Doctor is available. The clinic owner must activate or add a practitioner first.') }}
             </div>
         @endif
 
@@ -90,8 +89,8 @@
                 <div class="visit-form-heading">
                     <div class="form-section-number">01</div>
                     <div>
-                        <h2>Patient and practitioner</h2>
-                        <p>Select who is receiving and providing the consultation.</p>
+                        <h2>{{ __('Patient and practitioner') }}</h2>
+                        <p>{{ __('Select who is receiving and providing the consultation.') }}</p>
                     </div>
                 </div>
 
@@ -100,7 +99,7 @@
 
                     <div class="form-field">
                         <label for="doctor_user_id" class="form-label">
-                            Treating Doctor / Hakeem *
+                            {{ __('Treating Doctor / Hakeem') }} *
                         </label>
 
                         <select
@@ -109,7 +108,7 @@
                             class="form-select @error('doctor_user_id') is-invalid @enderror"
                             required
                         >
-                            <option value="">Select Doctor / Hakeem</option>
+                            <option value="">{{ __('Select Doctor / Hakeem') }}</option>
 
                             @foreach ($doctors as $doctor)
                                 <option
@@ -125,11 +124,11 @@
                         </select>
 
                         @error('doctor_user_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
 
                         <small class="form-help">
-                            The person recording this visit is saved separately.
+                            {{ __('The person recording this visit is saved separately.') }}
                         </small>
                     </div>
                 </div>
@@ -139,14 +138,14 @@
                 <div class="visit-form-heading">
                     <div class="form-section-number">02</div>
                     <div>
-                        <h2>Visit details</h2>
-                        <p>Day and Hijri date update automatically.</p>
+                        <h2>{{ __('Visit details') }}</h2>
+                        <p>{{ __('Day and Hijri date update automatically.') }}</p>
                     </div>
                 </div>
 
                 <div class="visit-form-grid">
                     <div class="form-field">
-                        <label for="visit_date" class="form-label">Gregorian date *</label>
+                        <label for="visit_date" class="form-label">{{ __('Gregorian date') }} *</label>
                         <input
                             type="date"
                             id="visit_date"
@@ -159,12 +158,12 @@
                             required
                         >
                         @error('visit_date')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
 
                     <div class="form-field">
-                        <label for="visit_day" class="form-label">Day</label>
+                        <label for="visit_day" class="form-label">{{ __('Day') }}</label>
                         <input
                             type="text"
                             id="visit_day"
@@ -176,7 +175,7 @@
 
                     <div class="form-field">
                         <label for="visit_hijri_date" class="form-label">
-                            Hijri date — Umm al-Qura
+                            {{ __('Hijri date — Umm al-Qura') }}
                         </label>
                         <input
                             type="text"
@@ -193,7 +192,7 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="visit_time" class="form-label">Visit time — UAE *</label>
+                        <label for="visit_time" class="form-label">{{ __('Visit time — UAE') }} *</label>
                         <input
                             type="time"
                             id="visit_time"
@@ -203,12 +202,12 @@
                             required
                         >
                         @error('visit_time')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
 
                     <div class="form-field">
-                        <label for="visit_type" class="form-label">Visit type *</label>
+                        <label for="visit_type" class="form-label">{{ __('Visit type') }} *</label>
                         <select
                             id="visit_type"
                             name="visit_reason"
@@ -225,7 +224,7 @@
                             @endforeach
                         </select>
                         @error('visit_reason')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
                 </div>
@@ -235,32 +234,32 @@
                 <div class="visit-form-heading">
                     <div class="form-section-number">03</div>
                     <div>
-                        <h2>Visit status</h2>
-                        <p>Select the current state of this visit.</p>
+                        <h2>{{ __('Visit status') }}</h2>
+                        <p>{{ __('Select the current state of this visit.') }}</p>
                     </div>
                 </div>
 
                 <div class="visit-form-grid">
                     <div class="form-field">
-                        <label for="visit_status" class="form-label">Status *</label>
+                        <label for="visit_status" class="form-label">{{ __('Status') }} *</label>
                         <select
                             id="visit_status"
                             name="status"
                             class="form-select @error('status') is-invalid @enderror"
                             required
                         >
-                            <option value="">Select status</option>
+                            <option value="">{{ __('Select status') }}</option>
                             @foreach ($statusOptions as $value => $label)
                                 <option
                                     value="{{ $value }}"
                                     @selected(old('status', $editing ? $visit->status : 'in_progress') === $value)
                                 >
-                                    {{ $label }}
+                                    {{ __($label) }}
                                 </option>
                             @endforeach
                         </select>
                         @error('status')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
                 </div>
@@ -270,15 +269,15 @@
                 <div class="visit-form-heading">
                     <div class="form-section-number">04</div>
                     <div>
-                        <h2>Tashkhees and notes</h2>
-                        <p>Record the illness or complaint for this visit.</p>
+                        <h2>{{ __('Tashkhees and notes') }}</h2>
+                        <p>{{ __('Record the illness or complaint for this visit.') }}</p>
                     </div>
                 </div>
 
                 <div class="visit-form-grid">
                     <div class="form-field visit-field-wide">
                         <label for="diagnosis_name" class="form-label">
-                            Tashkhees / Illness name
+                            {{ __('Tashkhees / Illness name') }}
                         </label>
                         <input
                             type="text"
@@ -289,12 +288,12 @@
                             maxlength="255"
                         >
                         @error('diagnosis_name')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
 
                     <div class="form-field visit-field-wide">
-                        <label for="notes" class="form-label">Visit notes</label>
+                        <label for="notes" class="form-label">{{ __('Visit notes') }}</label>
                         <textarea
                             id="notes"
                             name="general_notes"
@@ -302,14 +301,14 @@
                             rows="5"
                         >{{ old('general_notes', $visit->general_notes ?? '') }}</textarea>
                         @error('general_notes')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
                 </div>
             </section>
 
             <div class="visit-form-actions">
-                <a href="{{ route('visits.index') }}" class="btn btn-light">Cancel</a>
+                <a href="{{ route('visits.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
                 <button type="submit" class="btn btn-primary" @disabled($doctors->isEmpty())>
                     {{ $editing ? 'Update visit' : 'Save visit' }}
                 </button>

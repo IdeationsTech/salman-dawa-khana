@@ -10,12 +10,12 @@
         <div class="form-page-header">
             <a href="{{ route('orders.show', $order) }}" class="back-link">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to order
+                {{ __('Back to order') }}
             </a>
 
-            <h1>Edit {{ $order->order_no }}</h1>
+            <h1>{{ __('Edit') }} {{ $order->order_no }}</h1>
             <p>
-                Net received:
+                {{ __('Net received') }}:
                 {{ $order->currency }} {{ $paidAmount }}
             </p>
         </div>

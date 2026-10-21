@@ -47,26 +47,26 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Settings</p>
-                <h1>Payment settings</h1>
+                <p class="dashboard-date">{{ __('Settings') }}</p>
+                <h1>{{ __('Payment settings') }}</h1>
                 <p class="page-subtitle">
-                    Configure payment preferences and amount display.
+                    {{ __('Configure payment preferences and amount display.') }}
                 </p>
             </div>
         </header>
 
         @if (session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         @if ($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
                 <ul class="mb-0 mt-2">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -86,15 +86,15 @@
                     <section class="settings-panel">
                         <div class="settings-panel-heading">
                             <div>
-                                <h2>Currency and format</h2>
-                                <p>View clinic currency and configure amount display.</p>
+                                <h2>{{ __('Currency and format') }}</h2>
+                                <p>{{ __('View clinic currency and configure amount display.') }}</p>
                             </div>
                         </div>
 
                         <div class="settings-form-grid">
                             <div class="form-field">
                                 <label for="currency" class="form-label">
-                                    Clinic currency
+                                    {{ __('Clinic currency') }}
                                 </label>
 
                                 <input
@@ -106,14 +106,13 @@
                                 >
 
                                 <small class="text-muted">
-                                    Currency is locked after signup.
-                                    Contact the platform administrator to change it.
+                                    {{ __('Currency is locked after signup. Contact the platform administrator to change it.') }}
                                 </small>
                             </div>
 
                             <div class="form-field">
                                 <label for="decimal_places" class="form-label">
-                                    Decimal places *
+                                    {{ __('Decimal places') }} *
                                 </label>
 
                                 <select
@@ -141,8 +140,7 @@
 
                             <div class="form-field settings-field-wide">
                                 <small class="text-muted">
-                                    Decimal places affect display only.
-                                    Existing amounts are not converted.
+                                    {{ __('Decimal places affect display only. Existing amounts are not converted.') }}
                                 </small>
                             </div>
                         </div>
@@ -195,12 +193,12 @@
                         <div class="settings-panel-actions">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
-                                Save payment settings
+                                {{ __('Save payment settings') }}
                             </button>
                         </div>
                     @else
                         <p class="text-muted">
-                            The clinic Owner manages payment settings.
+                            {{ __('The clinic Owner manages payment settings.') }}
                         </p>
                     @endif
                 </form>

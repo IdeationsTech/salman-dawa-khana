@@ -1,42 +1,42 @@
 @extends('platform-admin.layouts.app')
 
-@section('title', 'Clinics')
+@section('title', __('Clinics'))
 @section('page_title', 'Clinics')
 
 @section('content')
     <div class="pa-page-heading">
         <div>
-            <h1 class="pa-page-title">Clinics</h1>
+            <h1 class="pa-page-title">{{ __('Clinics') }}</h1>
 
             <p class="pa-page-description">
-                Review registrations and manage clinic approvals.
+                {{ __('Review registrations and manage clinic approvals.') }}
             </p>
         </div>
     </div>
 
-    <section class="pa-stats" aria-label="Clinic statistics">
+    <section class="pa-stats" aria-label="{{ __('Clinic statistics') }}">
         <article class="pa-stat">
-            <p class="pa-stat-label">Total clinics</p>
+            <p class="pa-stat-label">{{ __('Total clinics') }}</p>
             <p class="pa-stat-value">{{ number_format($stats['total']) }}</p>
-            <p class="pa-stat-note">All registered clinics</p>
+            <p class="pa-stat-note">{{ __('All registered clinics') }}</p>
         </article>
 
         <article class="pa-stat">
-            <p class="pa-stat-label">Pending review</p>
+            <p class="pa-stat-label">{{ __('Pending review') }}</p>
             <p class="pa-stat-value">{{ number_format($stats['pending']) }}</p>
-            <p class="pa-stat-note">Awaiting your decision</p>
+            <p class="pa-stat-note">{{ __('Awaiting your decision') }}</p>
         </article>
 
         <article class="pa-stat">
-            <p class="pa-stat-label">Approved</p>
+            <p class="pa-stat-label">{{ __('Approved') }}</p>
             <p class="pa-stat-value">{{ number_format($stats['approved']) }}</p>
-            <p class="pa-stat-note">Approved clinics</p>
+            <p class="pa-stat-note">{{ __('Approved clinics') }}</p>
         </article>
 
         <article class="pa-stat">
-            <p class="pa-stat-label">Rejected</p>
+            <p class="pa-stat-label">{{ __('Rejected') }}</p>
             <p class="pa-stat-value">{{ number_format($stats['rejected']) }}</p>
-            <p class="pa-stat-note">Declined registrations</p>
+            <p class="pa-stat-note">{{ __('Declined registrations') }}</p>
         </article>
     </section>
 
@@ -44,11 +44,11 @@
         <header class="pa-panel-header">
             <div>
                 <h2 class="pa-panel-title" id="clinics-list-title">
-                    Clinic directory
+                    {{ __('Clinic directory') }}
                 </h2>
 
                 <p class="pa-panel-description">
-                    Search by clinic, contact name, email or phone.
+                    {{ __('Search by clinic, contact name, email or phone.') }}
                 </p>
             </div>
         </header>
@@ -59,7 +59,7 @@
             class="pa-filter-form"
         >
             <div class="pa-field pa-filter-search">
-                <label for="clinic-search">Search</label>
+                <label for="clinic-search">{{ __('Search') }}</label>
 
                 <input
                     id="clinic-search"
@@ -67,12 +67,12 @@
                     name="search"
                     class="pa-input"
                     value="{{ $filters['search'] }}"
-                    placeholder="Clinic name, contact, email or phone"
+                    placeholder="{{ __('Clinic name, contact, email or phone') }}"
                 >
             </div>
 
             <div class="pa-field">
-                <label for="onboarding-status">Approval status</label>
+                <label for="onboarding-status">{{ __('Approval status') }}</label>
 
                 <select
                     id="onboarding-status"
@@ -82,49 +82,49 @@
                     <option value="all"
                         @selected($filters['onboarding_status'] === 'all')
                     >
-                        All statuses
+                        {{ __('All statuses') }}
                     </option>
 
                     <option value="pending_review"
                         @selected($filters['onboarding_status'] === 'pending_review')
                     >
-                        Pending review
+                        {{ __('Pending review') }}
                     </option>
 
                     <option value="approved"
                         @selected($filters['onboarding_status'] === 'approved')
                     >
-                        Approved
+                        {{ __('Approved') }}
                     </option>
 
                     <option value="rejected"
                         @selected($filters['onboarding_status'] === 'rejected')
                     >
-                        Rejected
+                        {{ __('Rejected') }}
                     </option>
                 </select>
             </div>
 
             <div class="pa-filter-actions">
                 <button type="submit" class="pa-button pa-button-primary">
-                    Apply filters
+                    {{ __('Apply filters') }}
                 </button>
 
                 <a
                     href="{{ route('platform-admin.clinics.index') }}"
                     class="pa-button"
                 >
-                    Reset
+                    {{ __('Reset') }}
                 </a>
             </div>
         </form>
 
         @if($clinics->isEmpty())
             <div class="pa-empty">
-                <p class="pa-empty-title">No clinics found</p>
+                <p class="pa-empty-title">{{ __('No clinics found') }}</p>
 
                 <p class="pa-empty-description">
-                    Try another search or approval status.
+                    {{ __('Try another search or approval status.') }}
                 </p>
             </div>
         @else
@@ -132,12 +132,12 @@
                 <table class="pa-table">
                     <thead>
                         <tr>
-                            <th scope="col">Clinic</th>
-                            <th scope="col">Customer</th>
-                            <th scope="col">Contact</th>
-                            <th scope="col">Approval</th>
-                            <th scope="col">Registered</th>
-                            <th scope="col">Action</th>
+                            <th scope="col">{{ __('Clinic') }}</th>
+                            <th scope="col">{{ __('Customer') }}</th>
+                            <th scope="col">{{ __('Contact') }}</th>
+                            <th scope="col">{{ __('Approval') }}</th>
+                            <th scope="col">{{ __('Registered') }}</th>
+                            <th scope="col">{{ __('Action') }}</th>
                         </tr>
                     </thead>
 
@@ -150,7 +150,7 @@
                                     </span>
 
                                     <span class="pa-cell-subtitle">
-                                        Clinic #{{ $clinic->clinic_id }}
+                                        {{ __('Clinic #') }}{{ $clinic->clinic_id }}
                                     </span>
                                 </td>
 
@@ -195,7 +195,7 @@
                                         class="pa-link"
                                         href="{{ route('platform-admin.clinics.show', $clinic->clinic_id) }}"
                                     >
-                                        View details
+                                        {{ __('View details') }}
                                     </a>
                                 </td>
                             </tr>
@@ -206,35 +206,35 @@
 
             <div class="pa-list-footer">
                 <span>
-                    Showing {{ $clinics->firstItem() }}
-                    to {{ $clinics->lastItem() }}
-                    of {{ $clinics->total() }} clinics
+                    {{ __('Showing') }} {{ $clinics->firstItem() }}
+                    {{ __('to') }} {{ $clinics->lastItem() }}
+                    {{ __('of') }} {{ $clinics->total() }} {{ __('clinics') }}
                 </span>
 
                 @if($clinics->hasPages())
                     <nav
                         class="pa-pagination"
-                        aria-label="Clinic pages"
+                        aria-label="{{ __('Clinic pages') }}"
                     >
                         @if($clinics->onFirstPage())
-                            <span class="is-disabled">Previous</span>
+                            <span class="is-disabled">{{ __('Previous') }}</span>
                         @else
                             <a href="{{ $clinics->previousPageUrl() }}">
-                                Previous
+                                {{ __('Previous') }}
                             </a>
                         @endif
 
                         <span>
-                            Page {{ $clinics->currentPage() }}
-                            of {{ $clinics->lastPage() }}
+                            {{ __('Page') }} {{ $clinics->currentPage() }}
+                            {{ __('of') }} {{ $clinics->lastPage() }}
                         </span>
 
                         @if($clinics->hasMorePages())
                             <a href="{{ $clinics->nextPageUrl() }}">
-                                Next
+                                {{ __('Next') }}
                             </a>
                         @else
-                            <span class="is-disabled">Next</span>
+                            <span class="is-disabled">{{ __('Next') }}</span>
                         @endif
                     </nav>
                 @endif

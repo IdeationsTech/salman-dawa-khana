@@ -60,7 +60,7 @@
     <main class="dashboard-main">
         @if (session('success'))
             <div class="alert alert-success no-print" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
@@ -68,7 +68,7 @@
             <div class="alert alert-danger no-print" role="alert">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -77,7 +77,7 @@
         <div class="payment-detail-toolbar no-print">
             <a href="{{ route('payments.index') }}" class="back-link">
                 <i class="bi bi-arrow-left app-icon" aria-hidden="true"></i>
-                Back to payments
+                {{ __('Back to payments') }}
             </a>
 
             <div class="payment-toolbar-actions flex-wrap">
@@ -87,7 +87,7 @@
                         class="btn btn-outline-secondary"
                     >
                         <i class="bi bi-pencil-square app-icon" aria-hidden="true"></i>
-                        Edit payment
+                        {{ __('Edit payment') }}
                     </a>@endclinicCan
                 @endif
 
@@ -104,7 +104,7 @@
                         ]) }}"
                         class="btn btn-outline-secondary"
                     >
-                        Receive remaining payment
+                        {{ __('Receive remaining payment') }}
                     </a>
                 @endif
 
@@ -114,7 +114,7 @@
                     data-print-page
                 >
                     <i class="bi bi-printer app-icon" aria-hidden="true"></i>
-                    Print / Save PDF
+                    {{ __('Print / Save PDF') }}
                 </button>
             </div>
         </div>
@@ -155,28 +155,28 @@
 
                     <p>{{ $documentDate->format('d M Y') }}</p>
                     <p>{{ $documentDate->format('h:i A') }}</p>
-                    <p>Currency: {{ $currency }}</p>
+                    <p>{{ __('Currency') }}: {{ $currency }}</p>
                 </div>
             </header>
 
             <section class="r2-patient">
                 <div>
-                    <span>Patient name</span>
+                    <span>{{ __('Patient name') }}</span>
                     <strong>{{ $patient->full_name }}</strong>
                 </div>
 
                 <div>
-                    <span>Patient code</span>
+                    <span>{{ __('Patient code') }}</span>
                     <strong>{{ $patient->patient_code }}</strong>
                 </div>
 
                 <div>
-                    <span>Date of birth / Age at receipt date</span>
+                    <span>{{ __('Date of birth / Age at receipt date') }}</span>
                     <strong>
                         @if ($dob)
                             {{ $dob->format('d M Y') }}
                             @if ($ageAtDocument !== null)
-                                / {{ $ageAtDocument }} years
+                                / {{ $ageAtDocument }} {{ __('years') }}
                             @endif
                         @else
                             —
@@ -185,7 +185,7 @@
                 </div>
 
                 <div>
-                    <span>Phone number</span>
+                    <span>{{ __('Phone number') }}</span>
                     <strong>{{ $patient->phone ?: '—' }}</strong>
                 </div>
             </section>
@@ -194,8 +194,8 @@
                 <table class="r2-table">
                     <thead>
                         <tr>
-                            <th>Description</th>
-                            <th class="r2-number">Amount ({{ $currency }})</th>
+                            <th>{{ __('Description') }}</th>
+                            <th class="r2-number">{{ __('Amount (') }}{{ $currency }})</th>
                         </tr>
                     </thead>
 
@@ -209,7 +209,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td>Bill charges</td>
+                                <td>{{ __('Bill charges') }}</td>
                                 <td class="r2-number">
                                     {{ number_format($bill->subtotal, $decimals) }}
                                 </td>
@@ -222,7 +222,7 @@
             <section class="r2-bottom">
                 <div class="r2-details">
                     <div>
-                        <span>Bill number</span>
+                        <span>{{ __('Bill number') }}</span>
                         <strong>
                             {{ $bill?->bill_no ?? 'Unallocated payment' }}
                         </strong>
@@ -230,18 +230,18 @@
 
                     @if ($payment)
                         <div>
-                            <span>Payment method</span>
-                            <strong>{{ $methodLabel }}</strong>
+                            <span>{{ __('Payment method') }}</span>
+                            <strong>{{ __($methodLabel) }}</strong>
                         </div>
 
                         <div>
-                            <span>Received by</span>
+                            <span>{{ __('Received by') }}</span>
                             <strong>{{ $payment->receivedBy?->name ?? '—' }}</strong>
                         </div>
 
                         @if ($payment->reference_no)
                             <div>
-                                <span>Transaction reference</span>
+                                <span>{{ __('Transaction reference') }}</span>
                                 <strong>{{ $payment->reference_no }}</strong>
                             </div>
                         @endif
@@ -249,7 +249,7 @@
 
                     @if ($bill)
                         <div>
-                            <span>Current bill status</span>
+                            <span>{{ __('Current bill status') }}</span>
                             <strong>{{ $billStatus }}</strong>
                         </div>
                     @endif
@@ -258,36 +258,36 @@
                 <div class="r2-summary">
                     @if ($bill)
                         <div>
-                            <span>Subtotal</span>
+                            <span>{{ __('Subtotal') }}</span>
                             <strong>{{ $money($bill->subtotal) }}</strong>
                         </div>
 
                         <div>
-                            <span>Discount</span>
+                            <span>{{ __('Discount') }}</span>
                             <strong>{{ $money($bill->discount) }}</strong>
                         </div>
 
                         <div class="r2-total">
-                            <span>Bill total</span>
+                            <span>{{ __('Bill total') }}</span>
                             <strong>{{ $money($bill->total_amount) }}</strong>
                         </div>
                     @endif
 
                     @if ($payment)
                         <div>
-                            <span>This payment</span>
+                            <span>{{ __('This payment') }}</span>
                             <strong>{{ $money($payment->amount) }}</strong>
                         </div>
                     @endif
 
                     @if ($bill)
                         <div>
-                            <span>Total paid on this bill</span>
+                            <span>{{ __('Total paid on this bill') }}</span>
                             <strong>{{ $money($billPaid) }}</strong>
                         </div>
 
                         <div class="r2-due">
-                            <span>This bill remaining</span>
+                            <span>{{ __('This bill remaining') }}</span>
                             <strong>{{ $money($billDue) }}</strong>
                         </div>
                     @endif
@@ -295,13 +295,13 @@
                     @if ($showPreviousDue)
                         @if ($bill)
                             <div>
-                                <span>Other bills outstanding ({{ $currency }})</span>
+                                <span>{{ __('Other bills outstanding (') }}{{ $currency }})</span>
                                 <strong>{{ $money($otherBillsDue) }}</strong>
                             </div>
                         @endif
 
                         <div class="r2-total">
-                            <span>Patient outstanding ({{ $currency }})</span>
+                            <span>{{ __('Patient outstanding (') }}{{ $currency }})</span>
                             <strong>{{ $money($patientOutstanding) }}</strong>
                         </div>
                     @endif
@@ -310,24 +310,22 @@
 
             @if ($payment?->notes)
                 <div class="r2-notes">
-                    <span>Payment notes</span>
+                    <span>{{ __('Payment notes') }}</span>
                     <p>{{ $payment->notes }}</p>
                 </div>
             @endif
 
             <p class="r2-balance-note">
-                Balances are current when this receipt is generated.
-                Outstanding totals include only {{ $currency }} bills.
-                Unallocated payments are not deducted from bill balances.
+                {{ __('Balances are current when this receipt is generated. Outstanding totals include only') }} {{ $currency }} {{ __('bills. Unallocated payments are not deducted from bill balances.') }}
             </p>
 
             <div class="r2-signature">
-                Authorized signature:
+                {{ __('Authorized signature:') }}
                 <span></span>
             </div>
 
             <footer class="r2-footer">
-                <p>Thank you for visiting {{ $clinic->name }}.</p>
+                <p>{{ __('Thank you for visiting') }} {{ $clinic->name }}.</p>
 
                 <small>
                     {{ $payment
@@ -338,14 +336,14 @@
 
             @if ($bill && $billPayments->isNotEmpty())
                 <section class="r2-history no-print">
-                    <h2>Payments against this bill</h2>
+                    <h2>{{ __('Payments against this bill') }}</h2>
 
                     <table class="r2-table">
                         <thead>
                             <tr>
-                                <th>Receipt</th>
-                                <th>Date</th>
-                                <th class="r2-number">Amount</th>
+                                <th>{{ __('Receipt') }}</th>
+                                <th>{{ __('Date') }}</th>
+                                <th class="r2-number">{{ __('Amount') }}</th>
                             </tr>
                         </thead>
 

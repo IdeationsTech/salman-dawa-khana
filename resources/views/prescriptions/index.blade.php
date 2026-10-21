@@ -11,10 +11,10 @@
         {{-- PRESCRIPTIONS — Page Header --}}
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Patient care</p>
-                <h1>Prescriptions</h1>
+                <p class="dashboard-date">{{ __('Patient care') }}</p>
+                <h1>{{ __('Prescriptions') }}</h1>
                 <p class="page-subtitle">
-                    Manage patient nuskhas and prescription records.
+                    {{ __('Manage patient nuskhas and prescription records.') }}
                 </p>
             </div>
 
@@ -23,7 +23,7 @@
                     href="{{ route('prescriptions.templates.index') }}"
                     class="btn btn-outline-primary"
                 >
-                    Nuskha Templates
+                    {{ __('Nuskha Templates') }}
                 </a>@endclinicCan
 
                 @clinicCan('prescriptions.create')<a
@@ -38,17 +38,17 @@
         {{-- PRESCRIPTIONS — Messages --}}
         @if (session('success'))
             <div class="alert alert-success" role="alert">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         @if ($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
 
                 <ul class="mb-0 mt-2">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -57,27 +57,27 @@
         {{-- PRESCRIPTIONS — Summary --}}
         <section class="prescription-summary-grid">
             <article class="prescription-summary-card">
-                <span>Total prescriptions</span>
+                <span>{{ __('Total prescriptions') }}</span>
                 <strong>{{ number_format($totalPrescriptions) }}</strong>
-                <small>All clinic records</small>
+                <small>{{ __('All clinic records') }}</small>
             </article>
 
             <article class="prescription-summary-card">
-                <span>Created this month</span>
+                <span>{{ __('Created this month') }}</span>
                 <strong>{{ number_format($monthlyPrescriptions) }}</strong>
-                <small class="stat-success">Current month</small>
+                <small class="stat-success">{{ __('Current month') }}</small>
             </article>
 
             <article class="prescription-summary-card">
-                <span>Today's prescriptions</span>
+                <span>{{ __('Today\'s prescriptions') }}</span>
                 <strong>{{ number_format($todayPrescriptions) }}</strong>
-                <small>Today's records</small>
+                <small>{{ __('Today\'s records') }}</small>
             </article>
 
             <article class="prescription-summary-card">
-                <span>Saved templates</span>
+                <span>{{ __('Saved templates') }}</span>
                 <strong>{{ number_format($savedTemplates) }}</strong>
-                <small>Active reusable nuskha templates</small>
+                <small>{{ __('Active reusable nuskha templates') }}</small>
             </article>
         </section>
 
@@ -86,8 +86,8 @@
 
             <div class="prescriptions-toolbar">
                 <div>
-                    <h2>Prescription records</h2>
-                    <p>View and manage patient prescription history.</p>
+                    <h2>{{ __('Prescription records') }}</h2>
+                    <p>{{ __('View and manage patient prescription history.') }}</p>
                 </div>
 
                 <div class="prescriptions-toolbar-actions">
@@ -95,7 +95,7 @@
                         name="date_range"
                         class="form-select"
                         form="prescription-filter-form"
-                        aria-label="Filter prescriptions by date"
+                        aria-label="{{ __('Filter prescriptions by date') }}"
                     >
                         @foreach ([
                             'all dates' => 'All dates',
@@ -107,7 +107,7 @@
                                 value="{{ $value }}"
                                 @selected(request('date_range', 'all dates') === $value)
                             >
-                                {{ $label }}
+                                {{ __($label) }}
                             </option>
                         @endforeach
                     </select>
@@ -116,7 +116,7 @@
                         name="status"
                         class="form-select"
                         form="prescription-filter-form"
-                        aria-label="Filter prescriptions by status"
+                        aria-label="{{ __('Filter prescriptions by status') }}"
                     >
                         @foreach ([
                             'all' => 'All statuses',
@@ -128,7 +128,7 @@
                                 value="{{ $value }}"
                                 @selected(request('status', 'all') === $value)
                             >
-                                {{ $label }}
+                                {{ __($label) }}
                             </option>
                         @endforeach
                     </select>
@@ -151,21 +151,21 @@
                         name="search"
                         value="{{ request('search') }}"
                         maxlength="255"
-                        placeholder="Search by patient name, phone or prescription number"
-                        aria-label="Search prescriptions"
+                        placeholder="{{ __('Search by patient name, phone or prescription number') }}"
+                        aria-label="{{ __('Search prescriptions') }}"
                     >
                 </div>
 
                 <div class="d-flex flex-wrap gap-2 mb-3">
                     <button type="submit" class="btn btn-primary btn-sm">
-                        Search / Apply
+                        {{ __('Search / Apply') }}
                     </button>
 
                     <a
                         href="{{ route('prescriptions.index') }}"
                         class="btn btn-light btn-sm"
                     >
-                        Reset
+                        {{ __('Reset') }}
                     </a>
                 </div>
             </form>
@@ -175,13 +175,13 @@
                 <table class="table prescriptions-table align-middle">
                     <thead>
                         <tr>
-                            <th>Prescription ID</th>
-                            <th>Patient</th>
-                            <th>Date &amp; time</th>
-                            <th>Prepared by</th>
-                            <th>Nuskhas</th>
-                            <th>Status</th>
-                            <th class="text-end">Action</th>
+                            <th>{{ __('Prescription ID') }}</th>
+                            <th>{{ __('Patient') }}</th>
+                            <th>{{ __('Date & time') }}</th>
+                            <th>{{ __('Prepared by') }}</th>
+                            <th>{{ __('Nuskhas') }}</th>
+                            <th>{{ __('Status') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
                         </tr>
                     </thead>
 
@@ -257,14 +257,14 @@
                                             : route('prescriptions.show', $prescription) }}"
                                         class="table-action"
                                     >
-                                        {{ $status === 'draft' && \App\Support\ClinicPermissions::allows(auth()->user(), 'prescriptions.edit') ? 'Continue' : 'View' }}
+                                        {{ $status === 'draft' && \App\Support\ClinicPermissions::allows(auth()->user(), 'prescriptions.edit') ? __('Continue') : __('View') }}
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center py-4">
-                                    No prescriptions found.
+                                    {{ __('No prescriptions found.') }}
                                 </td>
                             </tr>
                         @endforelse
@@ -275,9 +275,9 @@
             {{-- PRESCRIPTIONS — Pagination --}}
             <div class="patients-pagination">
                 <span>
-                    Showing {{ $prescriptions->firstItem() ?? 0 }}
-                    to {{ $prescriptions->lastItem() ?? 0 }}
-                    of {{ $prescriptions->total() }} prescriptions
+                    {{ __('Showing') }} {{ $prescriptions->firstItem() ?? 0 }}
+                    {{ __('to') }} {{ $prescriptions->lastItem() ?? 0 }}
+                    {{ __('of') }} {{ $prescriptions->total() }} {{ __('prescriptions') }}
                 </span>
 
                 @if ($prescriptions->hasPages())

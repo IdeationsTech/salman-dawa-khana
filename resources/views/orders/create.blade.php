@@ -10,11 +10,11 @@
         <div class="form-page-header">
             <a href="{{ route('orders.index') }}" class="back-link">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to orders
+                {{ __('Back to orders') }}
             </a>
 
-            <h1>New nuskha order</h1>
-            <p>Record a customer order without creating a patient or visit.</p>
+            <h1>{{ __('New nuskha order') }}</h1>
+            <p>{{ __('Record a customer order without creating a patient or visit.') }}</p>
         </div>
 
         @include('orders._form')

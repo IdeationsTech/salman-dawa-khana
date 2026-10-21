@@ -10,10 +10,10 @@
                 <i class="bi bi-heart-pulse" aria-hidden="true"></i>
             </div>
             <h1>Clinicora</h1>
-            <p class="brand-tagline">Clinic Management, Simplified.</p>
+            <p class="brand-tagline">{{ __('Clinic Management, Simplified.') }}</p>
             <div class="brand-divider"></div>
             <p class="brand-description">
-                Manage patients, prescriptions, orders and clinic payments.
+                {{ __('Manage patients, prescriptions, orders and clinic payments.') }}
             </p>
         </div>
 
@@ -27,9 +27,9 @@
                 </div>
 
                 <div class="auth-heading">
-                    <p class="eyebrow">WELCOME BACK</p>
-                    <h2>Sign in to your account</h2>
-                    <p>Enter your details to continue.</p>
+                    <p class="eyebrow">{{ __('WELCOME BACK') }}</p>
+                    <h2>{{ __('Sign in to your account') }}</h2>
+                    <p>{{ __('Enter your details to continue.') }}</p>
                 </div>
 
                 @if ($errors->any())
@@ -40,7 +40,7 @@
 
                 @if (session('status'))
                     <div class="alert alert-success" role="status">
-                        {{ session('status') }}
+                        {{ __(session('status')) }}
                     </div>
                 @endif
 
@@ -48,7 +48,7 @@
                     @csrf
 
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email address *</label>
+                        <label for="email" class="form-label">{{ __('Email address') }} *</label>
                         <input
                             type="email"
                             id="email"
@@ -63,9 +63,9 @@
 
                     <div class="mb-3">
                         <div class="password-label-row">
-                            <label for="password" class="form-label">Password *</label>
+                            <label for="password" class="form-label">{{ __('Password') }} *</label>
                             <a href="{{ route('password.request') }}" class="auth-link">
-                                Forgot password?
+                                {{ __('Forgot password?') }}
                             </a>
                         </div>
 
@@ -88,22 +88,22 @@
                             value="1"
                             @checked(old('remember'))
                         >
-                        <label for="remember" class="form-check-label">Remember me</label>
+                        <label for="remember" class="form-check-label">{{ __('Remember me') }}</label>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg w-100">
-                        Sign in
+                        {{ __('Sign in') }}
                     </button>
                 </form>
 
                 <div class="auth-footer">
-                    <span>New clinic?</span>
-                    <a href="{{ route('register') }}" class="auth-link">Create an account</a>
+                    <span>{{ __('New clinic?') }}</span>
+                    <a href="{{ route('register') }}" class="auth-link">{{ __('Create an account') }}</a>
                 </div>
 
                 <div class="secure-note">
                     <i class="bi bi-shield-check" aria-hidden="true"></i>
-                    Access to your clinic workspace
+                    {{ __('Access to your clinic workspace') }}
                 </div>
             </div>
         </div>

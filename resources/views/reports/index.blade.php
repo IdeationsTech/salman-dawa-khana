@@ -9,9 +9,9 @@
         . ' ' . number_format((float) $value, $decimalPlaces);
 
     $methodLabel = fn ($value) => match (strtolower(trim($value ?? ''))) {
-        'bank', 'bank transfer', 'bank_transfer' => 'Bank transfer',
-        'cash' => 'Cash',
-        'card' => 'Card',
+        'bank', 'bank transfer', 'bank_transfer' => __('Bank transfer'),
+        'cash' => __('Cash'),
+        'card' => __('Card'),
         default => ucfirst($value ?? ''),
     };
 @endphp
@@ -22,16 +22,16 @@
     <main class="dashboard-main">
         <header class="page-header no-print">
             <div>
-                <p class="dashboard-date">Clinic performance</p>
-                <h1>Reports</h1>
+                <p class="dashboard-date">{{ __('Clinic performance') }}</p>
+                <h1>{{ __('Reports') }}</h1>
                 <p class="page-subtitle">
-                    Patient and order collections, expenses and activity.
+                    {{ __('Patient and order collections, expenses and activity.') }}
                 </p>
             </div>
 
             <button type="button" class="btn btn-primary" data-print-page>
                 <i class="bi bi-printer app-icon" aria-hidden="true"></i>
-                Print / Save PDF
+                {{ __('Print / Save PDF') }}
             </button>
         </header>
 
@@ -39,7 +39,7 @@
             <div class="alert alert-danger no-print" role="alert">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -52,7 +52,7 @@
                 class="orders-filter-grid"
             >
                 <label class="form-field">
-                    <span class="form-label">Report type</span>
+                    <span class="form-label">{{ __('Report type') }}</span>
                     <select name="report_type" class="form-select">
                         @foreach ([
                             'summary' => 'Summary',
@@ -60,14 +60,14 @@
                             'expenses' => 'Expenses',
                         ] as $value => $label)
                             <option value="{{ $value }}" @selected($reportType === $value)>
-                                {{ $label }}
+                                {{ __($label) }}
                             </option>
                         @endforeach
                     </select>
                 </label>
 
                 <label class="form-field">
-                    <span class="form-label">From date</span>
+                    <span class="form-label">{{ __('From date') }}</span>
                     <input
                         type="date"
                         name="from"
@@ -78,7 +78,7 @@
                 </label>
 
                 <label class="form-field">
-                    <span class="form-label">To date</span>
+                    <span class="form-label">{{ __('To date') }}</span>
                     <input
                         type="date"
                         name="to"
@@ -89,16 +89,15 @@
                 </label>
 
                 <div class="orders-filter-actions">
-                    <button type="submit" class="btn btn-primary">Apply</button>
-                    <a href="{{ route('reports.index') }}" class="btn btn-light">Reset</a>
+                    <button type="submit" class="btn btn-primary">{{ __('Apply') }}</button>
+                    <a href="{{ route('reports.index') }}" class="btn btn-light">{{ __('Reset') }}</a>
                 </div>
             </form>
         </section>
 
         @if ($unconfirmedCurrencyCount > 0)
             <div class="alert alert-warning" role="status">
-                {{ $unconfirmedCurrencyCount }} records have no confirmed currency.
-                They appear below but are excluded from financial totals.
+                {{ $unconfirmedCurrencyCount }} {{ __('records have no confirmed currency. They appear below but are excluded from financial totals.') }}
             </div>
         @endif
 
@@ -109,65 +108,64 @@
             </p>
 
             <p class="text-muted small">
-                Summary cards show {{ $currency }} only.
+                {{ __('Summary cards show') }} {{ $currency }} {{ __('only.') }}
             </p>
 
             <div class="payment-summary-grid">
                 <article class="payment-summary-card">
-                    <span>Patient collections</span>
+                    <span>{{ __('Patient collections') }}</span>
                     <strong>{{ $money($patientIncome, $currency) }}</strong>
-                    <small>Received patient payments</small>
+                    <small>{{ __('Received patient payments') }}</small>
                 </article>
 
                 <article class="payment-summary-card">
-                    <span>Nuskha order collections</span>
+                    <span>{{ __('Nuskha order collections') }}</span>
                     <strong>{{ $money($orderIncome, $currency) }}</strong>
-                    <small>Received order payments</small>
+                    <small>{{ __('Received order payments') }}</small>
                 </article>
 
                 <article class="payment-summary-card">
-                    <span>Total collections</span>
+                    <span>{{ __('Total collections') }}</span>
                     <strong>{{ $money($totalIncome, $currency) }}</strong>
-                    <small>Patient + order payments</small>
+                    <small>{{ __('Patient + order payments') }}</small>
                 </article>
 
                 <article class="payment-summary-card">
-                    <span>Expenses</span>
+                    <span>{{ __('Expenses') }}</span>
                     <strong>{{ $money($totalExpenses, $currency) }}</strong>
-                    <small>Recorded expenses in {{ $currency }}</small>
+                    <small>{{ __('Recorded expenses in') }} {{ $currency }}</small>
                 </article>
             </div>
 
             <div class="balance-summary-grid">
                 <div>
-                    <span>Collections minus expenses</span>
+                    <span>{{ __('Collections minus expenses') }}</span>
                     <strong>{{ $money($netIncome, $currency) }}</strong>
                 </div>
                 <div>
-                    <span>New patients</span>
+                    <span>{{ __('New patients') }}</span>
                     <strong>{{ number_format($totalPatients) }}</strong>
                 </div>
                 <div>
-                    <span>Visits</span>
+                    <span>{{ __('Visits') }}</span>
                     <strong>{{ number_format($totalVisits) }}</strong>
                 </div>
             </div>
 
             <small class="text-muted d-block mt-3">
-                Collections minus expenses is cash flow, not accounting profit.
-                Unpaid bills and orders are not counted as collections.
+                {{ __('Collections minus expenses is cash flow, not accounting profit. Unpaid bills and orders are not counted as collections.') }}
             </small>
 
-            <h3 class="h6 mt-4">Totals by original currency</h3>
+            <h3 class="h6 mt-4">{{ __('Totals by original currency') }}</h3>
 
             <div class="table-responsive">
                 <table class="table orders-table align-middle">
                     <thead>
                         <tr>
-                            <th>Currency</th>
-                            <th class="text-end">Received</th>
-                            <th class="text-end">Expenses</th>
-                            <th class="text-end">Net cash flow</th>
+                            <th>{{ __('Currency') }}</th>
+                            <th class="text-end">{{ __('Received') }}</th>
+                            <th class="text-end">{{ __('Expenses') }}</th>
+                            <th class="text-end">{{ __('Net cash flow') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -190,24 +188,24 @@
             </div>
 
             <small class="text-muted">
-                Currencies are reported separately without conversion.
+                {{ __('Currencies are reported separately without conversion.') }}
             </small>
         </section>
 
         @if (in_array($reportType, ['summary', 'payments'], true))
             <section class="orders-panel mb-4">
-                <h2 class="h5 mb-3">Received collections</h2>
+                <h2 class="h5 mb-3">{{ __('Received collections') }}</h2>
 
                 <div class="table-responsive">
                     <table class="table orders-table align-middle">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Source</th>
-                                <th>Customer/patient</th>
-                                <th>Reference</th>
-                                <th>Method</th>
-                                <th class="text-end">Amount</th>
+                                <th>{{ __('Date') }}</th>
+                                <th>{{ __('Source') }}</th>
+                                <th>{{ __('Customer/patient') }}</th>
+                                <th>{{ __('Reference') }}</th>
+                                <th>{{ __('Method') }}</th>
+                                <th class="text-end">{{ __('Amount') }}</th>
                             </tr>
                         </thead>
 
@@ -231,7 +229,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6">No collections in this date range.</td>
+                                    <td colspan="6">{{ __('No collections in this date range.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -242,16 +240,16 @@
 
         @if (in_array($reportType, ['summary', 'expenses'], true))
             <section class="orders-panel">
-                <h2 class="h5 mb-3">Expense records</h2>
+                <h2 class="h5 mb-3">{{ __('Expense records') }}</h2>
 
                 <div class="table-responsive">
                     <table class="table orders-table align-middle">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Category</th>
-                                <th class="text-end">Amount</th>
+                                <th>{{ __('Date') }}</th>
+                                <th>{{ __('Description') }}</th>
+                                <th>{{ __('Category') }}</th>
+                                <th class="text-end">{{ __('Amount') }}</th>
                             </tr>
                         </thead>
 
@@ -271,7 +269,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4">No expenses in this date range.</td>
+                                    <td colspan="4">{{ __('No expenses in this date range.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

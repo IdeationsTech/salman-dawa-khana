@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Payments')
+@section('title', __('Payments'))
 
 @section('content')
 <div class="app-shell">
@@ -9,22 +9,22 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Clinic finances</p>
-                <h1>Payments</h1>
+                <p class="dashboard-date">{{ __('Clinic finances') }}</p>
+                <h1>{{ __('Payments') }}</h1>
                 <p class="page-subtitle">
-                    Patient receipts, nuskha order collections and refunds.
+                    {{ __('Patient receipts, nuskha order collections and refunds.') }}
                 </p>
             </div>
 
             @clinicCan('payments.create')<a href="{{ route('payments.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                Record payment
+                {{ __('Record payment') }}
             </a>@endclinicCan
         </header>
 
         @if (session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
@@ -32,7 +32,7 @@
             <div class="alert alert-danger" role="alert">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -40,41 +40,40 @@
 
         @if ($unconfirmedCurrencyCount > 0)
             <div class="alert alert-warning" role="status">
-                {{ $unconfirmedCurrencyCount }} patient payments have no
-                confirmed currency and are excluded from summary totals.
+                {{ $unconfirmedCurrencyCount }} {{ __('patient payments have no confirmed currency and are excluded from summary totals.') }}
             </div>
         @endif
 
         <section class="payment-summary-grid">
             <article class="payment-summary-card">
-                <span>Today's patient receipts</span>
+                <span>{{ __('Today\'s patient receipts') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format((float) $todaySummary['patient'], $moneyDecimals) }}
                 </strong>
-                <small>Patient payments received today</small>
+                <small>{{ __('Patient payments received today') }}</small>
             </article>
 
             <article class="payment-summary-card">
-                <span>Today's order receipts</span>
+                <span>{{ __('Today\'s order receipts') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format((float) $todaySummary['orders'], $moneyDecimals) }}
                 </strong>
-                <small>Nuskha collections before refunds</small>
+                <small>{{ __('Nuskha collections before refunds') }}</small>
             </article>
 
             <article class="payment-summary-card">
-                <span>Today's refunds</span>
+                <span>{{ __('Today\'s refunds') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format((float) $todaySummary['refunds'], $moneyDecimals) }}
                 </strong>
-                <small class="stat-warning">Deducted from received income</small>
+                <small class="stat-warning">{{ __('Deducted from received income') }}</small>
             </article>
 
             <article class="payment-summary-card">
-                <span>Today's net receipts</span>
+                <span>{{ __('Today\'s net receipts') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format((float) $todaySummary['net'], $moneyDecimals) }}
@@ -87,7 +86,7 @@
 
         <section class="payment-summary-grid">
             <article class="payment-summary-card">
-                <span>This month's net receipts</span>
+                <span>{{ __('This month\'s net receipts') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format((float) $monthSummary['net'], $moneyDecimals) }}
@@ -96,47 +95,45 @@
             </article>
 
             <article class="payment-summary-card">
-                <span>All-time net receipts</span>
+                <span>{{ __('All-time net receipts') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format((float) $allTimeSummary['net'], $moneyDecimals) }}
                 </strong>
-                <small>Patient and order receipts after refunds</small>
+                <small>{{ __('Patient and order receipts after refunds') }}</small>
             </article>
 
             <article class="payment-summary-card">
-                <span>Outstanding patient bills</span>
+                <span>{{ __('Outstanding patient bills') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format((float) $outstandingBalance, $moneyDecimals) }}
                 </strong>
                 <small class="stat-warning">
-                    Remaining patient bill balances
+                    {{ __('Remaining patient bill balances') }}
                 </small>
             </article>
 
             <article class="payment-summary-card">
-                <span>Unallocated patient receipts</span>
+                <span>{{ __('Unallocated patient receipts') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format((float) $unallocatedReceived, $moneyDecimals) }}
                 </strong>
-                <small>Included in receipts; not assigned to bills</small>
+                <small>{{ __('Included in receipts; not assigned to bills') }}</small>
             </article>
         </section>
 
         <p class="text-muted small">
-            Summary cards show this clinic's {{ $currency }} records.
-            These are received amounts after refunds, before expenses.
-            Filters below apply to the patient payment table.
-            <a href="{{ route('orders.index') }}">View nuskha orders</a>.
+            {{ __('Summary cards show this clinic\'s') }} {{ $currency }} {{ __('records. These are received amounts after refunds, before expenses. Filters below apply to the patient payment table.') }}
+            <a href="{{ route('orders.index') }}">{{ __('View nuskha orders') }}</a>.
         </p>
 
         <section class="payments-panel">
             <div class="payments-toolbar">
                 <div>
-                    <h2>Patient payment records</h2>
-                    <p>Records retain their original currencies.</p>
+                    <h2>{{ __('Patient payment records') }}</h2>
+                    <p>{{ __('Records retain their original currencies.') }}</p>
                 </div>
 
                 <div class="payments-toolbar-actions">
@@ -144,7 +141,7 @@
                         name="method"
                         class="form-select"
                         form="payment-filter-form"
-                        aria-label="Payment method"
+                        aria-label="{{ __('Payment method') }}"
                     >
                         @foreach ([
                             'all' => 'All methods',
@@ -156,7 +153,7 @@
                                 value="{{ $value }}"
                                 @selected($method === $value)
                             >
-                                {{ $label }}
+                                {{ __($label) }}
                             </option>
                         @endforeach
                     </select>
@@ -165,7 +162,7 @@
                         name="date_range"
                         class="form-select"
                         form="payment-filter-form"
-                        aria-label="Payment date range"
+                        aria-label="{{ __('Payment date range') }}"
                     >
                         @foreach ([
                             'all time' => 'All time',
@@ -177,7 +174,7 @@
                                 value="{{ $value }}"
                                 @selected($dateRange === $value)
                             >
-                                {{ $label }}
+                                {{ __($label) }}
                             </option>
                         @endforeach
                     </select>
@@ -200,19 +197,19 @@
                         name="search"
                         value="{{ request('search') }}"
                         maxlength="160"
-                        aria-label="Search payments"
-                        placeholder="Patient name, phone, patient code, payment ID or reference"
+                        aria-label="{{ __('Search payments') }}"
+                        placeholder="{{ __('Patient name, phone, patient code, payment ID or reference') }}"
                     >
 
                     <button type="submit" class="btn btn-primary btn-sm">
-                        Search
+                        {{ __('Search') }}
                     </button>
 
                     <a
                         href="{{ route('payments.index') }}"
                         class="btn btn-light btn-sm"
                     >
-                        Clear
+                        {{ __('Clear') }}
                     </a>
                 </div>
             </form>
@@ -221,13 +218,13 @@
                 <table class="table payments-table align-middle">
                     <thead>
                         <tr>
-                            <th>Payment ID</th>
-                            <th>Patient</th>
-                            <th>Date</th>
-                            <th>Method</th>
-                            <th>Amount</th>
-                            <th>Reference</th>
-                            <th class="text-end">Action</th>
+                            <th>{{ __('Payment ID') }}</th>
+                            <th>{{ __('Patient') }}</th>
+                            <th>{{ __('Date') }}</th>
+                            <th>{{ __('Method') }}</th>
+                            <th>{{ __('Amount') }}</th>
+                            <th>{{ __('Reference') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
                         </tr>
                     </thead>
 
@@ -277,11 +274,11 @@
 
                                 <td>
                                     <span class="payment-method {{ $methodClass }}">
-                                        {{ $methodLabel }}
+                                        {{ __($methodLabel) }}
                                     </span>
 
                                     @if (!$payment->bill_id)
-                                        <small>Unallocated</small>
+                                        <small>{{ __('Unallocated') }}</small>
                                     @endif
                                 </td>
 
@@ -292,7 +289,7 @@
                                     @else
                                         {{ number_format((float) $payment->amount, $moneyDecimals) }}
                                         <small class="d-block text-muted">
-                                            Currency not recorded
+                                            {{ __('Currency not recorded') }}
                                         </small>
                                     @endif
                                 </td>
@@ -304,14 +301,14 @@
                                         href="{{ route('payments.show', $payment) }}"
                                         class="table-action"
                                     >
-                                        View
+                                        {{ __('View') }}
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center py-4">
-                                    No patient payments match your filters.
+                                    {{ __('No patient payments match your filters.') }}
                                 </td>
                             </tr>
                         @endforelse
@@ -321,9 +318,9 @@
 
             <div class="patients-pagination">
                 <span>
-                    Showing {{ $payments->firstItem() ?? 0 }}
-                    to {{ $payments->lastItem() ?? 0 }}
-                    of {{ $payments->total() }} patient payments
+                    {{ __('Showing') }} {{ $payments->firstItem() ?? 0 }}
+                    {{ __('to') }} {{ $payments->lastItem() ?? 0 }}
+                    {{ __('of') }} {{ $payments->total() }} {{ __('patient payments') }}
                 </span>
 
                 <div>{{ $payments->links() }}</div>

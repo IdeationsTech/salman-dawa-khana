@@ -14,26 +14,26 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Settings</p>
-                <h1>User account</h1>
+                <p class="dashboard-date">{{ __('Settings') }}</p>
+                <h1>{{ __('User account') }}</h1>
                 <p class="page-subtitle">
-                    Manage your personal information and profile photo.
+                    {{ __('Manage your personal information and profile photo.') }}
                 </p>
             </div>
         </header>
 
         @if(session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         @if($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
                 <ul class="mb-0 mt-2">
                     @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -60,10 +60,10 @@
 
                     <div class="account-profile-info">
                         <h2>{{ $user->name }}</h2>
-                        <p>{{ $roleName }}</p>
+                        <p>{{ __($roleName) }}</p>
                         @if($user->created_at)
                             <span>
-                                Member since {{ $user->created_at->format('F Y') }}
+                                {{ __('Member since') }} {{ $user->created_at->format('F Y') }}
                             </span>
                         @endif
                     </div>
@@ -73,8 +73,8 @@
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
-                            <h2>Personal information</h2>
-                            <p>Confirm changes with your current password.</p>
+                            <h2>{{ __('Personal information') }}</h2>
+                            <p>{{ __('Confirm changes with your current password.') }}</p>
                         </div>
                     </div>
 
@@ -89,7 +89,7 @@
                         <div class="settings-form-grid">
                             <div class="form-field">
                                 <label for="account_name" class="form-label">
-                                    Full name *
+                                    {{ __('Full name') }} *
                                 </label>
                                 <input
                                     type="text"
@@ -105,7 +105,7 @@
 
                             <div class="form-field">
                                 <label for="account_email" class="form-label">
-                                    Email address *
+                                    {{ __('Email address') }} *
                                 </label>
                                 <input
                                     type="email"
@@ -122,7 +122,7 @@
                             {{-- User Account — International Personal Phone --}}
                             <div class="form-field settings-field-wide">
                                 <label for="account_phone" class="form-label">
-                                    Personal phone number
+                                    {{ __('Personal phone number') }}
                                 </label>
 
                                 <x-phone-input
@@ -155,10 +155,10 @@
                                     <div class="settings-toggle-row">
                                         <div>
                                             <label for="remove_photo">
-                                                <strong>Remove current photo</strong>
+                                                <strong>{{ __('Remove current photo') }}</strong>
                                             </label>
                                             <small>
-                                                Select this without choosing a new photo.
+                                                {{ __('Select this without choosing a new photo.') }}
                                             </small>
                                         </div>
                                         <input
@@ -175,7 +175,7 @@
 
                             <div class="form-field settings-field-wide">
                                 <label for="account_current_password" class="form-label">
-                                    Current password *
+                                    {{ __('Current password') }} *
                                 </label>
                                 <input
                                     type="password"
@@ -191,7 +191,7 @@
                         <div class="settings-panel-actions">
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
-                                Save changes
+                                {{ __('Save changes') }}
                             </button>
                         </div>
                     </form>
@@ -201,8 +201,8 @@
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
-                            <h2>Role and access</h2>
-                            <p>Your assigned clinic role and account status.</p>
+                            <h2>{{ __('Role and access') }}</h2>
+                            <p>{{ __('Your assigned clinic role and account status.') }}</p>
                         </div>
                     </div>
 
@@ -212,12 +212,12 @@
                         </div>
 
                         <div>
-                            <strong>{{ $roleName }}</strong>
+                            <strong>{{ __($roleName) }}</strong>
                             <small>{{ $clinic->name }}</small>
                         </div>
 
                         <span class="status-badge {{ $user->is_active ? 'active-badge' : 'due-badge' }}">
-                            {{ $user->is_active ? 'Active' : 'Inactive' }}
+                            {{ $user->is_active ? __('Active') : __('Inactive') }}
                         </span>
                     </div>
                 </section>

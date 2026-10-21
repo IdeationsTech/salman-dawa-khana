@@ -367,16 +367,16 @@
                 <path d="M6 9V3h12v6M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/>
                 <path d="M6 14h12v7H6zM18 12h.01"/>
             </svg>
-            Print / Save PDF
+            {{ __('Print / Save PDF') }}
         </button>
     </div>
 
     <main class="receipt-sheet">
         <header class="receipt-header">
             <div>
-                <p class="brand-name">Platform Console</p>
+                <p class="brand-name">{{ __('Platform Console') }}</p>
                 <p class="brand-caption">
-                    Clinic software subscriptions
+                    {{ __('Clinic software subscriptions') }}
                 </p>
             </div>
 
@@ -395,14 +395,14 @@
 
         <div class="receipt-meta">
             <div>
-                <span class="meta-label">Record date</span>
+                <span class="meta-label">{{ __('Record date') }}</span>
                 <span class="meta-value">
                     {{ \Illuminate\Support\Carbon::parse($payment->created_at)->format('d M Y') }}
                 </span>
             </div>
 
             <div>
-                <span class="meta-label">Status</span>
+                <span class="meta-label">{{ __('Status') }}</span>
                 <span class="status-label">
                     {{ \Illuminate\Support\Str::headline($payment->status) }}
                 </span>
@@ -410,7 +410,7 @@
         </div>
 
         <section class="customer-section">
-            <p class="section-label">Issued to</p>
+            <p class="section-label">{{ __('Issued to') }}</p>
             <h2>{{ $payment->clinic_name }}</h2>
 
             @if($payment->contact_name)
@@ -433,8 +433,8 @@
         <table class="receipt-table">
             <thead>
                 <tr>
-                    <th>Subscription details</th>
-                    <th>Amount</th>
+                    <th>{{ __('Subscription details') }}</th>
+                    <th>{{ __('Amount') }}</th>
                 </tr>
             </thead>
 
@@ -442,20 +442,20 @@
                 <tr>
                     <td>
                         <strong class="subscription-name">
-                            {{ $payment->plan_name }} subscription
+                            {{ $payment->plan_name }} {{ __('subscription') }}
                         </strong>
 
                         <span class="subscription-detail">
-                            License #{{ $payment->clinic_license_id }}
+                            {{ __('License #') }}{{ $payment->clinic_license_id }}
                         </span>
 
                         <span class="subscription-detail">
-                            Starts:
+                            {{ __('Starts') }}:
                             {{ \Illuminate\Support\Carbon::parse($payment->license_starts_at)->format('d M Y') }}
                         </span>
 
                         <span class="subscription-detail">
-                            Expires:
+                            {{ __('Expires') }}:
                             {{ $payment->license_ends_at
                                 ? \Illuminate\Support\Carbon::parse($payment->license_ends_at)->format('d M Y')
                                 : 'No expiry - Lifetime' }}
@@ -474,7 +474,7 @@
             <span>
                 {{ $complimentary
                     ? 'Complimentary - Amount received'
-                    : 'Amount received' }}
+                    : __('Amount received') }}
             </span>
 
             <strong>
@@ -485,32 +485,32 @@
 
         <dl class="payment-details">
             <div>
-                <dt>Payment method</dt>
+                <dt>{{ __('Payment method') }}</dt>
                 <dd>
                     {{ \Illuminate\Support\Str::headline($payment->payment_method) }}
                 </dd>
             </div>
 
             <div>
-                <dt>{{ $complimentary ? 'Grant date' : 'Payment date' }}</dt>
+                <dt>{{ $complimentary ? 'Grant date' : __('Payment date') }}</dt>
                 <dd>
                     {{ \Illuminate\Support\Carbon::parse($payment->paid_at)->format('d M Y') }}
                 </dd>
             </div>
 
             <div>
-                <dt>Reference</dt>
+                <dt>{{ __('Reference') }}</dt>
                 <dd>{{ $payment->reference_no ?? '—' }}</dd>
             </div>
 
             <div>
-                <dt>Recorded by</dt>
+                <dt>{{ __('Recorded by') }}</dt>
                 <dd>{{ $payment->recorded_by_name ?? '—' }}</dd>
             </div>
 
             @if($payment->verified_by_name)
                 <div>
-                    <dt>Verified by</dt>
+                    <dt>{{ __('Verified by') }}</dt>
                     <dd>{{ $payment->verified_by_name }}</dd>
                 </div>
             @endif
@@ -518,7 +518,7 @@
 
         @if($payment->notes)
             <section class="receipt-notes">
-                <p class="section-label">Notes</p>
+                <p class="section-label">{{ __('Notes') }}</p>
                 <p>{{ $payment->notes }}</p>
             </section>
         @endif

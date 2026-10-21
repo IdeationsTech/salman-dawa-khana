@@ -5,15 +5,15 @@
 @section('content')
 @php
     $navigation = [
-        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
-        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
-        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
-        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
-        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
-        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
-        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
-        ['route' => 'notifications.index', 'icon' => 'bi-bell', 'label' => 'Notifications'],
-        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => __('Dashboard')],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => __('Patients')],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => __('Visits')],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => __('Prescriptions')],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => __('Payments')],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => __('Expenses')],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => __('Reports')],
+        ['route' => 'notifications.index', 'icon' => 'bi-bell', 'label' => __('Notifications')],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => __('Settings')],
     ];
 @endphp
 
@@ -26,11 +26,11 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Clinic activity</p>
-                <h1>Notifications</h1>
+                <p class="dashboard-date">{{ __('Clinic activity') }}</p>
+                <h1>{{ __('Notifications') }}</h1>
 
                 <p class="page-subtitle">
-                    {{ number_format($unreadCount) }} unread
+                    {{ number_format($unreadCount) }} {{ __('unread') }}
                     {{ $unreadCount === 1 ? 'notification' : 'notifications' }}
                 </p>
             </div>
@@ -40,13 +40,13 @@
                 class="btn btn-outline-secondary"
             >
                 <i class="bi bi-gear app-icon" aria-hidden="true"></i>
-                Preferences
+                {{ __('Preferences') }}
             </a>
         </header>
 
         @if(session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
@@ -60,7 +60,7 @@
                     class="clinic-alert-filter"
                 >
                     <label for="notification_status" class="visually-hidden">
-                        Notification status
+                        {{ __('Notification status') }}
                     </label>
 
                     <select
@@ -69,20 +69,20 @@
                         class="form-select"
                     >
                         <option value="all" @selected($status === 'all')>
-                            All notifications
+                            {{ __('All notifications') }}
                         </option>
 
                         <option value="unread" @selected($status === 'unread')>
-                            Unread
+                            {{ __('Unread') }}
                         </option>
 
                         <option value="read" @selected($status === 'read')>
-                            Read
+                            {{ __('Read') }}
                         </option>
                     </select>
 
                     <button type="submit" class="btn btn-outline-secondary">
-                        Apply
+                        {{ __('Apply') }}
                     </button>
                 </form>
 
@@ -98,7 +98,7 @@
                         @disabled($unreadCount === 0)
                     >
                         <i class="bi bi-check2-all app-icon" aria-hidden="true"></i>
-                        Mark all as read
+                        {{ __('Mark all as read') }}
                     </button>
                 </form>
             </div>
@@ -152,7 +152,7 @@
                                 <h2>{{ $notification->title }}</h2>
 
                                 <span class="clinic-alert-status">
-                                    {{ $isUnread ? 'Unread' : 'Read' }}
+                                    {{ $isUnread ? __('Unread') : __('Read') }}
                                 </span>
                             </div>
 
@@ -171,7 +171,7 @@
                                         href="{{ $destination }}"
                                         class="btn btn-sm btn-outline-secondary"
                                     >
-                                        View record
+                                        {{ __('View record') }}
                                     </a>
                                 @endif
 
@@ -189,7 +189,7 @@
                                             type="submit"
                                             class="btn btn-sm btn-outline-secondary"
                                         >
-                                            Mark as read
+                                            {{ __('Mark as read') }}
                                         </button>
                                     </form>
                                 @endif
@@ -199,17 +199,17 @@
                 @empty
                     <div class="clinic-alert-empty">
                         <i class="bi bi-bell" aria-hidden="true"></i>
-                        <h2>No notifications</h2>
-                        <p>No alerts match this filter.</p>
+                        <h2>{{ __('No notifications') }}</h2>
+                        <p>{{ __('No alerts match this filter.') }}</p>
                     </div>
                 @endforelse
             </div>
 
             <div class="patients-pagination">
                 <span>
-                    Showing {{ $notifications->firstItem() ?? 0 }}
-                    to {{ $notifications->lastItem() ?? 0 }}
-                    of {{ $notifications->total() }}
+                    {{ __('Showing') }} {{ $notifications->firstItem() ?? 0 }}
+                    {{ __('to') }} {{ $notifications->lastItem() ?? 0 }}
+                    {{ __('of') }} {{ $notifications->total() }}
                 </span>
 
                 {{ $notifications->links('pagination::bootstrap-5') }}

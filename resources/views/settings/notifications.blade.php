@@ -5,22 +5,22 @@
 @section('content')
 @php
     $sidebarLinks = [
-        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
-        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
-        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
-        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
-        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
-        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
-        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
-        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => __('Dashboard')],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => __('Patients')],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => __('Visits')],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => __('Prescriptions')],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => __('Payments')],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => __('Expenses')],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => __('Reports')],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => __('Settings')],
     ];
 
     $settingsLinks = [
-        ['route' => 'settings.index', 'icon' => 'bi-hospital', 'label' => 'Clinic profile'],
-        ['route' => 'settings.payments', 'icon' => 'bi-cash-coin', 'label' => 'Payment settings'],
-        ['route' => 'settings.account', 'icon' => 'bi-person-vcard', 'label' => 'User account'],
-        ['route' => 'settings.notifications', 'icon' => 'bi-bell', 'label' => 'Notifications'],
-        ['route' => 'settings.security', 'icon' => 'bi-shield-lock', 'label' => 'Security'],
+        ['route' => 'settings.index', 'icon' => 'bi-hospital', 'label' => __('Clinic profile')],
+        ['route' => 'settings.payments', 'icon' => 'bi-cash-coin', 'label' => __('Payment settings')],
+        ['route' => 'settings.account', 'icon' => 'bi-person-vcard', 'label' => __('User account')],
+        ['route' => 'settings.notifications', 'icon' => 'bi-bell', 'label' => __('Notifications')],
+        ['route' => 'settings.security', 'icon' => 'bi-shield-lock', 'label' => __('Security')],
     ];
 
     $preference = fn ($key, $default = '1') => old(
@@ -31,7 +31,7 @@
     $alerts = [
         [
             'key' => 'payment_alert_enabled',
-            'label' => 'Payment received',
+            'label' => __('Payment received'),
             'description' => 'Show an in-app alert when a patient payment is recorded.',
         ],
         [
@@ -51,35 +51,35 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Settings</p>
-                <h1>Notifications</h1>
+                <p class="dashboard-date">{{ __('Settings') }}</p>
+                <h1>{{ __('Notifications') }}</h1>
                 <a
                     href="{{ route('notifications.index') }}"
                     class="btn btn-outline-secondary mt-2"
                 >
                     <i class="bi bi-bell app-icon" aria-hidden="true"></i>
-                    View clinic notifications
+                    {{ __('View clinic notifications') }}
                 </a>
 
                 <p class="page-subtitle">
-                    Configure clinic alerts and daily summary preferences.
+                    {{ __('Configure clinic alerts and daily summary preferences.') }}
                 </p>
             </div>
         </header>
 
         @if(session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         @if($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
 
                 <ul class="mb-0 mt-2">
                     @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -90,7 +90,7 @@
                 @foreach($settingsLinks as $link)
                     <a
                         href="{{ route($link['route']) }}"
-                        class="settings-nav-item {{ request()->routeIs($link['route']) ? 'active' : '' }}"
+                        class="settings-nav-item {{ request()->routeIs($link['route']) ? __('active') : '' }}"
                         @if(request()->routeIs($link['route']))
                             aria-current="page"
                         @endif
@@ -119,19 +119,19 @@
                     <section class="settings-panel">
                         <div class="settings-panel-heading">
                             <div>
-                                <h2>In-app notifications</h2>
-                                <p>Routine clinic alerts appear inside the application.</p>
+                                <h2>{{ __('In-app notifications') }}</h2>
+                                <p>{{ __('Routine clinic alerts appear inside the application.') }}</p>
                             </div>
                         </div>
 
                         <div class="settings-toggle-row">
                             <div>
                                 <label for="in_app_enabled">
-                                    <strong>Enable in-app notifications</strong>
+                                    <strong>{{ __('Enable in-app notifications') }}</strong>
                                 </label>
 
                                 <small>
-                                    Turn clinic alerts on or off.
+                                    {{ __('Turn clinic alerts on or off.') }}
                                 </small>
                             </div>
 
@@ -156,8 +156,8 @@
                     <section class="settings-panel">
                         <div class="settings-panel-heading">
                             <div>
-                                <h2>Clinic alerts</h2>
-                                <p>Choose which in-app alerts your clinic receives.</p>
+                                <h2>{{ __('Clinic alerts') }}</h2>
+                                <p>{{ __('Choose which in-app alerts your clinic receives.') }}</p>
                             </div>
                         </div>
 
@@ -195,15 +195,15 @@
                     <section class="settings-panel">
                         <div class="settings-panel-heading">
                             <div>
-                                <h2>Daily email summary</h2>
-                                <p>Receive one combined clinic summary per day.</p>
+                                <h2>{{ __('Daily email summary') }}</h2>
+                                <p>{{ __('Receive one combined clinic summary per day.') }}</p>
                             </div>
                         </div>
 
                         <div class="settings-form-grid">
                             <div class="form-field settings-field-wide">
                                 <label for="notification_email" class="form-label">
-                                    Summary email address
+                                    {{ __('Summary email address') }}
                                 </label>
 
                                 <input
@@ -225,11 +225,11 @@
                         <div class="settings-toggle-row">
                             <div>
                                 <label for="daily_summary_enabled">
-                                    <strong>Send daily clinic summary</strong>
+                                    <strong>{{ __('Send daily clinic summary') }}</strong>
                                 </label>
 
                                 <small>
-                                    Include daily visits, collections and expenses.
+                                    {{ __('Include daily visits, collections and expenses.') }}
                                 </small>
                             </div>
 
@@ -255,7 +255,7 @@
                                     class="bi bi-check2-circle app-icon"
                                     aria-hidden="true"
                                 ></i>
-                                Save notification settings
+                                {{ __('Save notification settings') }}
                             </button>
                         </div>
                     </section>

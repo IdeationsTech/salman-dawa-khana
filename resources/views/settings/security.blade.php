@@ -5,22 +5,22 @@
 @section('content')
 @php
     $sidebarLinks = [
-        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
-        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
-        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
-        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
-        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
-        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
-        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
-        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => __('Dashboard')],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => __('Patients')],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => __('Visits')],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => __('Prescriptions')],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => __('Payments')],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => __('Expenses')],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => __('Reports')],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => __('Settings')],
     ];
 
     $settingsLinks = [
-        ['route' => 'settings.index', 'icon' => 'bi-hospital', 'label' => 'Clinic profile'],
-        ['route' => 'settings.payments', 'icon' => 'bi-cash-coin', 'label' => 'Payment settings'],
-        ['route' => 'settings.account', 'icon' => 'bi-person-vcard', 'label' => 'User account'],
-        ['route' => 'settings.notifications', 'icon' => 'bi-bell', 'label' => 'Notifications'],
-        ['route' => 'settings.security', 'icon' => 'bi-shield-lock', 'label' => 'Security'],
+        ['route' => 'settings.index', 'icon' => 'bi-hospital', 'label' => __('Clinic profile')],
+        ['route' => 'settings.payments', 'icon' => 'bi-cash-coin', 'label' => __('Payment settings')],
+        ['route' => 'settings.account', 'icon' => 'bi-person-vcard', 'label' => __('User account')],
+        ['route' => 'settings.notifications', 'icon' => 'bi-bell', 'label' => __('Notifications')],
+        ['route' => 'settings.security', 'icon' => 'bi-shield-lock', 'label' => __('Security')],
     ];
 @endphp
 
@@ -33,28 +33,28 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Settings</p>
-                <h1>Security</h1>
+                <p class="dashboard-date">{{ __('Settings') }}</p>
+                <h1>{{ __('Security') }}</h1>
 
                 <p class="page-subtitle">
-                    Manage your account password.
+                    {{ __('Manage your account password.') }}
                 </p>
             </div>
         </header>
 
         @if(session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         @if($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
 
                 <ul class="mb-0 mt-2">
                     @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -67,7 +67,7 @@
                 @foreach($settingsLinks as $link)
                     <a
                         href="{{ route($link['route']) }}"
-                        class="settings-nav-item {{ request()->routeIs($link['route']) ? 'active' : '' }}"
+                        class="settings-nav-item {{ request()->routeIs($link['route']) ? __('active') : '' }}"
                         @if(request()->routeIs($link['route']))
                             aria-current="page"
                         @endif
@@ -90,8 +90,8 @@
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
-                            <h2>Change password</h2>
-                            <p>Confirm your current password before choosing a new one.</p>
+                            <h2>{{ __('Change password') }}</h2>
+                            <p>{{ __('Confirm your current password before choosing a new one.') }}</p>
                         </div>
 
                         <div class="security-icon">
@@ -112,7 +112,7 @@
                         <div class="settings-form-grid">
                             <div class="form-field settings-field-wide">
                                 <label for="current_password" class="form-label">
-                                    Current password *
+                                    {{ __('Current password') }} *
                                 </label>
 
                                 <input
@@ -125,13 +125,13 @@
                                 >
 
                                 @error('current_password')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ __($message) }}</div>
                                 @enderror
                             </div>
 
                             <div class="form-field">
                                 <label for="new_password" class="form-label">
-                                    New password *
+                                    {{ __('New password') }} *
                                 </label>
 
                                 <input
@@ -145,13 +145,13 @@
                                 >
 
                                 @error('password')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback">{{ __($message) }}</div>
                                 @enderror
                             </div>
 
                             <div class="form-field">
                                 <label for="password_confirmation" class="form-label">
-                                    Confirm new password *
+                                    {{ __('Confirm new password') }} *
                                 </label>
 
                                 <input
@@ -167,12 +167,12 @@
                         </div>
 
                         <div class="password-requirements">
-                            <strong>Password requirements</strong>
+                            <strong>{{ __('Password requirements') }}</strong>
 
                             <ul>
-                                <li>At least 8 characters.</li>
-                                <li>Different from your current password.</li>
-                                <li>Both new-password fields must match.</li>
+                                <li>{{ __('At least 8 characters.') }}</li>
+                                <li>{{ __('Different from your current password.') }}</li>
+                                <li>{{ __('Both new-password fields must match.') }}</li>
                             </ul>
                         </div>
 
@@ -182,7 +182,7 @@
                                     class="bi bi-shield-check app-icon"
                                     aria-hidden="true"
                                 ></i>
-                                Update password
+                                {{ __('Update password') }}
                             </button>
                         </div>
                     </form>
@@ -192,7 +192,7 @@
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
-                            <h2>Signed-in account</h2>
+                            <h2>{{ __('Signed-in account') }}</h2>
                             <p>{{ $user->name }} · {{ $user->email }}</p>
                         </div>
                     </div>
@@ -209,7 +209,7 @@
                                     class="bi bi-box-arrow-right app-icon"
                                     aria-hidden="true"
                                 ></i>
-                                Sign out
+                                {{ __('Sign out') }}
                             </button>
                         </form>
                     </div>
@@ -219,10 +219,10 @@
         </section>
         @if (auth()->user()->role?->name === 'Owner')
             <section class="settings-panel mt-4">
-                <h2>Encrypted backups</h2>
-                <p>Server backups include the database and uploaded clinic files. The daily schedule keeps 30 days of backups.</p>
-                <p>Server operator: run <code>php artisan clinic:backup</code> to create a backup. Run <code>php artisan clinic:restore /absolute/path/to/file.backup</code> to verify one without changing data.</p>
-                <p>Enable the Laravel scheduler on your server with <code>php artisan schedule:run</code> every minute. Keep a secure copy of backups and the original APP_KEY outside the server.</p>
+                <h2>{{ __('Encrypted backups') }}</h2>
+                <p>{{ __('Server backups include the database and uploaded clinic files. The daily schedule keeps 30 days of backups.') }}</p>
+                <p>{{ __('Server operator: run') }} <code>php artisan clinic:backup</code> {{ __('to create a backup. Run') }} <code>php artisan clinic:restore /absolute/path/to/file.backup</code> {{ __('to verify one without changing data.') }}</p>
+                <p>{{ __('Enable the Laravel scheduler on your server with') }} <code>php artisan schedule:run</code> every minute. Keep a secure copy of backups and the original APP_KEY outside the server.</p>
             </section>
         @endif
     </main>

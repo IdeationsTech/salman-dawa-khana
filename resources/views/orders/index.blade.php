@@ -9,24 +9,24 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Non-patient sales</p>
-                <h1>Nuskha Orders</h1>
-                <p class="page-subtitle">Manage walk-in and phone orders.</p>
+                <p class="dashboard-date">{{ __('Non-patient sales') }}</p>
+                <h1>{{ __('Nuskha Orders') }}</h1>
+                <p class="page-subtitle">{{ __('Manage walk-in and phone orders.') }}</p>
             </div>
             @clinicCan('orders.create')<a href="{{ route('orders.create') }}" class="btn btn-primary">
                 <i class="bi bi-bag-plus" aria-hidden="true"></i>
-                New order
+                {{ __('New order') }}
             </a>@endclinicCan
         </header>
 
         @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success">{{ __(session('success')) }}</div>
         @endif
 
         @if ($errors->any())
             <div class="alert alert-danger">
                 <ul class="mb-0">
-                    @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+                    @foreach ($errors->all() as $error)<li>{{ __($error) }}</li>@endforeach
                 </ul>
             </div>
         @endif
@@ -34,14 +34,14 @@
         <section class="orders-panel">
             <form method="GET" action="{{ route('orders.index') }}" class="orders-filter-grid">
                 <label class="form-field orders-search-field">
-                    <span class="form-label">Search orders</span>
-                    <input type="search" name="search" class="form-control" value="{{ request('search') }}" maxlength="160" placeholder="Customer, phone or order number">
+                    <span class="form-label">{{ __('Search orders') }}</span>
+                    <input type="search" name="search" class="form-control" value="{{ request('search') }}" maxlength="160" placeholder="{{ __('Customer, phone or order number') }}">
                 </label>
 
                 <label class="form-field">
-                    <span class="form-label">Status</span>
+                    <span class="form-label">{{ __('Status') }}</span>
                     <select name="status" class="form-select">
-                        <option value="all">All statuses</option>
+                        <option value="all">{{ __('All statuses') }}</option>
                         @foreach ($statuses as $status)
                             <option value="{{ $status }}" @selected(request('status') === $status)>{{ ucfirst($status) }}</option>
                         @endforeach
@@ -49,27 +49,27 @@
                 </label>
 
                 <label class="form-field">
-                    <span class="form-label">Fulfillment</span>
+                    <span class="form-label">{{ __('Fulfillment') }}</span>
                     <select name="fulfillment" class="form-select">
-                        <option value="all">All types</option>
-                        <option value="pickup" @selected(request('fulfillment') === 'pickup')>Pickup</option>
-                        <option value="delivery" @selected(request('fulfillment') === 'delivery')>Delivery</option>
+                        <option value="all">{{ __('All types') }}</option>
+                        <option value="pickup" @selected(request('fulfillment') === 'pickup')>{{ __('Pickup') }}</option>
+                        <option value="delivery" @selected(request('fulfillment') === 'delivery')>{{ __('Delivery') }}</option>
                     </select>
                 </label>
 
                 <label class="form-field">
-                    <span class="form-label">From date</span>
+                    <span class="form-label">{{ __('From date') }}</span>
                     <input type="date" name="from" class="form-control" value="{{ request('from') }}">
                 </label>
 
                 <label class="form-field">
-                    <span class="form-label">To date</span>
+                    <span class="form-label">{{ __('To date') }}</span>
                     <input type="date" name="to" class="form-control" value="{{ request('to') }}">
                 </label>
 
                 <div class="orders-filter-actions">
-                    <button class="btn btn-primary" type="submit">Apply</button>
-                    <a href="{{ route('orders.index') }}" class="btn btn-light">Reset</a>
+                    <button class="btn btn-primary" type="submit">{{ __('Apply') }}</button>
+                    <a href="{{ route('orders.index') }}" class="btn btn-light">{{ __('Reset') }}</a>
                 </div>
             </form>
 
@@ -77,9 +77,9 @@
                 <table class="table orders-table align-middle">
                     <thead>
                         <tr>
-                            <th>Order</th><th>Customer</th><th>Date</th>
-                            <th>Fulfillment</th><th>Total</th><th>Net received</th>
-                            <th>Remaining</th><th>Status</th><th class="text-end">Action</th>
+                            <th>{{ __('Order') }}</th><th>{{ __('Customer') }}</th><th>{{ __('Date') }}</th>
+                            <th>{{ __('Fulfillment') }}</th><th>{{ __('Total') }}</th><th>{{ __('Net received') }}</th>
+                            <th>{{ __('Remaining') }}</th><th>{{ __('Status') }}</th><th class="text-end">{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -107,17 +107,17 @@
                                 <td><span class="status-badge">{{ ucfirst($order->status) }}</span></td>
                                 <td class="text-end text-nowrap">
                                     <div class="d-flex justify-content-end gap-3">
-                                        <a href="{{ route('orders.show', $order) }}" class="table-action">View</a>
+                                        <a href="{{ route('orders.show', $order) }}" class="table-action">{{ __('View') }}</a>
                                         @if ($order->status !== 'cancelled')
-                                            @clinicCan('orders.edit')<a href="{{ route('orders.edit', $order) }}" class="table-action">Edit</a>@endclinicCan
+                                            @clinicCan('orders.edit')<a href="{{ route('orders.edit', $order) }}" class="table-action">{{ __('Edit') }}</a>@endclinicCan
                                         @else
-                                            <a href="{{ route('orders.show', $order) }}#order-status-panel" class="table-action">Restore</a>
+                                            <a href="{{ route('orders.show', $order) }}#order-status-panel" class="table-action">{{ __('Restore') }}</a>
                                         @endif
                                     </div>
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="text-center py-4">No orders found.</td></tr>
+                            <tr><td colspan="9" class="text-center py-4">{{ __('No orders found.') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -125,9 +125,9 @@
 
             <div class="patients-pagination">
                 <span>
-                    Showing {{ $orders->firstItem() ?? 0 }}
-                    to {{ $orders->lastItem() ?? 0 }}
-                    of {{ $orders->total() }} orders
+                    {{ __('Showing') }} {{ $orders->firstItem() ?? 0 }}
+                    {{ __('to') }} {{ $orders->lastItem() ?? 0 }}
+                    {{ __('of') }} {{ $orders->total() }} {{ __('orders') }}
                 </span>
                 {{ $orders->links('pagination::bootstrap-5') }}
             </div>

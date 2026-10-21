@@ -7,22 +7,22 @@
     <div class="pa-page-heading">
         <div>
             <h1 class="pa-page-title">
-                Clinic licenses
+                {{ __('Clinic licenses') }}
             </h1>
 
             <p class="pa-page-description">
-                Current licenses, expiry dates and clinic access status.
+                {{ __('Current licenses, expiry dates and clinic access status.') }}
             </p>
         </div>
     </div>
 
     @if($errors->any())
         <div class="pa-notice pa-notice-error" role="alert">
-            <strong>Please correct the following:</strong>
+            <strong>{{ __('Please correct the following:') }}</strong>
 
             <ul>
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    <li>{{ __($error) }}</li>
                 @endforeach
             </ul>
         </div>
@@ -32,11 +32,11 @@
         <header class="pa-panel-header">
             <div>
                 <h2 class="pa-panel-title">
-                    Current licenses
+                    {{ __('Current licenses') }}
                 </h2>
 
                 <p class="pa-panel-description">
-                    {{ $licenses->total() }} matching records
+                    {{ $licenses->total() }} {{ __('matching records') }}
                 </p>
             </div>
         </header>
@@ -50,7 +50,7 @@
                 <div class="pa-form-grid">
                     <div class="pa-field">
                         <label for="license-search">
-                            Search
+                            {{ __('Search') }}
                         </label>
 
                         <input
@@ -59,14 +59,14 @@
                             name="search"
                             class="pa-input"
                             maxlength="160"
-                            placeholder="Clinic, customer, email or license ID"
+                            placeholder="{{ __('Clinic, customer, email or license ID') }}"
                             value="{{ $filters['search'] }}"
                         >
                     </div>
 
                     <div class="pa-field">
                         <label for="license-status">
-                            Status
+                            {{ __('Status') }}
                         </label>
 
                         <select
@@ -78,42 +78,42 @@
                                 value="all"
                                 @selected($filters['status'] === 'all')
                             >
-                                All statuses
+                                {{ __('All statuses') }}
                             </option>
 
                             <option
                                 value="active"
                                 @selected($filters['status'] === 'active')
                             >
-                                Active
+                                {{ __('Active') }}
                             </option>
 
                             <option
                                 value="expired"
                                 @selected($filters['status'] === 'expired')
                             >
-                                Expired
+                                {{ __('Expired') }}
                             </option>
 
                             <option
                                 value="expiring"
                                 @selected($filters['status'] === 'expiring')
                             >
-                                Expiring within 7 days
+                                {{ __('Expiring within 7 days') }}
                             </option>
 
                             <option
                                 value="suspended"
                                 @selected($filters['status'] === 'suspended')
                             >
-                                Suspended clinics
+                                {{ __('Suspended clinics') }}
                             </option>
                         </select>
                     </div>
 
                     <div class="pa-field">
                         <label for="license-plan">
-                            Plan
+                            {{ __('Plan') }}
                         </label>
 
                         <select
@@ -125,7 +125,7 @@
                                 value="all"
                                 @selected($filters['plan'] === 'all')
                             >
-                                All plans
+                                {{ __('All plans') }}
                             </option>
 
                             <option
@@ -139,21 +139,21 @@
                                 value="monthly"
                                 @selected($filters['plan'] === 'monthly')
                             >
-                                Monthly
+                                {{ __('Monthly') }}
                             </option>
 
                             <option
                                 value="yearly"
                                 @selected($filters['plan'] === 'yearly')
                             >
-                                Yearly
+                                {{ __('Yearly') }}
                             </option>
 
                             <option
                                 value="lifetime"
                                 @selected($filters['plan'] === 'lifetime')
                             >
-                                Lifetime
+                                {{ __('Lifetime') }}
                             </option>
                         </select>
                     </div>
@@ -164,14 +164,14 @@
                         type="submit"
                         class="pa-button pa-button-primary"
                     >
-                        Apply filters
+                        {{ __('Apply filters') }}
                     </button>
 
                     <a
                         href="{{ route('platform-admin.licenses.index') }}"
                         class="pa-button"
                     >
-                        Clear
+                        {{ __('Clear') }}
                     </a>
                 </div>
             </form>
@@ -180,11 +180,11 @@
         @if($licenses->isEmpty())
             <div class="pa-empty">
                 <p class="pa-empty-title">
-                    No licenses found
+                    {{ __('No licenses found') }}
                 </p>
 
                 <p class="pa-empty-description">
-                    Try changing the search or filters.
+                    {{ __('Try changing the search or filters.') }}
                 </p>
             </div>
         @else
@@ -192,14 +192,14 @@
                 <table class="pa-table">
                     <thead>
                         <tr>
-                            <th>License</th>
-                            <th>Clinic</th>
-                            <th>Plan</th>
-                            <th>Grant</th>
-                            <th>Starts</th>
-                            <th>Expires</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th>{{ __('License') }}</th>
+                            <th>{{ __('Clinic') }}</th>
+                            <th>{{ __('Plan') }}</th>
+                            <th>{{ __('Grant') }}</th>
+                            <th>{{ __('Starts') }}</th>
+                            <th>{{ __('Expires') }}</th>
+                            <th>{{ __('Status') }}</th>
+                            <th>{{ __('Action') }}</th>
                         </tr>
                     </thead>
 
@@ -255,7 +255,7 @@
                                         href="{{ route('platform-admin.clinics.show', $license->clinic_id) }}"
                                         class="pa-back-link"
                                     >
-                                        View clinic
+                                        {{ __('View clinic') }}
                                     </a>
                                 </td>
                             </tr>

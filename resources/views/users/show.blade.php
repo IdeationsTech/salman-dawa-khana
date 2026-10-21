@@ -8,15 +8,15 @@
     $roleName = $user->role?->name ?? 'Staff';
 
     $navigation = [
-        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
-        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
-        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
-        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
-        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
-        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
-        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
-        ['route' => 'users.index', 'icon' => 'bi-people', 'label' => 'Users'],
-        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => __('Dashboard')],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => __('Patients')],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => __('Visits')],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => __('Prescriptions')],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => __('Payments')],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => __('Expenses')],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => __('Reports')],
+        ['route' => 'users.index', 'icon' => 'bi-people', 'label' => __('Users')],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => __('Settings')],
     ];
 @endphp
 
@@ -31,12 +31,12 @@
             <div>
                 <a href="{{ route('users.index') }}" class="back-link">
                     <i class="bi bi-arrow-left app-icon" aria-hidden="true"></i>
-                    Back to users
+                    {{ __('Back to users') }}
                 </a>
 
-                <h1>User details</h1>
+                <h1>{{ __('User details') }}</h1>
                 <p class="page-subtitle">
-                    View this clinic user’s account and assigned role.
+                    {{ __('View this clinic user’s account and assigned role.') }}
                 </p>
             </div>
 
@@ -45,13 +45,13 @@
                 class="btn btn-primary"
             >
                 <i class="bi bi-pencil-square app-icon" aria-hidden="true"></i>
-                Edit user
+                {{ __('Edit user') }}
             </a>@endclinicCan
         </header>
 
         @if(session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
@@ -71,10 +71,10 @@
 
             <div class="account-profile-info">
                 <h2>{{ $user->name }}</h2>
-                <p>{{ $roleName === 'Doctor' ? 'Doctor / Hakeem' : $roleName }}</p>
+                <p>{{ $roleName === 'Doctor' ? __('Doctor / Hakeem') : $roleName }}</p>
 
                 <span>
-                    {{ $user->is_active ? 'Active account' : 'Inactive account' }}
+                    {{ $user->is_active ? __('Active account') : 'Inactive account' }}
                 </span>
             </div>
         </section>
@@ -85,41 +85,41 @@
                 <div class="form-section-number">01</div>
 
                 <div>
-                    <h2>Account information</h2>
-                    <p>Saved details for this user.</p>
+                    <h2>{{ __('Account information') }}</h2>
+                    <p>{{ __('Saved details for this user.') }}</p>
                 </div>
             </div>
 
             <div class="user-form-grid">
                 <div class="form-field">
-                    <span class="form-label">Full name</span>
+                    <span class="form-label">{{ __('Full name') }}</span>
                     <p class="mb-0">{{ $user->name }}</p>
                 </div>
 
                 <div class="form-field">
-                    <span class="form-label">Email address</span>
+                    <span class="form-label">{{ __('Email address') }}</span>
                     <p class="mb-0 text-break">{{ $user->email }}</p>
                 </div>
 
                 <div class="form-field">
-                    <span class="form-label">Phone number</span>
+                    <span class="form-label">{{ __('Phone number') }}</span>
                     <p class="mb-0">{{ $user->phone ?: 'Not provided' }}</p>
                 </div>
 
                 <div class="form-field">
-                    <span class="form-label">Clinic</span>
+                    <span class="form-label">{{ __('Clinic') }}</span>
                     <p class="mb-0">{{ $clinic->name }}</p>
                 </div>
 
                 <div class="form-field">
-                    <span class="form-label">Role</span>
+                    <span class="form-label">{{ __('Role') }}</span>
                     <p class="mb-0">
-                        {{ $roleName === 'Doctor' ? 'Doctor / Hakeem' : $roleName }}
+                        {{ $roleName === 'Doctor' ? __('Doctor / Hakeem') : $roleName }}
                     </p>
                 </div>
 
                 <div class="form-field">
-                    <span class="form-label">Joined</span>
+                    <span class="form-label">{{ __('Joined') }}</span>
                     <p class="mb-0">
                         {{ $user->created_at?->format('d M Y') ?? '—' }}
                     </p>

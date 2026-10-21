@@ -5,10 +5,10 @@
 @endphp
 <article class="rx-nuskha-card" data-rx-nuskha-row data-original-template="{{ $rowTemplate }}">
     <div class="rx-nuskha-card-heading">
-        <h3>Nuskha <span data-rx-nuskha-number>{{ is_numeric($index) ? $index + 1 : '' }}</span></h3>
-        <button type="button" class="btn btn-outline-danger btn-sm" data-rx-remove-nuskha aria-label="Remove nuskha">
+        <h3>{{ __('Nuskha') }} <span data-rx-nuskha-number>{{ is_numeric($index) ? $index + 1 : '' }}</span></h3>
+        <button type="button" class="btn btn-outline-danger btn-sm" data-rx-remove-nuskha aria-label="{{ __('Remove nuskha') }}">
             <i class="bi bi-trash3" aria-hidden="true"></i>
-            Remove
+            {{ __('Remove') }}
         </button>
     </div>
 
@@ -16,17 +16,17 @@
 
     <div class="template-form-grid">
         <div class="form-field">
-            <label for="{{ $rowPrefix }}-source" class="form-label">Nuskha source *</label>
+            <label for="{{ $rowPrefix }}-source" class="form-label">{{ __('Nuskha source') }} *</label>
             <select id="{{ $rowPrefix }}-source" name="nuskhas[{{ $index }}][source]" class="form-select" data-rxn-field="source" required>
-                <option value="template" @selected($rowSource === 'template')>Saved template</option>
-                <option value="custom" @selected($rowSource === 'custom')>Custom nuskha</option>
+                <option value="template" @selected($rowSource === 'template')>{{ __('Saved template') }}</option>
+                <option value="custom" @selected($rowSource === 'custom')>{{ __('Custom nuskha') }}</option>
             </select>
         </div>
 
         <div class="form-field" data-rxn-template-section @if($rowSource !== 'template') hidden @endif>
-            <label for="{{ $rowPrefix }}-nuskha_template_id" class="form-label">Saved nuskha *</label>
+            <label for="{{ $rowPrefix }}-nuskha_template_id" class="form-label">{{ __('Saved nuskha') }} *</label>
             <select id="{{ $rowPrefix }}-nuskha_template_id" name="nuskhas[{{ $index }}][nuskha_template_id]" class="form-select" data-rxn-field="nuskha_template_id" @required($rowSource === 'template') @disabled($rowSource !== 'template')>
-                <option value="">Select a nuskha</option>
+                <option value="">{{ __('Select a nuskha') }}</option>
                 @foreach ($templates as $template)
                     <option
                         value="{{ $template->nuskha_template_id }}"
@@ -42,22 +42,22 @@
         </div>
 
         <div class="form-field template-field-wide">
-            <label for="{{ $rowPrefix }}-nuskha_name" class="form-label">Nuskha name *</label>
+            <label for="{{ $rowPrefix }}-nuskha_name" class="form-label">{{ __('Nuskha name') }} *</label>
             <input type="text" id="{{ $rowPrefix }}-nuskha_name" name="nuskhas[{{ $index }}][nuskha_name]" class="form-control" maxlength="160" value="{{ $row['nuskha_name'] ?? '' }}" data-rxn-field="nuskha_name" @readonly($rowSource === 'template') @required($rowSource === 'custom')>
         </div>
 
         <div class="form-field">
-            <label for="{{ $rowPrefix }}-quantity" class="form-label">Total nuskha quantity / weight *</label>
+            <label for="{{ $rowPrefix }}-quantity" class="form-label">{{ __('Total nuskha quantity / weight') }} *</label>
             <input type="number" id="{{ $rowPrefix }}-quantity" name="nuskhas[{{ $index }}][quantity]" class="form-control" min="0.001" max="999999999.999" step="0.001" inputmode="decimal" placeholder="e.g. 20" value="{{ $row['quantity'] ?? '' }}" data-rxn-field="quantity" required>
-            <small class="form-help">Total finished nuskha, for example 20 g.</small>
+            <small class="form-help">{{ __('Total finished nuskha, for example 20 g.') }}</small>
         </div>
 
         <div class="form-field">
-            <label for="{{ $rowPrefix }}-unit" class="form-label">Unit *</label>
+            <label for="{{ $rowPrefix }}-unit" class="form-label">{{ __('Unit') }} *</label>
             <select id="{{ $rowPrefix }}-unit" name="nuskhas[{{ $index }}][unit]" class="form-select" data-rxn-field="unit" required>
-                <option value="">Select unit</option>
+                <option value="">{{ __('Select unit') }}</option>
                 @foreach ($units as $value => $label)
-                    <option value="{{ $value }}" @selected(($row['unit'] ?? '') === $value)>{{ $label }}</option>
+                    <option value="{{ $value }}" @selected(($row['unit'] ?? '') === $value)>{{ __($label) }}</option>
                 @endforeach
             </select>
         </div>
@@ -68,14 +68,14 @@
             'timing' => ['Timing', 'e.g. After meals'],
         ] as $field => [$label, $placeholder])
             <div class="form-field">
-                <label for="{{ $rowPrefix }}-{{ $field }}" class="form-label">{{ $label }}</label>
+                <label for="{{ $rowPrefix }}-{{ $field }}" class="form-label">{{ __($label) }}</label>
                 <input type="text" id="{{ $rowPrefix }}-{{ $field }}" name="nuskhas[{{ $index }}][{{ $field }}]" class="form-control" maxlength="80" placeholder="{{ $placeholder }}" value="{{ $row[$field] ?? '' }}" data-rxn-field="{{ $field }}">
             </div>
         @endforeach
 
         <div class="form-field template-field-wide">
-            <label for="{{ $rowPrefix }}-instructions" class="form-label">How to take this nuskha</label>
-            <input type="text" id="{{ $rowPrefix }}-instructions" name="nuskhas[{{ $index }}][instructions]" class="form-control" maxlength="255" placeholder="Patient instructions, if needed" value="{{ $row['instructions'] ?? '' }}" data-rxn-field="instructions">
+            <label for="{{ $rowPrefix }}-instructions" class="form-label">{{ __('How to take this nuskha') }}</label>
+            <input type="text" id="{{ $rowPrefix }}-instructions" name="nuskhas[{{ $index }}][instructions]" class="form-control" maxlength="255" placeholder="{{ __('Patient instructions, if needed') }}" value="{{ $row['instructions'] ?? '' }}" data-rxn-field="instructions">
         </div>
     </div>
 </article>

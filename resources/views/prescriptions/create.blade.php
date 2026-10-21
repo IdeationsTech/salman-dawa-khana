@@ -72,18 +72,18 @@
         <div class="form-page-header">
             <a href="{{ route('prescriptions.index') }}" class="back-link">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to prescriptions
+                {{ __('Back to prescriptions') }}
             </a>
-            <h1>{{ $editing ? 'Edit prescription' : 'Create prescription' }}</h1>
-            <p>Assign one or more nuskhay with their total quantities and patient instructions.</p>
+            <h1>{{ $editing ? __('Edit prescription') : __('Create prescription') }}</h1>
+            <p>{{ __('Assign one or more nuskhay with their total quantities and patient instructions.') }}</p>
         </div>
 
         @if ($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
                 <ul class="mb-0 mt-2">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -91,8 +91,7 @@
 
         @if ($doctors->isEmpty())
             <div class="alert alert-warning" role="status">
-                No active Owner/Doctor is available.
-                The clinic owner must activate or add a practitioner.
+                {{ __('No active Owner/Doctor is available. The clinic owner must activate or add a practitioner.') }}
             </div>
         @endif
 
@@ -113,8 +112,8 @@
                 <div class="template-form-heading">
                     <div class="form-section-number">01</div>
                     <div>
-                        <h2>Patient, visit and practitioner</h2>
-                        <p>Select the patient and treating Doctor/Hakeem.</p>
+                        <h2>{{ __('Patient, visit and practitioner') }}</h2>
+                        <p>{{ __('Select the patient and treating Doctor/Hakeem.') }}</p>
                     </div>
                 </div>
 
@@ -130,7 +129,7 @@
                         data-selected-name="{{ $currentPatient?->full_name ?? '' }}"
                         data-locked="{{ $editing ? '1' : '0' }}"
                     >
-                        <label for="rx-patient-search" class="form-label">Patient *</label>
+                        <label for="rx-patient-search" class="form-label">{{ __('Patient') }} *</label>
                         <input
                             type="hidden"
                             name="patient_id"
@@ -143,7 +142,7 @@
                             name="patient_search"
                             class="form-control"
                             value="{{ $currentPatient?->full_name ?? old('patient_search', '') }}"
-                            placeholder="Start typing a patient name..."
+                            placeholder="{{ __('Start typing a patient name...') }}"
                             maxlength="160"
                             autocomplete="off"
                             role="combobox"
@@ -155,21 +154,21 @@
                             @readonly($editing)
                             required
                         >
-                        <div class="rx-patient-results" id="rx-patient-results" role="listbox" aria-label="Matching patients" data-rx-patient-results hidden></div>
+                        <div class="rx-patient-results" id="rx-patient-results" role="listbox" aria-label="{{ __('Matching patients') }}" data-rx-patient-results hidden></div>
                         <small id="rx-patient-search-help" class="form-help" data-rx-patient-feedback role="status" aria-live="polite">
                             @if ($currentPatient)
-                                Selected: {{ $currentPatient->patient_code }}{{ $currentPatient->phone ? ' · '.$currentPatient->phone : '' }}
+                                {{ __('Selected:') }} {{ $currentPatient->patient_code }}{{ $currentPatient->phone ? ' · '.$currentPatient->phone : '' }}
                                 {{ $editing ? ' · Patient cannot be changed on an existing prescription.' : '' }}
                             @else
-                                Type a name, then select the matching patient.
+                                {{ __('Type a name, then select the matching patient.') }}
                             @endif
                         </small>
                     </div>
 
                     <div class="form-field">
-                        <label for="visit" class="form-label">Visit</label>
+                        <label for="visit" class="form-label">{{ __('Visit') }}</label>
                         <select id="visit" name="visit_id" class="form-select" data-rx-visit>
-                            <option value="">No linked visit</option>
+                            <option value="">{{ __('No linked visit') }}</option>
                             @foreach ($visits as $visit)
                                 <option
                                     value="{{ $visit->visit_id }}"
@@ -184,13 +183,13 @@
                             @endforeach
                         </select>
                         <small class="form-help">
-                            Only this patient's visits are available.
+                            {{ __('Only this patient\'s visits are available.') }}
                         </small>
                     </div>
 
                     <div class="form-field">
                         <label for="doctor_user_id" class="form-label">
-                            Treating Doctor / Hakeem *
+                            {{ __('Treating Doctor / Hakeem') }} *
                         </label>
                         <select
                             id="doctor_user_id"
@@ -199,7 +198,7 @@
                             data-rx-doctor
                             required
                         >
-                            <option value="">Select Doctor / Hakeem</option>
+                            <option value="">{{ __('Select Doctor / Hakeem') }}</option>
                             @foreach ($doctors as $doctor)
                                 <option
                                     value="{{ $doctor->user_id }}"
@@ -213,13 +212,13 @@
                             @endforeach
                         </select>
                         <small class="form-help" data-rx-doctor-message>
-                            Select the practitioner issuing this prescription.
+                            {{ __('Select the practitioner issuing this prescription.') }}
                         </small>
                     </div>
 
                     <div class="form-field">
                         <label for="prescribed_at" class="form-label">
-                            Prescription date &amp; time — UAE *
+                            {{ __('Prescription date & time — UAE') }} *
                         </label>
                         <input
                             type="datetime-local"
@@ -234,7 +233,7 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="prescription_status" class="form-label">Status *</label>
+                        <label for="prescription_status" class="form-label">{{ __('Status') }} *</label>
                         <select id="prescription_status" name="status" class="form-select" required>
                             @foreach ([
                                 'issued' => 'Issued',
@@ -245,7 +244,7 @@
                                     value="{{ $value }}"
                                     @selected(old('status', $prescription->status ?? 'issued') === $value)
                                 >
-                                    {{ $label }}
+                                    {{ __($label) }}
                                 </option>
                             @endforeach
                         </select>
@@ -257,16 +256,14 @@
                 <div class="template-form-heading">
                     <div class="form-section-number">02</div>
                     <div>
-                        <h2>Prescribed nuskhay</h2>
-                        <p>Select a template or enter a custom name for each nuskha.</p>
+                        <h2>{{ __('Prescribed nuskhay') }}</h2>
+                        <p>{{ __('Select a template or enter a custom name for each nuskha.') }}</p>
                     </div>
                 </div>
 
                 @if ($legacyPrescription)
                     <div class="alert alert-info" role="status">
-                        This older prescription has no recorded finished-nuskha quantity.
-                        Confirm its name, total quantity and unit before saving.
-                        Historical ingredient quantities are not used as the nuskha's weight.
+                        {{ __('This older prescription has no recorded finished-nuskha quantity. Confirm its name, total quantity and unit before saving. Historical ingredient quantities are not used as the nuskha\'s weight.') }}
                     </div>
                 @endif
 
@@ -285,7 +282,7 @@
 
                 <button type="button" class="btn btn-outline-primary add-item-button" data-rx-add-nuskha>
                     <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                    Add another nuskha
+                    {{ __('Add another nuskha') }}
                 </button>
                 <p class="form-help mt-2" data-rx-nuskha-count role="status"></p>
             </section>
@@ -294,14 +291,14 @@
                 <div class="template-form-heading">
                     <div class="form-section-number">03</div>
                     <div>
-                        <h2>Instructions and notes</h2>
-                        <p>Add patient-specific instructions.</p>
+                        <h2>{{ __('Instructions and notes') }}</h2>
+                        <p>{{ __('Add patient-specific instructions.') }}</p>
                     </div>
                 </div>
 
                 <div class="template-form-grid">
                     <div class="form-field">
-                        <label for="prepared_by" class="form-label">Recorded by</label>
+                        <label for="prepared_by" class="form-label">{{ __('Recorded by') }}</label>
                         <input
                             type="text"
                             id="prepared_by"
@@ -314,7 +311,7 @@
                     </div>
 
                     <div class="form-field template-field-wide">
-                        <label for="notes" class="form-label">Patient instructions</label>
+                        <label for="notes" class="form-label">{{ __('Patient instructions') }}</label>
                         <textarea
                             id="notes"
                             name="general_instructions"
@@ -328,7 +325,7 @@
             </section>
 
             <div class="template-form-actions">
-                <a href="{{ route('prescriptions.index') }}" class="btn btn-light">Cancel</a>
+                <a href="{{ route('prescriptions.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
                 <button type="submit" class="btn btn-primary" @disabled($doctors->isEmpty())>
                     {{ $editing ? 'Update prescription' : 'Save prescription' }}
                 </button>

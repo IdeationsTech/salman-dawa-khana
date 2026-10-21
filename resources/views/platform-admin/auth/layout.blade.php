@@ -20,28 +20,27 @@
                 <h1>Clinicora</h1>
 
                 <p class="brand-tagline">
-                    Platform Administration
+                    {{ __('Platform Administration') }}
                 </p>
 
                 <div class="brand-divider"></div>
 
                 <p class="brand-description">
-                    Manage clinics, licenses and subscriptions.
-                    Authorized administrators only.
+                    {{ __('Manage clinics, licenses and subscriptions. Authorized administrators only.') }}
                 </p>
             </section>
 
             <section class="auth-form-panel">
                 <div class="auth-form-content">
                     <div class="auth-heading">
-                        <p class="eyebrow">PLATFORM CONSOLE</p>
+                        <p class="eyebrow">{{ __('PLATFORM CONSOLE') }}</p>
                         <h2>@yield('heading')</h2>
                         <p>@yield('description')</p>
                     </div>
 
                     @if (session('status'))
                         <div class="alert alert-success" role="status">
-                            {{ session('status') }}
+                            {{ __(session('status')) }}
                         </div>
                     @endif
 
@@ -49,7 +48,7 @@
                         <div class="alert alert-danger" role="alert">
                             <ul class="mb-0">
                                 @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
+                                    <li>{{ __($error) }}</li>
                                 @endforeach
                             </ul>
                         </div>

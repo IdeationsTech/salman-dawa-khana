@@ -18,7 +18,7 @@
             </h1>
 
             <p class="pa-page-description">
-                Event #{{ $log->platform_audit_log_id }}
+                {{ __('Event #') }}{{ $log->platform_audit_log_id }}
                 · {{ \Illuminate\Support\Carbon::parse($log->created_at)->format('d M Y, h:i A') }}
             </p>
         </div>
@@ -26,39 +26,39 @@
 
     <section class="pa-panel">
         <header class="pa-panel-header">
-            <h2 class="pa-panel-title">Event information</h2>
+            <h2 class="pa-panel-title">{{ __('Event information') }}</h2>
         </header>
 
         <dl class="pa-detail-list pa-detail-list-wide">
             <div>
-                <dt>Administrator</dt>
+                <dt>{{ __('Administrator') }}</dt>
                 <dd>{{ $log->admin_name ?? 'System / unavailable' }}</dd>
             </div>
 
             <div>
-                <dt>Clinic</dt>
-                <dd>{{ $log->clinic_name ?? 'Platform activity' }}</dd>
+                <dt>{{ __('Clinic') }}</dt>
+                <dd>{{ $log->clinic_name ?? __('Platform activity') }}</dd>
             </div>
 
             <div>
-                <dt>Record type</dt>
+                <dt>{{ __('Record type') }}</dt>
                 <dd>
                     {{ \Illuminate\Support\Str::headline($log->entity_type) }}
                 </dd>
             </div>
 
             <div>
-                <dt>Record ID</dt>
-                <dd>{{ $log->entity_id ?? 'Not recorded' }}</dd>
+                <dt>{{ __('Record ID') }}</dt>
+                <dd>{{ $log->entity_id ?? __('Not recorded') }}</dd>
             </div>
 
             <div>
-                <dt>IP address</dt>
-                <dd>{{ $log->ip_address ?? 'Not recorded' }}</dd>
+                <dt>{{ __('IP address') }}</dt>
+                <dd>{{ $log->ip_address ?? __('Not recorded') }}</dd>
             </div>
 
             <div>
-                <dt>Action</dt>
+                <dt>{{ __('Action') }}</dt>
                 <dd>{{ $log->action }}</dd>
             </div>
         </dl>
@@ -67,12 +67,12 @@
     <div class="pa-detail-grid">
         <section class="pa-panel">
             <header class="pa-panel-header">
-                <h2 class="pa-panel-title">Before change</h2>
+                <h2 class="pa-panel-title">{{ __('Before change') }}</h2>
             </header>
 
             @if(empty($oldValues))
                 <div class="pa-empty">
-                    <p class="pa-empty-title">No previous values recorded</p>
+                    <p class="pa-empty-title">{{ __('No previous values recorded') }}</p>
                 </div>
             @else
                 <dl class="pa-detail-list">
@@ -90,12 +90,12 @@
 
         <section class="pa-panel">
             <header class="pa-panel-header">
-                <h2 class="pa-panel-title">After change</h2>
+                <h2 class="pa-panel-title">{{ __('After change') }}</h2>
             </header>
 
             @if(empty($newValues))
                 <div class="pa-empty">
-                    <p class="pa-empty-title">No new values recorded</p>
+                    <p class="pa-empty-title">{{ __('No new values recorded') }}</p>
                 </div>
             @else
                 <dl class="pa-detail-list">

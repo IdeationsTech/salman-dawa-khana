@@ -7,29 +7,28 @@
     <div class="pa-page-heading">
         <div>
             <h1 class="pa-page-title">
-                Subscription plans
+                {{ __('Subscription plans') }}
             </h1>
 
             <p class="pa-page-description">
-                Configure prices in AED. Only active paid plans appear
-                in clinic approval and subscription forms.
+                {{ __('Configure prices in AED. Only active paid plans appear in clinic approval and subscription forms.') }}
             </p>
         </div>
     </div>
 
     @if(session('success'))
         <div class="pa-notice" role="status">
-            {{ session('success') }}
+            {{ __(session('success')) }}
         </div>
     @endif
 
     @if($errors->any())
         <div class="pa-notice pa-notice-error" role="alert">
-            <strong>Please correct the following:</strong>
+            <strong>{{ __('Please correct the following:') }}</strong>
 
             <ul>
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    <li>{{ __($error) }}</li>
                 @endforeach
             </ul>
         </div>
@@ -51,7 +50,7 @@
                     </div>
 
                     <span class="pa-badge">
-                        {{ $plan->is_active ? 'Active' : 'Inactive' }}
+                        {{ $plan->is_active ? __('Active') : __('Inactive') }}
                     </span>
                 </header>
 
@@ -59,7 +58,7 @@
                     @if($plan->plan_code === 'trial_7d')
                         <dl class="pa-detail-list">
                             <div>
-                                <dt>Price</dt>
+                                <dt>{{ __('Price') }}</dt>
                                 <dd>
                                     {{ $plan->currency }}
                                     {{ number_format((float) $plan->price, 2) }}
@@ -67,16 +66,15 @@
                             </div>
 
                             <div>
-                                <dt>Duration</dt>
+                                <dt>{{ __('Duration') }}</dt>
                                 <dd>
-                                    {{ $plan->duration_days }} days
+                                    {{ $plan->duration_days }} {{ __('days') }}
                                 </dd>
                             </div>
                         </dl>
 
                         <p class="pa-form-description">
-                            The seven-day trial is free and is managed
-                            separately from paid plans.
+                            {{ __('The seven-day trial is free and is managed separately from paid plans.') }}
                         </p>
                     @else
                         <form
@@ -89,7 +87,7 @@
 
                             <div class="pa-field">
                                 <label for="price-{{ $plan->subscription_plan_id }}">
-                                    Price (AED) *
+                                    {{ __('Price (AED)') }} *
                                 </label>
 
                                 <input
@@ -107,7 +105,7 @@
 
                             <div class="pa-field">
                                 <label for="active-{{ $plan->subscription_plan_id }}">
-                                    Availability *
+                                    {{ __('Availability') }} *
                                 </label>
 
                                 <select
@@ -120,21 +118,21 @@
                                         value="0"
                                         @selected(! $plan->is_active)
                                     >
-                                        Inactive
+                                        {{ __('Inactive') }}
                                     </option>
 
                                     <option
                                         value="1"
                                         @selected((bool) $plan->is_active)
                                     >
-                                        Active
+                                        {{ __('Active') }}
                                     </option>
                                 </select>
                             </div>
 
                             <div class="pa-field">
                                 <label for="description-{{ $plan->subscription_plan_id }}">
-                                    Description
+                                    {{ __('Description') }}
                                 </label>
 
                                 <textarea
@@ -150,7 +148,7 @@
                                 type="submit"
                                 class="pa-button pa-button-primary"
                             >
-                                Save {{ $plan->name }}
+                                {{ __('Save') }} {{ $plan->name }}
                             </button>
                         </form>
                     @endif

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Patients')
+@section('title', __('Patients'))
 
 @section('content')
 <div class="app-shell">
@@ -9,22 +9,22 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Clinic management</p>
-                <h1>Patients</h1>
+                <p class="dashboard-date">{{ __('Clinic management') }}</p>
+                <h1>{{ __('Patients') }}</h1>
                 <p class="page-subtitle">
-                    Manage your patient records and visit history.
+                    {{ __('Manage your patient records and visit history.') }}
                 </p>
             </div>
 
             @clinicCan('patients.create')<a href="{{ route('patients.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                Add patient
+                {{ __('Add patient') }}
             </a>@endclinicCan
         </header>
 
         @if (session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
@@ -32,7 +32,7 @@
             <div class="alert alert-danger" role="alert">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -40,31 +40,31 @@
 
         <section class="patient-stats-grid">
             <article class="patient-stat-card">
-                <span class="patient-stat-label">Total patients</span>
+                <span class="patient-stat-label">{{ __('Total patients') }}</span>
                 <strong>{{ number_format($totalPatients) }}</strong>
-                <small>All registered patients</small>
+                <small>{{ __('All registered patients') }}</small>
             </article>
 
             <article class="patient-stat-card">
-                <span class="patient-stat-label">Active patients</span>
+                <span class="patient-stat-label">{{ __('Active patients') }}</span>
                 <strong>{{ number_format($activePatients) }}</strong>
-                <small class="stat-success">Currently active records</small>
+                <small class="stat-success">{{ __('Currently active records') }}</small>
             </article>
 
             <article class="patient-stat-card">
-                <span class="patient-stat-label">New this month</span>
+                <span class="patient-stat-label">{{ __('New this month') }}</span>
                 <strong>{{ number_format($newPatientsThisMonth) }}</strong>
-                <small class="stat-success">Recently registered</small>
+                <small class="stat-success">{{ __('Recently registered') }}</small>
             </article>
 
             <article class="patient-stat-card">
-                <span class="patient-stat-label">Outstanding balance</span>
+                <span class="patient-stat-label">{{ __('Outstanding balance') }}</span>
                 <strong>
                     {{ $currency }}
                     {{ number_format($outstandingBalance, $moneyDecimals) }}
                 </strong>
                 <small class="stat-warning">
-                    Outstanding {{ $currency }} patient bills
+                    {{ __('Outstanding') }} {{ $currency }} {{ __('patient bills') }}
                 </small>
             </article>
         </section>
@@ -72,10 +72,9 @@
         <section class="patients-panel">
             <div class="patients-toolbar">
                 <div>
-                    <h2>All patients</h2>
+                    <h2>{{ __('All patients') }}</h2>
                     <p>
-                        Balances and CSV amounts show {{ $currency }} bills only.
-                        Other currencies are not added to these balances.
+                        {{ __('Balances and CSV amounts show') }} {{ $currency }} {{ __('bills only. Other currencies are not added to these balances.') }}
                     </p>
                 </div>
 
@@ -88,7 +87,7 @@
                         class="btn btn-outline-secondary"
                     >
                         <i class="bi bi-download" aria-hidden="true"></i>
-                        Export CSV
+                        {{ __('Export CSV') }}
                     </button>
 
                     @clinicCan('patients.create')<a
@@ -96,7 +95,7 @@
                         class="btn btn-primary"
                     >
                         <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                        New patient
+                        {{ __('New patient') }}
                     </a>@endclinicCan
                 </div>
             </div>
@@ -117,8 +116,8 @@
                         type="search"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Name, phone, patient code, CNIC or Emirates ID"
-                        aria-label="Search patients"
+                        placeholder="{{ __('Name, phone, patient code, CNIC or Emirates ID') }}"
+                        aria-label="{{ __('Search patients') }}"
                         maxlength="160"
                     >
                 </div>
@@ -126,25 +125,25 @@
                 <select
                     name="status"
                     class="form-select"
-                    aria-label="Patient status"
+                    aria-label="{{ __('Patient status') }}"
                 >
                     <option value="all" @selected(request('status', 'all') === 'all')>
-                        All statuses
+                        {{ __('All statuses') }}
                     </option>
 
                     <option value="active" @selected(request('status') === 'active')>
-                        Active
+                        {{ __('Active') }}
                     </option>
 
                     <option value="inactive" @selected(request('status') === 'inactive')>
-                        Inactive
+                        {{ __('Inactive') }}
                     </option>
                 </select>
 
-                <button type="submit" class="btn btn-primary">Search</button>
+                <button type="submit" class="btn btn-primary">{{ __('Search') }}</button>
 
                 <a href="{{ route('patients.index') }}" class="btn btn-light">
-                    Clear
+                    {{ __('Clear') }}
                 </a>
             </form>
 
@@ -152,13 +151,13 @@
                 <table class="table patients-table align-middle" id="patients-table">
                     <thead>
                         <tr>
-                            <th>Patient ID</th>
-                            <th>Patient name</th>
-                            <th>Phone number</th>
-                            <th>Last visit</th>
-                            <th>Balance ({{ $currency }})</th>
-                            <th>Status</th>
-                            <th class="text-end">Action</th>
+                            <th>{{ __('Patient ID') }}</th>
+                            <th>{{ __('Patient name') }}</th>
+                            <th>{{ __('Phone number') }}</th>
+                            <th>{{ __('Last visit') }}</th>
+                            <th>{{ __('Balance (') }}{{ $currency }})</th>
+                            <th>{{ __('Status') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
                         </tr>
                     </thead>
 
@@ -186,11 +185,11 @@
                                 <td>
                                     @if ($patient->status === 'active')
                                         <span class="status-badge active-badge">
-                                            Active
+                                            {{ __('Active') }}
                                         </span>
                                     @else
                                         <span class="status-badge due-badge">
-                                            Inactive
+                                            {{ __('Inactive') }}
                                         </span>
                                     @endif
                                 </td>
@@ -200,14 +199,14 @@
                                         href="{{ route('patients.show', $patient) }}"
                                         class="table-action"
                                     >
-                                        View
+                                        {{ __('View') }}
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center">
-                                    No patients match these filters.
+                                    {{ __('No patients match these filters.') }}
                                 </td>
                             </tr>
                         @endforelse
@@ -217,9 +216,9 @@
 
             <div class="patients-pagination">
                 <span>
-                    Showing {{ $patients->firstItem() ?? 0 }}
-                    to {{ $patients->lastItem() ?? 0 }}
-                    of {{ $patients->total() }} patients
+                    {{ __('Showing') }} {{ $patients->firstItem() ?? 0 }}
+                    {{ __('to') }} {{ $patients->lastItem() ?? 0 }}
+                    {{ __('of') }} {{ $patients->total() }} {{ __('patients') }}
                 </span>
                 <div>{{ $patients->links() }}</div>
             </div>

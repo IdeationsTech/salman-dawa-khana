@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Users')
+@section('title', __('Users'))
 
 @section('content')
 <div class="app-shell">
@@ -9,22 +9,22 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Team management</p>
-                <h1>Users</h1>
+                <p class="dashboard-date">{{ __('Team management') }}</p>
+                <h1>{{ __('Users') }}</h1>
                 <p class="page-subtitle">
-                    Manage clinic users, roles and access.
+                    {{ __('Manage clinic users, roles and access.') }}
                 </p>
             </div>
 
             @clinicCan('users.create')<a href="{{ route('users.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                Add user
+                {{ __('Add user') }}
             </a>@endclinicCan
         </header>
 
         @if (session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
@@ -32,7 +32,7 @@
             <div class="alert alert-danger" role="alert">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -40,35 +40,35 @@
 
         <section class="users-summary-grid">
             <article class="user-summary-card">
-                <span>Total users</span>
+                <span>{{ __('Total users') }}</span>
                 <strong>{{ number_format($totalUsers) }}</strong>
-                <small>Clinic team members</small>
+                <small>{{ __('Clinic team members') }}</small>
             </article>
 
             <article class="user-summary-card">
-                <span>Active users</span>
+                <span>{{ __('Active users') }}</span>
                 <strong>{{ number_format($activeUsers) }}</strong>
-                <small>Currently active accounts</small>
+                <small>{{ __('Currently active accounts') }}</small>
             </article>
 
             <article class="user-summary-card">
-                <span>Doctors / Hakeems</span>
+                <span>{{ __('Doctors / Hakeems') }}</span>
                 <strong>{{ number_format($doctorUsers) }}</strong>
-                <small>Users with Doctor role</small>
+                <small>{{ __('Users with Doctor role') }}</small>
             </article>
 
             <article class="user-summary-card">
-                <span>Staff roles</span>
+                <span>{{ __('Staff roles') }}</span>
                 <strong>{{ number_format($roleCount) }}</strong>
-                <small>Available access roles</small>
+                <small>{{ __('Available access roles') }}</small>
             </article>
         </section>
 
         <section class="users-panel">
             <div class="users-toolbar">
                 <div>
-                    <h2>Clinic users</h2>
-                    <p>Search across all users in your clinic.</p>
+                    <h2>{{ __('Clinic users') }}</h2>
+                    <p>{{ __('Search across all users in your clinic.') }}</p>
                 </div>
 
                 <div class="users-toolbar-actions">
@@ -76,18 +76,18 @@
                         name="status"
                         class="form-select"
                         form="user-filter-form"
-                        aria-label="User status"
+                        aria-label="{{ __('User status') }}"
                     >
                         <option value="all" @selected(request('status', 'all') === 'all')>
-                            All statuses
+                            {{ __('All statuses') }}
                         </option>
 
                         <option value="active" @selected(request('status') === 'active')>
-                            Active
+                            {{ __('Active') }}
                         </option>
 
                         <option value="inactive" @selected(request('status') === 'inactive')>
-                            Inactive
+                            {{ __('Inactive') }}
                         </option>
                     </select>
                 </div>
@@ -108,17 +108,17 @@
                         type="search"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Search by name, email, phone or user ID"
+                        placeholder="{{ __('Search by name, email, phone or user ID') }}"
                         maxlength="160"
-                        aria-label="Search users"
+                        aria-label="{{ __('Search users') }}"
                     >
 
                     <button type="submit" class="btn btn-primary btn-sm">
-                        Search
+                        {{ __('Search') }}
                     </button>
 
                     <a href="{{ route('users.index') }}" class="btn btn-light btn-sm">
-                        Clear
+                        {{ __('Clear') }}
                     </a>
                 </div>
             </form>
@@ -127,12 +127,12 @@
                 <table class="table users-table align-middle">
                     <thead>
                         <tr>
-                            <th>User</th>
-                            <th>Email / Phone</th>
-                            <th>Role</th>
-                            <th>Joined</th>
-                            <th>Status</th>
-                            <th class="text-end">Action</th>
+                            <th>{{ __('User') }}</th>
+                            <th>{{ __('Email / Phone') }}</th>
+                            <th>{{ __('Role') }}</th>
+                            <th>{{ __('Joined') }}</th>
+                            <th>{{ __('Status') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
                         </tr>
                     </thead>
 
@@ -164,7 +164,7 @@
 
                                         <div>
                                             <strong>{{ $user->name }}</strong>
-                                            <small>User #{{ $user->user_id }}</small>
+                                            <small>{{ __('User #') }}{{ $user->user_id }}</small>
                                         </div>
                                     </div>
                                 </td>
@@ -186,22 +186,22 @@
 
                                 <td>
                                     @if ($user->is_active)
-                                        <span class="status-badge active-badge">Active</span>
+                                        <span class="status-badge active-badge">{{ __('Active') }}</span>
                                     @else
-                                        <span class="status-badge due-badge">Inactive</span>
+                                        <span class="status-badge due-badge">{{ __('Inactive') }}</span>
                                     @endif
                                 </td>
 
                                 <td class="text-end">
                                     <a href="{{ route('users.show', $user) }}" class="table-action">
-                                        View
+                                        {{ __('View') }}
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="text-center">
-                                    No users match these filters.
+                                    {{ __('No users match these filters.') }}
                                 </td>
                             </tr>
                         @endforelse
@@ -211,9 +211,9 @@
 
             <div class="patients-pagination">
                 <span>
-                    Showing {{ $users->firstItem() ?? 0 }}
-                    to {{ $users->lastItem() ?? 0 }}
-                    of {{ $users->total() }} users
+                    {{ __('Showing') }} {{ $users->firstItem() ?? 0 }}
+                    {{ __('to') }} {{ $users->lastItem() ?? 0 }}
+                    {{ __('of') }} {{ $users->total() }} {{ __('users') }}
                 </span>
                 <div>{{ $users->links() }}</div>
             </div>

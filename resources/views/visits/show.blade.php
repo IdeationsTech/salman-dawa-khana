@@ -12,10 +12,10 @@
     ]);
 
     $statusLabels = [
-        'in_progress' => 'In progress',
-        'completed' => 'Completed',
-        'follow_up_required' => 'Follow-up required',
-        'cancelled' => 'Cancelled',
+        'in_progress' => __('In progress'),
+        'completed' => __('Completed'),
+        'follow_up_required' => __('Follow-up required'),
+        'cancelled' => __('Cancelled'),
     ];
 @endphp
 
@@ -25,14 +25,14 @@
     <main class="dashboard-main">
         @if (session('success'))
             <div class="alert alert-success no-print" role="alert">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         <div class="clh-toolbar no-print">
             <a href="{{ route('visits.index') }}" class="back-link">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to visits
+                {{ __('Back to visits') }}
             </a>
 
             <div class="clh-toolbar-actions">
@@ -42,7 +42,7 @@
                         class="btn btn-outline-secondary"
                     >
                         <i class="bi bi-person" aria-hidden="true"></i>
-                        Patient profile
+                        {{ __('Patient profile') }}
                     </a>
                 @endif
 
@@ -51,7 +51,7 @@
                     class="btn btn-outline-secondary"
                 >
                     <i class="bi bi-pencil" aria-hidden="true"></i>
-                    Edit visit
+                    {{ __('Edit visit') }}
                 </a>@endclinicCan
 
                 <button
@@ -60,15 +60,14 @@
                     data-print-page
                 >
                     <i class="bi bi-printer" aria-hidden="true"></i>
-                    Print patient slip
+                    {{ __('Print patient slip') }}
                 </button>
             </div>
         </div>
 
         @if (!$visit->doctor)
             <div class="alert alert-warning clh-screen-notice no-print">
-                No doctor is assigned to this visit.
-                Open Edit visit to select the treating Doctor / Hakeem.
+                {{ __('No doctor is assigned to this visit. Open Edit visit to select the treating Doctor / Hakeem.') }}
             </div>
         @endif
 
@@ -82,20 +81,20 @@
             :visit-type="$visit->visit_reason"
         >
             <div class="clh-diagnosis-block">
-                <h3 class="clh-section-title">Tashkhees / Diagnosis</h3>
+                <h3 class="clh-section-title">{{ __('Tashkhees / Diagnosis') }}</h3>
                 <p class="clh-diagnosis">
                     {{ $visit->diagnosis_name ?: '—' }}
                 </p>
             </div>
 
-            <h3 class="clh-section-title">Clinical notes</h3>
+            <h3 class="clh-section-title">{{ __('Clinical notes') }}</h3>
             <p class="clh-notes">{{ $visit->general_notes }}</p>
 
             <div class="clh-prescription-area">
-                <span class="clh-rx" aria-label="Prescription">℞</span>
+                <span class="clh-rx" aria-label="{{ __('Prescription') }}">℞</span>
 
                 <div class="clh-nuskha">
-                    <h3 class="clh-section-title">Prescription</h3>
+                    <h3 class="clh-section-title">{{ __('Prescription') }}</h3>
                 </div>
             </div>
 
@@ -110,32 +109,32 @@
         >
             <div class="visit-form-heading">
                 <div>
-                    <h2>Visit information</h2>
-                    <p>Practitioner, calendar and record status.</p>
+                    <h2>{{ __('Visit information') }}</h2>
+                    <p>{{ __('Practitioner, calendar and record status.') }}</p>
                 </div>
             </div>
 
             <div class="visit-form-grid">
                 <div class="form-field">
-                    <span class="form-label d-block">Doctor / Hakeem</span>
+                    <span class="form-label d-block">{{ __('Doctor / Hakeem') }}</span>
                     <strong>{{ $visit->doctor?->name ?: 'Not assigned' }}</strong>
                 </div>
 
                 <div class="form-field">
-                    <span class="form-label d-block">Recorded by</span>
+                    <span class="form-label d-block">{{ __('Recorded by') }}</span>
                     <strong>{{ $visit->recordedBy?->name ?: '—' }}</strong>
                 </div>
 
                 <div class="form-field">
-                    <span class="form-label d-block">Status</span>
+                    <span class="form-label d-block">{{ __('Status') }}</span>
                     <strong>
-                        {{ $statusLabels[$visit->status] ?? 'Not recorded' }}
+                        {{ $statusLabels[$visit->status] ?? __('Not recorded') }}
                     </strong>
                 </div>
 
                 <div class="form-field">
                     <label for="detail_visit_date" class="form-label">
-                        Gregorian date
+                        {{ __('Gregorian date') }}
                     </label>
 
                     <input
@@ -150,7 +149,7 @@
 
                 <div class="form-field">
                     <label for="detail_visit_day" class="form-label">
-                        Day
+                        {{ __('Day') }}
                     </label>
 
                     <input
@@ -165,7 +164,7 @@
 
                 <div class="form-field">
                     <label for="detail_hijri_date" class="form-label">
-                        Hijri date — Umm al-Qura
+                        {{ __('Hijri date — Umm al-Qura') }}
                     </label>
 
                     <input

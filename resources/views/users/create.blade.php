@@ -8,15 +8,15 @@
     $clinic = auth()->user()->clinic;
 
     $navigation = [
-        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
-        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => 'Patients'],
-        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => 'Visits'],
-        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => 'Prescriptions'],
-        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => 'Payments'],
-        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => 'Expenses'],
-        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => 'Reports'],
-        ['route' => 'users.index', 'icon' => 'bi-people', 'label' => 'Users'],
-        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => 'Settings'],
+        ['route' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => __('Dashboard')],
+        ['route' => 'patients.index', 'icon' => 'bi-person-vcard', 'label' => __('Patients')],
+        ['route' => 'visits.index', 'icon' => 'bi-calendar-check', 'label' => __('Visits')],
+        ['route' => 'prescriptions.index', 'icon' => 'bi-prescription', 'label' => __('Prescriptions')],
+        ['route' => 'payments.index', 'icon' => 'bi-cash-coin', 'label' => __('Payments')],
+        ['route' => 'expenses.index', 'icon' => 'bi-receipt', 'label' => __('Expenses')],
+        ['route' => 'reports.index', 'icon' => 'bi-bar-chart-line', 'label' => __('Reports')],
+        ['route' => 'users.index', 'icon' => 'bi-people', 'label' => __('Users')],
+        ['route' => 'settings.index', 'icon' => 'bi-gear', 'label' => __('Settings')],
     ];
 @endphp
 
@@ -30,10 +30,10 @@
         <div class="form-page-header">
             <a href="{{ route('users.index') }}" class="back-link">
                 <i class="bi bi-arrow-left app-icon" aria-hidden="true"></i>
-                Back to users
+                {{ __('Back to users') }}
             </a>
 
-            <h1>{{ $editing ? 'Edit user' : 'Add new user' }}</h1>
+            <h1>{{ $editing ? __('Edit user') : 'Add new user' }}</h1>
 
             <p>
                 {{ $editing
@@ -44,11 +44,11 @@
 
         @if($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
 
                 <ul class="mb-0 mt-2">
                     @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -72,15 +72,15 @@
                     <div class="form-section-number">01</div>
 
                     <div>
-                        <h2>Personal details</h2>
-                        <p>Enter the user’s name, email and phone number.</p>
+                        <h2>{{ __('Personal details') }}</h2>
+                        <p>{{ __('Enter the user’s name, email and phone number.') }}</p>
                     </div>
                 </div>
 
                 <div class="user-form-grid">
                     <div class="form-field">
                         <label for="name" class="form-label">
-                            Full name <span>*</span>
+                            {{ __('Full name') }} <span>*</span>
                         </label>
 
                         <input
@@ -95,13 +95,13 @@
                         >
 
                         @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
 
                     <div class="form-field">
                         <label for="email" class="form-label">
-                            Email address <span>*</span>
+                            {{ __('Email address') }} <span>*</span>
                         </label>
 
                         <input
@@ -116,14 +116,14 @@
                         >
 
                         @error('email')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
 
                     {{-- User Form — Required International Phone --}}
                     <div class="form-field">
                         <label for="user_phone" class="form-label">
-                            Personal phone number <span>*</span>
+                            {{ __('Personal phone number') }} <span>*</span>
                         </label>
 
                         <x-phone-input
@@ -142,14 +142,14 @@
                     <div class="form-section-number">02</div>
 
                     <div>
-                        <h2>Role and access</h2>
-                        <p>Select the responsibilities of this account.</p>
+                        <h2>{{ __('Role and access') }}</h2>
+                        <p>{{ __('Select the responsibilities of this account.') }}</p>
                     </div>
                 </div>
 
                 <div class="form-field">
                     <label for="role_id" class="form-label">
-                        System role <span>*</span>
+                        {{ __('System role') }} <span>*</span>
                     </label>
 
                     <select
@@ -158,7 +158,7 @@
                         class="form-select @error('role_id') is-invalid @enderror"
                         required
                     >
-                        <option value="">Select a role</option>
+                        <option value="">{{ __('Select a role') }}</option>
 
                         @foreach($roles as $role)
                             <option
@@ -171,14 +171,14 @@
                                 )
                             >
                                 {{ $role->name === 'Doctor'
-                                    ? 'Doctor / Hakeem'
+                                    ? __('Doctor / Hakeem')
                                     : $role->name }}
                             </option>
                         @endforeach
                     </select>
 
                     @error('role_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ __($message) }}</div>
                     @enderror
                 </div>
 
@@ -188,12 +188,10 @@
                     </div>
 
                     <div>
-                        <strong>Role access</strong>
+                        <strong>{{ __('Role access') }}</strong>
 
                         <p>
-                            Owner manages users and clinic administration.
-                            Doctor/Hakeem can access expenses.
-                            Receptionist cannot access users or expenses.
+                            {{ __('Owner manages users and clinic administration. Doctor/Hakeem can access expenses. Receptionist cannot access users or expenses.') }}
                         </p>
                     </div>
                 </div>
@@ -205,7 +203,7 @@
                     <div class="form-section-number">03</div>
 
                     <div>
-                        <h2>Login credentials</h2>
+                        <h2>{{ __('Login credentials') }}</h2>
 
                         <p>
                             {{ $editing
@@ -218,7 +216,7 @@
                 <div class="user-form-grid">
                     <div class="form-field">
                         <label for="password" class="form-label">
-                            {{ $editing ? 'New password' : 'Password' }}
+                            {{ $editing ? __('New password') : __('Password') }}
                             @if(!$editing)
                                 <span>*</span>
                             @endif
@@ -235,13 +233,13 @@
                         >
 
                         @error('password')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ __($message) }}</div>
                         @enderror
                     </div>
 
                     <div class="form-field">
                         <label for="password_confirmation" class="form-label">
-                            Confirm password
+                            {{ __('Confirm password') }}
                             @if(!$editing)
                                 <span>*</span>
                             @endif
@@ -262,10 +260,10 @@
                 <div class="user-status-row">
                     <div>
                         <label for="is_active">
-                            <strong>Active account</strong>
+                            <strong>{{ __('Active account') }}</strong>
                         </label>
 
-                        <small>Inactive accounts cannot sign in.</small>
+                        <small>{{ __('Inactive accounts cannot sign in.') }}</small>
                     </div>
 
                     <input type="hidden" name="is_active" value="0">
@@ -288,7 +286,7 @@
 
             <div class="user-form-actions">
                 <a href="{{ route('users.index') }}" class="btn btn-light">
-                    Cancel
+                    {{ __('Cancel') }}
                 </a>
 
                 <button type="submit" class="btn btn-primary">
@@ -297,7 +295,7 @@
                         aria-hidden="true"
                     ></i>
 
-                    {{ $editing ? 'Save changes' : 'Create user' }}
+                    {{ $editing ? __('Save changes') : 'Create user' }}
                 </button>
             </div>
         </form>

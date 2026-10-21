@@ -10,10 +10,10 @@
         {{-- NUSKHA TEMPLATES — Heading --}}
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Prescription library</p>
-                <h1>Nuskha Templates</h1>
+                <p class="dashboard-date">{{ __('Prescription library') }}</p>
+                <h1>{{ __('Nuskha Templates') }}</h1>
                 <p class="page-subtitle">
-                    Save and reuse commonly prescribed nuskhas.
+                    {{ __('Save and reuse commonly prescribed nuskhas.') }}
                 </p>
             </div>
 
@@ -27,14 +27,14 @@
 
         @if (session('success'))
             <div class="alert alert-success" role="alert">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         @if ($errors->any())
             <div class="alert alert-danger" role="alert">
                 @foreach ($errors->all() as $error)
-                    <div>{{ $error }}</div>
+                    <div>{{ __($error) }}</div>
                 @endforeach
             </div>
         @endif
@@ -53,15 +53,15 @@
                     name="search"
                     value="{{ request('search') }}"
                     maxlength="160"
-                    placeholder="Search by name or ingredient"
-                    aria-label="Search nuskha templates"
+                    placeholder="{{ __('Search by name or ingredient') }}"
+                    aria-label="{{ __('Search nuskha templates') }}"
                 >
             </div>
 
             <select
                 name="status"
                 class="form-select template-category-select"
-                aria-label="Template status"
+                aria-label="{{ __('Template status') }}"
             >
                 @foreach ([
                     'all' => 'All statuses',
@@ -72,20 +72,20 @@
                         value="{{ $value }}"
                         @selected(request('status', 'all') === $value)
                     >
-                        {{ $label }}
+                        {{ __($label) }}
                     </option>
                 @endforeach
             </select>
 
             <button type="submit" class="btn btn-primary">
-                Apply
+                {{ __('Apply') }}
             </button>
 
             @clinicCan('prescriptions.templates.index')<a
                 href="{{ route('prescriptions.templates.index') }}"
                 class="btn btn-light"
             >
-                Reset
+                {{ __('Reset') }}
             </a>@endclinicCan
         </form>
 
@@ -99,7 +99,7 @@
                         <span class="badge {{ $template->is_active
                             ? 'bg-success-subtle text-success'
                             : 'bg-secondary-subtle text-secondary' }}">
-                            {{ $template->is_active ? 'Active' : 'Inactive' }}
+                            {{ $template->is_active ? __('Active') : __('Inactive') }}
                         </span>
                     </div>
 
@@ -117,7 +117,7 @@
                             {{ $template->items_count }}
                             {{ $template->items_count === 1 ? 'ingredient' : 'ingredients' }}
                         </span>
-                        <span>Template #{{ $template->nuskha_template_id }}</span>
+                        <span>{{ __('Template #') }}{{ $template->nuskha_template_id }}</span>
                     </div>
 
                     <div class="template-card-actions">
@@ -125,7 +125,7 @@
                             href="{{ route('prescriptions.templates.edit', $template) }}"
                             class="template-action"
                         >
-                            View / edit
+                            {{ __('View / edit') }}
                         </a>@endclinicCan
 
                         @if ($template->is_active && $template->items_count > 0)
@@ -135,20 +135,20 @@
                                 ]) }}"
                                 class="btn btn-primary btn-sm"
                             >
-                                Use template
+                                {{ __('Use template') }}
                             </a>
                         @else
                             <span class="small text-muted">
-                                Not available for use
+                                {{ __('Not available for use') }}
                             </span>
                         @endif
                     </div>
                 </article>
             @empty
                 <div class="surface-card p-4 template-empty-state">
-                    <h2 class="h5">No templates found</h2>
+                    <h2 class="h5">{{ __('No templates found') }}</h2>
                     <p class="text-muted mb-0">
-                        Create a nuskha template or change your search filters.
+                        {{ __('Create a nuskha template or change your search filters.') }}
                     </p>
                 </div>
             @endforelse

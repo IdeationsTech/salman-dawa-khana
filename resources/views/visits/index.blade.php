@@ -5,17 +5,17 @@
 @section('content')
 @php
     $statusLabels = [
-        'in_progress' => 'In progress',
-        'completed' => 'Completed',
-        'follow_up_required' => 'Follow-up required',
-        'cancelled' => 'Cancelled',
+        'in_progress' => __('In progress'),
+        'completed' => __('Completed'),
+        'follow_up_required' => __('Follow-up required'),
+        'cancelled' => __('Cancelled'),
     ];
 
     $dateOptions = [
-        'all dates' => 'All dates',
-        'today' => 'Today',
-        'this week' => 'This week',
-        'this month' => 'This month',
+        'all dates' => __('All dates'),
+        'today' => __('Today'),
+        'this week' => __('This week'),
+        'this month' => __('This month'),
     ];
 
     $visitTypes = [
@@ -35,10 +35,10 @@
 
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Clinic management</p>
-                <h1>Visits</h1>
+                <p class="dashboard-date">{{ __('Clinic management') }}</p>
+                <h1>{{ __('Visits') }}</h1>
                 <p class="page-subtitle">
-                    Track patient visits and consultation records.
+                    {{ __('Track patient visits and consultation records.') }}
                 </p>
             </div>
 
@@ -49,7 +49,7 @@
 
         @if (session('success'))
             <div class="alert alert-success" role="alert">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
@@ -57,7 +57,7 @@
             <div class="alert alert-danger" role="alert">
                 <ul class="mb-0">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -66,27 +66,27 @@
         {{-- VISITS — Summary --}}
         <section class="visit-summary-grid">
             <article class="visit-summary-card">
-                <span>Today's visits</span>
+                <span>{{ __('Today\'s visits') }}</span>
                 <strong>{{ $todayVisits }}</strong>
-                <small>Today's patient visits</small>
+                <small>{{ __('Today\'s patient visits') }}</small>
             </article>
 
             <article class="visit-summary-card">
-                <span>This month's visits</span>
+                <span>{{ __('This month\'s visits') }}</span>
                 <strong>{{ $monthVisits }}</strong>
                 <small>{{ \App\Support\ClinicClock::now()->format('F Y') }}</small>
             </article>
 
             <article class="visit-summary-card">
-                <span>Total visits</span>
+                <span>{{ __('Total visits') }}</span>
                 <strong>{{ $totalVisits }}</strong>
-                <small>All recorded visits</small>
+                <small>{{ __('All recorded visits') }}</small>
             </article>
 
             <article class="visit-summary-card">
-                <span>Follow-up visits</span>
+                <span>{{ __('Follow-up visits') }}</span>
                 <strong>{{ $followUpVisits }}</strong>
-                <small>Visits recorded as Follow-up</small>
+                <small>{{ __('Visits recorded as Follow-up') }}</small>
             </article>
         </section>
 
@@ -95,8 +95,8 @@
 
             <div class="visits-toolbar">
                 <div>
-                    <h2>Visit records</h2>
-                    <p>View and manage patient visit history.</p>
+                    <h2>{{ __('Visit records') }}</h2>
+                    <p>{{ __('View and manage patient visit history.') }}</p>
                 </div>
 
                 <div class="visits-toolbar-actions flex-wrap">
@@ -104,14 +104,14 @@
                         name="date_range"
                         class="form-select"
                         form="visit-filter-form"
-                        aria-label="Filter by date"
+                        aria-label="{{ __('Filter by date') }}"
                     >
                         @foreach ($dateOptions as $value => $label)
                             <option
                                 value="{{ $value }}"
                                 @selected(request('date_range', 'all dates') === $value)
                             >
-                                {{ $label }}
+                                {{ __($label) }}
                             </option>
                         @endforeach
                     </select>
@@ -120,9 +120,9 @@
                         name="visit_type"
                         class="form-select"
                         form="visit-filter-form"
-                        aria-label="Filter by visit type"
+                        aria-label="{{ __('Filter by visit type') }}"
                     >
-                        <option value="all">All visit types</option>
+                        <option value="all">{{ __('All visit types') }}</option>
 
                         @foreach ($visitTypes as $type)
                             <option
@@ -138,20 +138,20 @@
                         name="status"
                         class="form-select"
                         form="visit-filter-form"
-                        aria-label="Filter by status"
+                        aria-label="{{ __('Filter by status') }}"
                     >
                         <option
                             value="all"
                             @selected(request('status', 'all') === 'all')
                         >
-                            All statuses
+                            {{ __('All statuses') }}
                         </option>
 
                         <option
                             value="not_recorded"
                             @selected(request('status') === 'not_recorded')
                         >
-                            Not recorded
+                            {{ __('Not recorded') }}
                         </option>
 
                         @foreach ($statusLabels as $value => $label)
@@ -159,7 +159,7 @@
                                 value="{{ $value }}"
                                 @selected(request('status') === $value)
                             >
-                                {{ $label }}
+                                {{ __($label) }}
                             </option>
                         @endforeach
                     </select>
@@ -178,18 +178,18 @@
                         type="search"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Search by patient name, phone, patient code or visit ID"
-                        aria-label="Search visits"
+                        placeholder="{{ __('Search by patient name, phone, patient code or visit ID') }}"
+                        aria-label="{{ __('Search visits') }}"
                     >
                 </div>
 
                 <div class="d-flex gap-2 mb-3">
                     <button type="submit" class="btn btn-primary">
-                        Search / Apply
+                        {{ __('Search / Apply') }}
                     </button>
 
                     <a href="{{ route('visits.index') }}" class="btn btn-light">
-                        Clear
+                        {{ __('Clear') }}
                     </a>
                 </div>
             </form>
@@ -198,14 +198,14 @@
                 <table class="table visits-table align-middle">
                     <thead>
                         <tr>
-                            <th>Visit ID</th>
-                            <th>Patient</th>
-                            <th>Date &amp; Time</th>
-                            <th>Visit Type</th>
-                            <th>Phone</th>
-                            <th>Tashkhees</th>
-                            <th>Status</th>
-                            <th class="text-end">Action</th>
+                            <th>{{ __('Visit ID') }}</th>
+                            <th>{{ __('Patient') }}</th>
+                            <th>{{ __('Date & Time') }}</th>
+                            <th>{{ __('Visit Type') }}</th>
+                            <th>{{ __('Phone') }}</th>
+                            <th>{{ __('Tashkhees') }}</th>
+                            <th>{{ __('Status') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
                         </tr>
                     </thead>
 
@@ -239,17 +239,17 @@
                                 </td>
 
                                 <td>
-                                    {{ $visit->diagnosis_name ?: 'Not recorded' }}
+                                    {{ $visit->diagnosis_name ?: __('Not recorded') }}
                                 </td>
 
                                 <td>
                                     @if ($visit->status === 'completed')
                                         <span class="status-badge active-badge">
-                                            Completed
+                                            {{ __('Completed') }}
                                         </span>
                                     @elseif ($visit->status === 'follow_up_required')
                                         <span class="status-badge due-badge">
-                                            Follow-up required
+                                            {{ __('Follow-up required') }}
                                         </span>
                                     @elseif ($visit->status)
                                         <span class="status-badge">
@@ -257,7 +257,7 @@
                                         </span>
                                     @else
                                         <span class="text-muted">
-                                            Not recorded
+                                            {{ __('Not recorded') }}
                                         </span>
                                     @endif
                                 </td>
@@ -267,14 +267,14 @@
                                         href="{{ route('visits.show', $visit) }}"
                                         class="table-action"
                                     >
-                                        View
+                                        {{ __('View') }}
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="8" class="text-center py-4">
-                                    No visits match the selected filters.
+                                    {{ __('No visits match the selected filters.') }}
                                 </td>
                             </tr>
                         @endforelse
@@ -284,9 +284,9 @@
 
             <div class="patients-pagination">
                 <span>
-                    Showing {{ $visits->firstItem() ?? 0 }}
-                    to {{ $visits->lastItem() ?? 0 }}
-                    of {{ $visits->total() }} visits
+                    {{ __('Showing') }} {{ $visits->firstItem() ?? 0 }}
+                    {{ __('to') }} {{ $visits->lastItem() ?? 0 }}
+                    {{ __('of') }} {{ $visits->total() }} {{ __('visits') }}
                 </span>
 
                 <div>{{ $visits->links() }}</div>

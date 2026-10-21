@@ -22,26 +22,26 @@
     <main class="dashboard-main">
         <header class="page-header">
             <div>
-                <p class="dashboard-date">Application configuration</p>
-                <h1>Settings</h1>
+                <p class="dashboard-date">{{ __('Application configuration') }}</p>
+                <h1>{{ __('Settings') }}</h1>
                 <p class="page-subtitle">
-                    Manage your clinic profile and system preferences.
+                    {{ __('Manage your clinic profile and system preferences.') }}
                 </p>
             </div>
         </header>
 
         @if (session('success'))
             <div class="alert alert-success" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         @if ($errors->any())
             <div class="alert alert-danger" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
                 <ul class="mb-0 mt-2">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -54,15 +54,15 @@
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
-                            <h2>Clinic country and currency</h2>
-                            <p>The platform administrator manages changes.</p>
+                            <h2>{{ __('Clinic country and currency') }}</h2>
+                            <p>{{ __('The platform administrator manages changes.') }}</p>
                         </div>
                     </div>
 
                     <div class="settings-form-grid">
                         <div class="form-field">
                             <label for="clinic_country_display" class="form-label">
-                                Clinic country
+                                {{ __('Clinic country') }}
                             </label>
                             <input
                                 id="clinic_country_display"
@@ -74,7 +74,7 @@
 
                         <div class="form-field">
                             <label for="clinic_currency_display" class="form-label">
-                                Clinic currency
+                                {{ __('Clinic currency') }}
                             </label>
                             <input
                                 id="clinic_currency_display"
@@ -89,8 +89,8 @@
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
-                            <h2>Clinic profile</h2>
-                            <p>Update your clinic details and logo.</p>
+                            <h2>{{ __('Clinic profile') }}</h2>
+                            <p>{{ __('Update your clinic details and logo.') }}</p>
                         </div>
 
                         <div class="clinic-settings-logo">
@@ -117,7 +117,7 @@
                         <div class="settings-form-grid">
                             <div class="form-field settings-field-wide">
                                 <label for="clinic_name" class="form-label">
-                                    Clinic name *
+                                    {{ __('Clinic name') }} *
                                 </label>
                                 <input
                                     type="text"
@@ -133,7 +133,7 @@
 
                             <div class="form-field">
                                 <label for="clinic_phone" class="form-label">
-                                    Phone number *
+                                    {{ __('Phone number') }} *
                                 </label>
                                 <x-phone-input
                                     name="clinic_phone"
@@ -145,7 +145,7 @@
 
                             <div class="form-field">
                                 <label for="account_email" class="form-label">
-                                    Your account email
+                                    {{ __('Your account email') }}
                                 </label>
                                 <input
                                     type="email"
@@ -155,13 +155,13 @@
                                     readonly
                                 >
                                 <small class="text-muted">
-                                    Manage your email in User account.
+                                    {{ __('Manage your email in User account.') }}
                                 </small>
                             </div>
 
                             <div class="form-field settings-field-wide">
                                 <label for="clinic_address" class="form-label">
-                                    Full clinic address
+                                    {{ __('Full clinic address') }}
                                 </label>
                                 <textarea
                                     id="clinic_address"
@@ -174,18 +174,18 @@
                             </div>
 
                             <div class="form-field settings-field-wide">
-                                <label for="clinic_timezone" class="form-label">Clinic timezone</label>
+                                <label for="clinic_timezone" class="form-label">{{ __('Clinic timezone') }}</label>
                                 <select id="clinic_timezone" name="settings[timezone]" class="form-select" @disabled(!$isOwner)>
                                     @foreach (\DateTimeZone::listIdentifiers() as $zone)
                                         <option value="{{ $zone }}" @selected(old('settings.timezone', \App\Support\ClinicClock::zone()) === $zone)>{{ $zone }}</option>
                                     @endforeach
                                 </select>
-                                <small class="text-muted">Choose Asia/Karachi for Pakistan or Asia/Dubai for UAE. Forms, history and report boundaries use this timezone.</small>
+                                <small class="text-muted">{{ __('Choose Asia/Karachi for Pakistan or Asia/Dubai for UAE. Forms, history and report boundaries use this timezone.') }}</small>
                             </div>
 
                             <div class="form-field settings-field-wide">
                                 <label for="print_location" class="form-label">
-                                    Short location for print header
+                                    {{ __('Short location for print header') }}
                                 </label>
                                 <input
                                     type="text"
@@ -194,11 +194,11 @@
                                     class="form-control"
                                     value="{{ old('settings.print_location', $settings->get('print_location')?->setting_value) }}"
                                     maxlength="160"
-                                    placeholder="City, State, Country"
+                                    placeholder="{{ __('City, State, Country') }}"
                                     @disabled(!$isOwner)
                                 >
                                 <small class="text-muted">
-                                    Full address appears in the print footer.
+                                    {{ __('Full address appears in the print footer.') }}
                                 </small>
                             </div>
 
@@ -224,10 +224,10 @@
                                         <div class="settings-toggle-row">
                                             <div>
                                                 <label for="remove_logo">
-                                                    <strong>Remove current logo</strong>
+                                                    <strong>{{ __('Remove current logo') }}</strong>
                                                 </label>
                                                 <small>
-                                                    Select this without choosing a new file.
+                                                    {{ __('Select this without choosing a new file.') }}
                                                 </small>
                                             </div>
                                             <input
@@ -248,12 +248,12 @@
                             <div class="settings-panel-actions">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
-                                    Save clinic profile
+                                    {{ __('Save clinic profile') }}
                                 </button>
                             </div>
                         @else
                             <p class="text-muted mt-3">
-                                The clinic Owner manages clinic details.
+                                {{ __('The clinic Owner manages clinic details.') }}
                             </p>
                         @endif
                     </form>
@@ -262,8 +262,8 @@
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
-                            <h2>Patient identification</h2>
-                            <p>Select the default ID format for new patients.</p>
+                            <h2>{{ __('Patient identification') }}</h2>
+                            <p>{{ __('Select the default ID format for new patients.') }}</p>
                         </div>
                     </div>
 
@@ -278,7 +278,7 @@
                             <div class="settings-form-grid">
                                 <div class="form-field settings-field-wide">
                                     <label for="patient_id_country" class="form-label">
-                                        Patient ID format *
+                                        {{ __('Patient ID format') }} *
                                     </label>
 
                                     <select
@@ -292,15 +292,13 @@
                                                 value="{{ $code }}"
                                                 @selected($patientIdCountry === $code)
                                             >
-                                                {{ $label }}
+                                                {{ __($label) }}
                                             </option>
                                         @endforeach
                                     </select>
 
                                     <small class="text-muted">
-                                        This applies to new patients.
-                                        Existing records retain their saved ID format.
-                                        Other accepts an ID without a country-specific format.
+                                        {{ __('This applies to new patients. Existing records retain their saved ID format. Other accepts an ID without a country-specific format.') }}
                                     </small>
                                 </div>
                             </div>
@@ -308,14 +306,14 @@
                             <div class="settings-panel-actions">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
-                                    Save ID format
+                                    {{ __('Save ID format') }}
                                 </button>
                             </div>
                         </form>
                     @else
                         <p>{{ $idLabels[$patientIdCountry] ?? $idLabels['ZZ'] }}</p>
                         <small class="text-muted">
-                            The clinic Owner manages this setting.
+                            {{ __('The clinic Owner manages this setting.') }}
                         </small>
                     @endif
                 </section>
@@ -323,9 +321,9 @@
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
-                            <h2>Payment settings</h2>
+                            <h2>{{ __('Payment settings') }}</h2>
                             <p>
-                                Current clinic currency:
+                                {{ __('Current clinic currency:') }}
                                 <strong>{{ $clinic->currency }}</strong>
                             </p>
                         </div>
@@ -336,7 +334,7 @@
                             href="{{ route('settings.payments') }}"
                             class="btn btn-outline-secondary"
                         >
-                            Open payment settings
+                            {{ __('Open payment settings') }}
                         </a>
                     </div>
                 </section>
@@ -344,8 +342,8 @@
                 <section class="settings-panel">
                     <div class="settings-panel-heading">
                         <div>
-                            <h2>User account</h2>
-                            <p>Details of the currently signed-in user.</p>
+                            <h2>{{ __('User account') }}</h2>
+                            <p>{{ __('Details of the currently signed-in user.') }}</p>
                         </div>
                     </div>
 
@@ -361,7 +359,7 @@
                             href="{{ route('settings.account') }}"
                             class="btn btn-outline-secondary ms-auto"
                         >
-                            Edit profile
+                            {{ __('Edit profile') }}
                         </a>
                     </div>
                 </section>

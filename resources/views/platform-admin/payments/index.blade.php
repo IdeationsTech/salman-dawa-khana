@@ -6,19 +6,19 @@
 @section('content')
     <div class="pa-page-heading">
         <div>
-            <h1 class="pa-page-title">License payments</h1>
+            <h1 class="pa-page-title">{{ __('License payments') }}</h1>
             <p class="pa-page-description">
-                Manual payments recorded for clinic subscriptions.
+                {{ __('Manual payments recorded for clinic subscriptions.') }}
             </p>
         </div>
     </div>
 
     @if($errors->any())
         <div class="pa-notice pa-notice-error" role="alert">
-            <strong>Please correct the following:</strong>
+            <strong>{{ __('Please correct the following:') }}</strong>
             <ul>
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    <li>{{ __($error) }}</li>
                 @endforeach
             </ul>
         </div>
@@ -27,9 +27,9 @@
     <section class="pa-panel">
         <header class="pa-panel-header">
             <div>
-                <h2 class="pa-panel-title">Payment history</h2>
+                <h2 class="pa-panel-title">{{ __('Payment history') }}</h2>
                 <p class="pa-panel-description">
-                    {{ $payments->total() }} payment records
+                    {{ $payments->total() }} {{ __('payment records') }}
                 </p>
             </div>
         </header>
@@ -42,20 +42,20 @@
             >
                 <div class="pa-form-grid">
                     <div class="pa-field">
-                        <label for="payment-search">Search</label>
+                        <label for="payment-search">{{ __('Search') }}</label>
                         <input
                             id="payment-search"
                             type="search"
                             name="search"
                             class="pa-input"
                             maxlength="160"
-                            placeholder="Clinic, email, reference or payment ID"
+                            placeholder="{{ __('Clinic, email, reference or payment ID') }}"
                             value="{{ $filters['search'] }}"
                         >
                     </div>
 
                     <div class="pa-field">
-                        <label for="payment-status">Status</label>
+                        <label for="payment-status">{{ __('Status') }}</label>
                         <select id="payment-status" name="status" class="pa-input">
                             @foreach([
                                 'all' => 'All statuses',
@@ -67,14 +67,14 @@
                                     value="{{ $value }}"
                                     @selected($filters['status'] === $value)
                                 >
-                                    {{ $label }}
+                                    {{ __($label) }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
                     <div class="pa-field">
-                        <label for="payment-method-filter">Method</label>
+                        <label for="payment-method-filter">{{ __('Method') }}</label>
                         <select
                             id="payment-method-filter"
                             name="method"
@@ -90,14 +90,14 @@
                                     value="{{ $value }}"
                                     @selected($filters['method'] === $value)
                                 >
-                                    {{ $label }}
+                                    {{ __($label) }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
                     <div class="pa-field">
-                        <label for="payment-from">From</label>
+                        <label for="payment-from">{{ __('From') }}</label>
                         <input
                             id="payment-from"
                             type="date"
@@ -108,7 +108,7 @@
                     </div>
 
                     <div class="pa-field">
-                        <label for="payment-to">To</label>
+                        <label for="payment-to">{{ __('To') }}</label>
                         <input
                             id="payment-to"
                             type="date"
@@ -121,13 +121,13 @@
 
                 <div class="pa-payment-actions">
                     <button type="submit" class="pa-button pa-button-primary">
-                        Apply filters
+                        {{ __('Apply filters') }}
                     </button>
                     <a
                         href="{{ route('platform-admin.payments.index') }}"
                         class="pa-button"
                     >
-                        Clear
+                        {{ __('Clear') }}
                     </a>
                 </div>
             </form>
@@ -135,21 +135,21 @@
 
         @if($payments->isEmpty())
             <div class="pa-empty">
-                <p class="pa-empty-title">No payments found</p>
+                <p class="pa-empty-title">{{ __('No payments found') }}</p>
             </div>
         @else
             <div class="pa-table-wrap">
                 <table class="pa-table">
                     <thead>
                         <tr>
-                            <th>Payment</th>
-                            <th>Clinic</th>
-                            <th>Plan</th>
-                            <th>Method</th>
-                            <th>Paid on</th>
-                            <th>Status</th>
-                            <th class="pa-amount">Amount</th>
-                            <th>Action</th>
+                            <th>{{ __('Payment') }}</th>
+                            <th>{{ __('Clinic') }}</th>
+                            <th>{{ __('Plan') }}</th>
+                            <th>{{ __('Method') }}</th>
+                            <th>{{ __('Paid on') }}</th>
+                            <th>{{ __('Status') }}</th>
+                            <th class="pa-amount">{{ __('Amount') }}</th>
+                            <th>{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -160,7 +160,7 @@
                                         #{{ $payment->license_payment_id }}
                                     </span>
                                     <span class="pa-cell-subtitle">
-                                        License #{{ $payment->clinic_license_id }}
+                                        {{ __('License #') }}{{ $payment->clinic_license_id }}
                                     </span>
                                 </td>
                                 <td>
@@ -195,7 +195,7 @@
                                         href="{{ route('platform-admin.payments.show', $payment->license_payment_id) }}"
                                         class="pa-link"
                                     >
-                                        View
+                                        {{ __('View') }}
                                     </a>
                                 </td>
                             </tr>

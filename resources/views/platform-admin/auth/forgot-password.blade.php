@@ -13,7 +13,7 @@
 
     <div class="mb-4">
         <label for="admin-reset-email" class="form-label">
-            Email address *
+            {{ __('Email address') }} *
         </label>
 
         <input
@@ -30,7 +30,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary w-100">
-        Send reset link
+        {{ __('Send reset link') }}
     </button>
 </form>
 
@@ -39,7 +39,7 @@
         href="{{ route('platform-admin.login') }}"
         class="auth-link"
     >
-        Back to admin sign in
+        {{ __('Back to admin sign in') }}
     </a>
 </div>
 @endsection

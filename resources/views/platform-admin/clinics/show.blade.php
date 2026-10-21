@@ -34,7 +34,7 @@
             </h1>
 
             <p class="pa-page-description">
-                Clinic #{{ $clinic->clinic_id }}
+                {{ __('Clinic #') }}{{ $clinic->clinic_id }}
                 · Registered
                 {{ \Illuminate\Support\Carbon::parse($clinic->created_at)->format('d M Y') }}
             </p>
@@ -53,24 +53,24 @@
                 href="{{ route('platform-admin.clinics.edit', $clinic->clinic_id) }}"
                 class="pa-button"
             >
-                Edit clinic
+                {{ __('Edit clinic') }}
             </a>
         </div>
     </div>
 
     @if(session('success'))
         <div class="pa-notice" role="status">
-            {{ session('success') }}
+            {{ __(session('success')) }}
         </div>
     @endif
 
     @if($errors->any())
         <div class="pa-notice pa-notice-error" role="alert">
-            <strong>Please correct the following:</strong>
+            <strong>{{ __('Please correct the following:') }}</strong>
 
             <ul>
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    <li>{{ __($error) }}</li>
                 @endforeach
             </ul>
         </div>
@@ -81,34 +81,34 @@
             <header class="pa-panel-header">
                 <div>
                     <h2 class="pa-panel-title">
-                        Clinic information
+                        {{ __('Clinic information') }}
                     </h2>
                 </div>
             </header>
 
             <dl class="pa-detail-list">
                 <div>
-                    <dt>Clinic name</dt>
+                    <dt>{{ __('Clinic name') }}</dt>
                     <dd>{{ $clinic->name }}</dd>
                 </div>
 
                 <div>
-                    <dt>Phone</dt>
+                    <dt>{{ __('Phone') }}</dt>
                     <dd>{{ $clinic->phone ?? 'Not provided' }}</dd>
                 </div>
 
                 <div>
-                    <dt>Address</dt>
+                    <dt>{{ __('Address') }}</dt>
                     <dd>{{ $clinic->address ?? 'Not provided' }}</dd>
                 </div>
 
                 <div>
-                    <dt>Clinic currency</dt>
+                    <dt>{{ __('Clinic currency') }}</dt>
                     <dd>{{ $clinic->currency }}</dd>
                 </div>
 
                 <div>
-                    <dt>Approval status</dt>
+                    <dt>{{ __('Approval status') }}</dt>
                     <dd>
                         {{ \Illuminate\Support\Str::headline($clinic->onboarding_status) }}
                     </dd>
@@ -116,7 +116,7 @@
 
                 @if($clinic->reviewed_at)
                     <div>
-                        <dt>Reviewed on</dt>
+                        <dt>{{ __('Reviewed on') }}</dt>
                         <dd>
                             {{ \Illuminate\Support\Carbon::parse($clinic->reviewed_at)->format('d M Y, h:i A') }}
                         </dd>
@@ -125,7 +125,7 @@
 
                 @if($clinic->rejection_reason)
                     <div>
-                        <dt>Rejection reason</dt>
+                        <dt>{{ __('Rejection reason') }}</dt>
                         <dd>{{ $clinic->rejection_reason }}</dd>
                     </div>
                 @endif
@@ -136,34 +136,34 @@
             <header class="pa-panel-header">
                 <div>
                     <h2 class="pa-panel-title">
-                        Customer contact
+                        {{ __('Customer contact') }}
                     </h2>
                 </div>
             </header>
 
             <dl class="pa-detail-list">
                 <div>
-                    <dt>Contact name</dt>
+                    <dt>{{ __('Contact name') }}</dt>
                     <dd>{{ $clinic->contact_name ?? 'Not linked' }}</dd>
                 </div>
 
                 <div>
-                    <dt>Company</dt>
+                    <dt>{{ __('Company') }}</dt>
                     <dd>{{ $clinic->company_name ?? 'Not provided' }}</dd>
                 </div>
 
                 <div>
-                    <dt>Email</dt>
+                    <dt>{{ __('Email') }}</dt>
                     <dd>{{ $clinic->customer_email ?? 'Not provided' }}</dd>
                 </div>
 
                 <div>
-                    <dt>Phone</dt>
+                    <dt>{{ __('Phone') }}</dt>
                     <dd>{{ $clinic->customer_phone ?? 'Not provided' }}</dd>
                 </div>
 
                 <div>
-                    <dt>Country</dt>
+                    <dt>{{ __('Country') }}</dt>
                     <dd>{{ $clinic->country_code ?? 'Not provided' }}</dd>
                 </div>
             </dl>
@@ -174,7 +174,7 @@
         <header class="pa-panel-header">
             <div>
                 <h2 class="pa-panel-title">
-                    Current license
+                    {{ __('Current license') }}
                 </h2>
             </div>
         </header>
@@ -182,33 +182,33 @@
         @if($license)
             <dl class="pa-detail-list pa-detail-list-wide">
                 <div>
-                    <dt>Plan</dt>
+                    <dt>{{ __('Plan') }}</dt>
                     <dd>{{ $license->plan_name }}</dd>
                 </div>
 
                 <div>
-                    <dt>License status</dt>
+                    <dt>{{ __('License status') }}</dt>
                     <dd>
                         {{ \Illuminate\Support\Str::headline($license->status) }}
                     </dd>
                 </div>
 
                 <div>
-                    <dt>Grant type</dt>
+                    <dt>{{ __('Grant type') }}</dt>
                     <dd>
                         {{ \Illuminate\Support\Str::headline($license->grant_type) }}
                     </dd>
                 </div>
 
                 <div>
-                    <dt>Starts</dt>
+                    <dt>{{ __('Starts') }}</dt>
                     <dd>
                         {{ \Illuminate\Support\Carbon::parse($license->starts_at)->format('d M Y, h:i A') }}
                     </dd>
                 </div>
 
                 <div>
-                    <dt>Ends</dt>
+                    <dt>{{ __('Ends') }}</dt>
                     <dd>
                         {{ $license->ends_at
                             ? \Illuminate\Support\Carbon::parse($license->ends_at)->format('d M Y, h:i A')
@@ -218,7 +218,7 @@
 
                 @if($license->grant_reason)
                     <div>
-                        <dt>Reason</dt>
+                        <dt>{{ __('Reason') }}</dt>
                         <dd>{{ $license->grant_reason }}</dd>
                     </div>
                 @endif
@@ -226,11 +226,11 @@
         @else
             <div class="pa-empty">
                 <p class="pa-empty-title">
-                    No license issued
+                    {{ __('No license issued') }}
                 </p>
 
                 <p class="pa-empty-description">
-                    The clinic does not have a current license record yet.
+                    {{ __('The clinic does not have a current license record yet.') }}
                 </p>
             </div>
         @endif
@@ -242,11 +242,11 @@
                 <header class="pa-panel-header">
                     <div>
                         <h2 class="pa-panel-title">
-                            Approve registration
+                            {{ __('Approve registration') }}
                         </h2>
 
                         <p class="pa-panel-description">
-                            Choose a plan after reviewing the clinic.
+                            {{ __('Choose a plan after reviewing the clinic.') }}
                         </p>
                     </div>
                 </header>
@@ -261,17 +261,16 @@
                             @csrf
 
                             <h3 class="pa-form-heading">
-                                Verified manual payment
+                                {{ __('Verified manual payment') }}
                             </h3>
 
                             <p class="pa-form-description">
-                                Enter the payment you have already
-                                received and verified.
+                                {{ __('Enter the payment you have already received and verified.') }}
                             </p>
 
                             <div class="pa-field">
                                 <label for="paid-plan">
-                                    Subscription plan *
+                                    {{ __('Subscription plan') }} *
                                 </label>
 
                                 <select
@@ -281,7 +280,7 @@
                                     required
                                 >
                                     <option value="">
-                                        Select a plan
+                                        {{ __('Select a plan') }}
                                     </option>
 
                                     @foreach($paidPlans as $plan)
@@ -300,7 +299,7 @@
                             <div class="pa-form-grid">
                                 <div class="pa-field">
                                     <label for="payment-method">
-                                        Payment method *
+                                        {{ __('Payment method') }} *
                                     </label>
 
                                     <select
@@ -310,28 +309,28 @@
                                         required
                                     >
                                         <option value="">
-                                            Select method
+                                            {{ __('Select method') }}
                                         </option>
 
                                         <option
                                             value="bank_transfer"
                                             @selected(old('payment_method') === 'bank_transfer')
                                         >
-                                            Bank transfer
+                                            {{ __('Bank transfer') }}
                                         </option>
 
                                         <option
                                             value="cash"
                                             @selected(old('payment_method') === 'cash')
                                         >
-                                            Cash
+                                            {{ __('Cash') }}
                                         </option>
                                     </select>
                                 </div>
 
                                 <div class="pa-field">
                                     <label for="payment-amount">
-                                        Amount received (AED) *
+                                        {{ __('Amount received (AED)') }} *
                                     </label>
 
                                     <input
@@ -349,7 +348,7 @@
 
                                 <div class="pa-field">
                                     <label for="paid-at">
-                                        Payment date *
+                                        {{ __('Payment date') }} *
                                     </label>
 
                                     <input
@@ -365,7 +364,7 @@
 
                                 <div class="pa-field">
                                     <label for="reference-no">
-                                        Bank/reference number
+                                        {{ __('Bank/reference number') }}
                                     </label>
 
                                     <input
@@ -381,7 +380,7 @@
 
                             <div class="pa-field">
                                 <label for="payment-notes">
-                                    Payment notes
+                                    {{ __('Payment notes') }}
                                 </label>
 
                                 <textarea
@@ -397,14 +396,12 @@
                                 type="submit"
                                 class="pa-button pa-button-primary"
                             >
-                                Verify payment & approve
+                                {{ __('Verify payment & approve') }}
                             </button>
                         </form>
                     @else
                         <p class="pa-form-description">
-                            Monthly, Yearly and Lifetime plans will
-                            become available here after their prices
-                            are set and the plans are activated.
+                            {{ __('Monthly, Yearly and Lifetime plans will become available here after their prices are set and the plans are activated.') }}
                         </p>
                     @endif
 
@@ -424,16 +421,15 @@
                             >
 
                             <h3 class="pa-form-heading">
-                                Optional 7-day trial
+                                {{ __('Optional 7-day trial') }}
                             </h3>
 
                             <p class="pa-form-description">
-                                Approve this clinic with a seven-day
-                                trial. No payment is recorded.
+                                {{ __('Approve this clinic with a seven-day trial. No payment is recorded.') }}
                             </p>
 
                             <button type="submit" class="pa-button">
-                                Approve with trial
+                                {{ __('Approve with trial') }}
                             </button>
                         </form>
                     @endif
@@ -444,11 +440,11 @@
                 <header class="pa-panel-header">
                     <div>
                         <h2 class="pa-panel-title">
-                            Reject registration
+                            {{ __('Reject registration') }}
                         </h2>
 
                         <p class="pa-panel-description">
-                            Record the reason for declining this clinic.
+                            {{ __('Record the reason for declining this clinic.') }}
                         </p>
                     </div>
                 </header>
@@ -463,7 +459,7 @@
 
                         <div class="pa-field">
                             <label for="rejection-reason">
-                                Rejection reason *
+                                {{ __('Rejection reason') }} *
                             </label>
 
                             <textarea
@@ -477,7 +473,7 @@
                         </div>
 
                         <button type="submit" class="pa-button">
-                            Reject registration
+                            {{ __('Reject registration') }}
                         </button>
                     </form>
                 </div>
@@ -489,7 +485,7 @@
         <header class="pa-panel-header">
             <div>
                 <h2 class="pa-panel-title">
-                    Recent activity
+                    {{ __('Recent activity') }}
                 </h2>
             </div>
         </header>
@@ -497,7 +493,7 @@
         @if($auditLogs->isEmpty())
             <div class="pa-empty">
                 <p class="pa-empty-title">
-                    No admin activity recorded
+                    {{ __('No admin activity recorded') }}
                 </p>
             </div>
         @else

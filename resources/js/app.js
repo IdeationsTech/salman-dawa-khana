@@ -1,8 +1,10 @@
 import 'bootstrap';
+import { Offcanvas } from 'bootstrap';
 import intlTelInput from 'intl-tel-input';
 import 'intl-tel-input/styles';
 
 document.addEventListener('DOMContentLoaded', () => {
+    initializeMobileSidebar();
     initPasswordToggles();
     initAlerts();
     initPrintButtons();
@@ -2892,4 +2894,21 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializePrescriptionPatientSearch);
 } else {
     initializePrescriptionPatientSearch();
+}
+
+
+function initializeMobileSidebar() {
+    const sidebar = document.getElementById('clinic-sidebar');
+    if (!sidebar) return;
+    const toggle = document.querySelector('[data-bs-target="#clinic-sidebar"][data-bs-toggle]');
+    const mobile = window.matchMedia('(max-width: 991.98px)');
+    const close = () => Offcanvas.getInstance(sidebar)?.hide();
+    sidebar.addEventListener('show.bs.offcanvas', () => toggle?.setAttribute('aria-expanded', 'true'));
+    sidebar.addEventListener('hidden.bs.offcanvas', () => toggle?.setAttribute('aria-expanded', 'false'));
+    sidebar.addEventListener('click', (event) => {
+        if (mobile.matches && event.target.closest('a[href]')) close();
+    });
+    sidebar.addEventListener('submit', () => { if (mobile.matches) close(); });
+    mobile.addEventListener('change', () => { if (!mobile.matches) close(); });
+    window.addEventListener('pageshow', () => { if (mobile.matches) close(); });
 }

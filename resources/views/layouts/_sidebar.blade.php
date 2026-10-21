@@ -19,7 +19,16 @@
     ];
 @endphp
 
-<aside class="app-sidebar no-print">
+<div class="clinic-mobile-bar no-print">
+    <button type="button" class="clinic-menu-toggle" data-bs-toggle="offcanvas" data-bs-target="#clinic-sidebar" aria-controls="clinic-sidebar" aria-expanded="false" aria-label="{{ __('Open navigation') }}">
+        <i class="bi bi-list" aria-hidden="true"></i>
+    </button>
+    <span>{{ $sidebarClinic->name }}</span>
+    <x-language-switcher />
+</div>
+
+<aside id="clinic-sidebar" class="app-sidebar offcanvas-lg offcanvas-start no-print" tabindex="-1" aria-labelledby="clinic-sidebar-title">
+    <div class="clinic-sidebar-heading">
     <div class="sidebar-brand">
         <div class="sidebar-logo">
             @if ($sidebarClinic->logo_path)
@@ -32,10 +41,13 @@
                 <i class="bi bi-hospital app-icon" aria-hidden="true"></i>
             @endif
         </div>
-        <span>{{ $sidebarClinic->name }}</span>
+        <span id="clinic-sidebar-title">{{ $sidebarClinic->name }}</span>
     </div>
+        <button type="button" class="btn-close btn-close-white clinic-sidebar-close" data-bs-dismiss="offcanvas" data-bs-target="#clinic-sidebar" aria-label="{{ __('Close navigation') }}"></button>
+    </div>
+    <div class="clinic-sidebar-body">
 
-    <nav class="sidebar-nav" aria-label="Main navigation">
+    <nav class="sidebar-nav" aria-label="{{ __('Main navigation') }}">
         @foreach ($sidebarNavigation as [$routeName, $pattern, $icon, $label])
             @if (!\App\Support\ClinicPermissions::allows(auth()->user(), $routeName)) @continue @endif
             @if (in_array($routeName, ['users.index', 'audit.index'], true) && $sidebarRole !== 'Owner')
@@ -55,22 +67,24 @@
 
             <a
                 href="{{ route($routeName) }}"
-                class="sidebar-link {{ request()->routeIs($pattern) ? 'active' : '' }}"
+                class="sidebar-link {{ request()->routeIs($pattern) ? __('active') : '' }}"
                 @if (request()->routeIs($pattern)) aria-current="page" @endif
             >
                 <span><i class="bi bi-{{ $icon }} app-icon" aria-hidden="true"></i></span>
-                <span>{{ $label }}</span>
+                <span>{{ __($label) }}</span>
             </a>
         @endforeach
     </nav>
 
     <div class="sidebar-footer">
+        <x-language-switcher />
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="sidebar-signout">
                 <i class="bi bi-box-arrow-right app-icon" aria-hidden="true"></i>
-                <span>Sign out</span>
+                <span>{{ __('Sign out') }}</span>
             </button>
         </form>
+    </div>
     </div>
 </aside>

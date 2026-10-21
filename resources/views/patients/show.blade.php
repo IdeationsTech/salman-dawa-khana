@@ -29,9 +29,9 @@
         : 'inactive-badge';
 
     $maritalStatus = match ($patient->marital_status) {
-        'married' => 'Married',
-        'unmarried' => 'Unmarried',
-        default => 'Not recorded',
+        'married' => __('Married'),
+        'unmarried' => __('Unmarried'),
+        default => __('Not recorded'),
     };
 
     $childrenLabel = 'Not recorded';
@@ -59,9 +59,9 @@
     );
 
     $profileIdLabel = match ($profileIdCountry) {
-        'PK' => 'CNIC',
-        'AE' => 'Emirates ID',
-        default => 'National ID',
+        'PK' => __('CNIC'),
+        'AE' => __('Emirates ID'),
+        default => __('National ID'),
     };
 
     $formattedProfileId = match (true) {
@@ -92,20 +92,19 @@
         <div class="form-page-header no-print">
             <a href="{{ route('patients.index') }}" class="back-link">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Back to patients
+                {{ __('Back to patients') }}
             </a>
         </div>
 
         @if (session('success'))
             <div class="alert alert-success no-print" role="status">
-                {{ session('success') }}
+                {{ __(session('success')) }}
             </div>
         @endif
 
         @if ($unconfirmedFinancialRecords > 0)
             <div class="alert alert-warning" role="status">
-                {{ $unconfirmedFinancialRecords }} financial records have no
-                confirmed currency and are excluded from account totals.
+                {{ $unconfirmedFinancialRecords }} {{ __('financial records have no confirmed currency and are excluded from account totals.') }}
             </div>
         @endif
 
@@ -115,7 +114,7 @@
 
                 <div>
                     <div class="patient-id-label">
-                        PATIENT CODE: {{ $patient->patient_code }}
+                        {{ __('PATIENT CODE:') }} {{ $patient->patient_code }}
                     </div>
 
                     <h1>{{ $patient->full_name }}</h1>
@@ -123,7 +122,7 @@
                     <p>
                         {{ $patient->gender ?: 'Gender not recorded' }}
                         @if ($age !== null)
-                            · {{ $age }} years
+                            · {{ $age }} {{ __('years') }}
                         @endif
                         @if ($patient->phone)
                             · {{ $patient->phone }}
@@ -138,7 +137,7 @@
                     class="btn btn-outline-secondary"
                 >
                     <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                    Edit patient
+                    {{ __('Edit patient') }}
                 </a>@endclinicCan
 
                 <a
@@ -148,7 +147,7 @@
                     class="btn btn-primary"
                 >
                     <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                    New visit
+                    {{ __('New visit') }}
                 </a>
             </div>
         </section>
@@ -158,36 +157,36 @@
                 <div class="patient-detail-panel">
                     <div class="profile-panel-heading">
                         <div>
-                            <h2>Personal information</h2>
-                            <p>Registered patient details</p>
+                            <h2>{{ __('Personal information') }}</h2>
+                            <p>{{ __('Registered patient details') }}</p>
                         </div>
 
                         <span class="status-badge {{ $statusClass }}">
-                            {{ $status !== '' ? ucfirst($status) : 'Not recorded' }}
+                            {{ $status !== '' ? ucfirst($status) : __('Not recorded') }}
                         </span>
                     </div>
 
                     <div class="detail-grid">
                         <div>
-                            <span class="detail-label">Full name</span>
+                            <span class="detail-label">{{ __('Full name') }}</span>
                             <strong>{{ $patient->full_name }}</strong>
                         </div>
 
                         <div>
-                            <span class="detail-label">Patient code</span>
+                            <span class="detail-label">{{ __('Patient code') }}</span>
                             <strong>{{ $patient->patient_code }}</strong>
                         </div>
 
                         <div>
-                            <span class="detail-label">Father / husband name</span>
+                            <span class="detail-label">{{ __('Father / husband name') }}</span>
                             <strong>
-                                {{ $patient->father_or_husband_name ?: 'Not recorded' }}
+                                {{ $patient->father_or_husband_name ?: __('Not recorded') }}
                             </strong>
                         </div>
 
                         <div>
-                            <span class="detail-label">Phone number</span>
-                            <strong>{{ $patient->phone ?: 'Not recorded' }}</strong>
+                            <span class="detail-label">{{ __('Phone number') }}</span>
+                            <strong>{{ $patient->phone ?: __('Not recorded') }}</strong>
                         </div>
 
                         <div>
@@ -196,37 +195,37 @@
                         </div>
 
                         <div>
-                            <span class="detail-label">Date of birth</span>
+                            <span class="detail-label">{{ __('Date of birth') }}</span>
                             <strong>
-                                {{ $patient->date_of_birth?->format('d F Y') ?? 'Not recorded' }}
+                                {{ $patient->date_of_birth?->format('d F Y') ?? __('Not recorded') }}
                             </strong>
                         </div>
 
                         <div>
-                            <span class="detail-label">Gender</span>
-                            <strong>{{ $patient->gender ?: 'Not recorded' }}</strong>
+                            <span class="detail-label">{{ __('Gender') }}</span>
+                            <strong>{{ $patient->gender ?: __('Not recorded') }}</strong>
                         </div>
 
                         <div>
-                            <span class="detail-label">Marital status</span>
+                            <span class="detail-label">{{ __('Marital status') }}</span>
                             <strong>{{ $maritalStatus }}</strong>
                         </div>
 
                         <div>
-                            <span class="detail-label">Children</span>
+                            <span class="detail-label">{{ __('Children') }}</span>
                             <strong>{{ $childrenLabel }}</strong>
                         </div>
 
                         <div>
-                            <span class="detail-label">Registered on</span>
+                            <span class="detail-label">{{ __('Registered on') }}</span>
                             <strong>
-                                {{ $patient->created_at?->format('d F Y') ?? 'Not recorded' }}
+                                {{ $patient->created_at?->format('d F Y') ?? __('Not recorded') }}
                             </strong>
                         </div>
 
                         <div>
-                            <span class="detail-label">Address</span>
-                            <strong>{{ $patient->address ?: 'Not recorded' }}</strong>
+                            <span class="detail-label">{{ __('Address') }}</span>
+                            <strong>{{ $patient->address ?: __('Not recorded') }}</strong>
                         </div>
                     </div>
                 </div>
@@ -234,7 +233,7 @@
                 @if ($patient->notes)
                     <div class="patient-detail-panel">
                         <div class="profile-panel-heading">
-                            <div><h2>Patient notes</h2></div>
+                            <div><h2>{{ __('Patient notes') }}</h2></div>
                         </div>
                         <p class="mb-0">{!! nl2br(e($patient->notes)) !!}</p>
                     </div>
@@ -243,8 +242,8 @@
                 <div class="patient-detail-panel" id="patient-visits">
                     <div class="profile-panel-heading">
                         <div>
-                            <h2>Visit history</h2>
-                            <p>Latest five visits for this patient</p>
+                            <h2>{{ __('Visit history') }}</h2>
+                            <p>{{ __('Latest five visits for this patient') }}</p>
                         </div>
                     </div>
 
@@ -261,12 +260,12 @@
                                 </div>
 
                                 <div class="visit-info">
-                                    <strong>{{ $visit->visit_reason ?: 'Visit' }}</strong>
+                                    <strong>{{ $visit->visit_reason ?: __('Visit') }}</strong>
                                     <span>
                                         {{ $visit->visit_date?->format('d M Y, h:i A') ?? 'Date not recorded' }}
                                     </span>
                                     @if ($visit->diagnosis_name)
-                                        <span>Diagnosis: {{ $visit->diagnosis_name }}</span>
+                                        <span>{{ __('Diagnosis:') }} {{ $visit->diagnosis_name }}</span>
                                     @endif
                                     <span>
                                         {{ $visit->status
@@ -279,11 +278,11 @@
                                     href="{{ route('visits.show', $visit) }}"
                                     class="panel-link no-print"
                                 >
-                                    View
+                                    {{ __('View') }}
                                 </a>
                             </div>
                         @empty
-                            <p class="text-muted mb-0">No visits recorded.</p>
+                            <p class="text-muted mb-0">{{ __('No visits recorded.') }}</p>
                         @endforelse
                     </div>
                 </div>
@@ -291,8 +290,8 @@
                 <div class="patient-detail-panel" id="patient-prescriptions">
                     <div class="profile-panel-heading">
                         <div>
-                            <h2>Prescriptions</h2>
-                            <p>Latest five prescriptions for this patient</p>
+                            <h2>{{ __('Prescriptions') }}</h2>
+                            <p>{{ __('Latest five prescriptions for this patient') }}</p>
                         </div>
                     </div>
 
@@ -319,7 +318,7 @@
                                         <span>{{ $prescription->nuskha_name }}</span>
                                     @endif
                                     <span>
-                                        {{ ucfirst($prescription->status ?: 'Not recorded') }}
+                                        {{ ucfirst($prescription->status ?: __('Not recorded')) }}
                                     </span>
                                 </div>
 
@@ -327,11 +326,11 @@
                                     href="{{ route('prescriptions.show', $prescription) }}"
                                     class="panel-link no-print"
                                 >
-                                    View
+                                    {{ __('View') }}
                                 </a>
                             </div>
                         @empty
-                            <p class="text-muted mb-0">No prescriptions recorded.</p>
+                            <p class="text-muted mb-0">{{ __('No prescriptions recorded.') }}</p>
                         @endforelse
                     </div>
                 </div>
@@ -341,8 +340,8 @@
                 <div class="patient-detail-panel account-summary-panel">
                     <div class="profile-panel-heading">
                         <div>
-                            <h2>Account summary</h2>
-                            <p>Original currencies shown separately</p>
+                            <h2>{{ __('Account summary') }}</h2>
+                            <p>{{ __('Original currencies shown separately') }}</p>
                         </div>
                     </div>
 
@@ -354,21 +353,21 @@
                         <h3 class="h6">{{ $account['currency'] }}</h3>
 
                         <div class="account-total">
-                            <span>Outstanding bills</span>
+                            <span>{{ __('Outstanding bills') }}</span>
                             <strong>
                                 {{ $money($account['outstanding'], $account['currency']) }}
                             </strong>
                         </div>
 
                         <div class="account-row">
-                            <span>Total billed</span>
+                            <span>{{ __('Total billed') }}</span>
                             <strong>
                                 {{ $money($account['billed'], $account['currency']) }}
                             </strong>
                         </div>
 
                         <div class="account-row">
-                            <span>Paid against bills</span>
+                            <span>{{ __('Paid against bills') }}</span>
                             <strong>
                                 {{ $money($account['paid'], $account['currency']) }}
                             </strong>
@@ -376,7 +375,7 @@
 
                         @if ((float) $account['unallocated'] > 0)
                             <div class="account-row">
-                                <span>Unallocated payments</span>
+                                <span>{{ __('Unallocated payments') }}</span>
                                 <strong>
                                     {{ $money($account['unallocated'], $account['currency']) }}
                                 </strong>
@@ -385,8 +384,7 @@
                     @endforeach
 
                     <small class="text-muted d-block mt-3">
-                        Currencies are not converted or combined.
-                        Unallocated payments are not deducted from bills.
+                        {{ __('Currencies are not converted or combined. Unallocated payments are not deducted from bills.') }}
                     </small>
 
                     <a
@@ -396,7 +394,7 @@
                         ]) }}"
                         class="btn btn-primary w-100 mt-3 no-print"
                     >
-                        New bill + payment
+                        {{ __('New bill + payment') }}
                     </a>
 
                     @if ($hasOutstanding)
@@ -407,24 +405,24 @@
                             ]) }}"
                             class="btn btn-outline-secondary w-100 mt-2 no-print"
                         >
-                            Receive outstanding payment
+                            {{ __('Receive outstanding payment') }}
                         </a>
                     @endif
                 </div>
 
                 <div class="patient-detail-panel no-print">
                     <div class="profile-panel-heading">
-                        <div><h2>Quick actions</h2></div>
+                        <div><h2>{{ __('Quick actions') }}</h2></div>
                     </div>
 
                     <div class="profile-quick-actions">
                         <a href="#patient-prescriptions">
-                            Recent prescriptions <span>›</span>
+                            {{ __('Recent prescriptions') }} <span>›</span>
                         </a>
                         <a href="{{ route('visits.create', [
                             'patient_id' => $patient->patient_id,
                         ]) }}">
-                            Create new visit <span>›</span>
+                            {{ __('Create new visit') }} <span>›</span>
                         </a>
                     </div>
 
@@ -433,7 +431,7 @@
                         class="btn btn-outline-secondary w-100 mt-3"
                         data-print-page
                     >
-                        Print patient summary
+                        {{ __('Print patient summary') }}
                     </button>
                 </div>
             </aside>

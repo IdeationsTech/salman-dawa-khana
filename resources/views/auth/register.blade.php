@@ -16,21 +16,20 @@
 
             <div class="clinicora-brand-content">
                 <span class="clinicora-brand-eyebrow">
-                    YOUR CLINIC, CONNECTED
+                    {{ __('YOUR CLINIC, CONNECTED') }}
                 </span>
 
                 <h1>
-                    Better care.<br>
-                    Simpler management.
+                    {{ __('Better care.') }}<br>
+                    {{ __('Simpler management.') }}
                 </h1>
 
                 <p class="brand-tagline">
-                    Clinic Management, Simplified.
+                    {{ __('Clinic Management, Simplified.') }}
                 </p>
 
                 <p class="brand-description">
-                    Manage patients, consultations, prescriptions and
-                    payments from one organized workspace.
+                    {{ __('Manage patients, consultations, prescriptions and payments from one organized workspace.') }}
                 </p>
 
                 <div class="clinicora-features">
@@ -39,8 +38,8 @@
                             <i class="bi bi-person-vcard" aria-hidden="true"></i>
                         </span>
                         <p>
-                            <strong>Patient records</strong>
-                            <small>A clear history of every visit.</small>
+                            <strong>{{ __('Patient records') }}</strong>
+                            <small>{{ __('A clear history of every visit.') }}</small>
                         </p>
                     </div>
 
@@ -49,8 +48,8 @@
                             <i class="bi bi-prescription2" aria-hidden="true"></i>
                         </span>
                         <p>
-                            <strong>Prescriptions &amp; orders</strong>
-                            <small>Your daily work in one place.</small>
+                            <strong>{{ __('Prescriptions & orders') }}</strong>
+                            <small>{{ __('Your daily work in one place.') }}</small>
                         </p>
                     </div>
 
@@ -59,15 +58,15 @@
                             <i class="bi bi-shield-check" aria-hidden="true"></i>
                         </span>
                         <p>
-                            <strong>Your clinic workspace</strong>
-                            <small>Access for your authorized team.</small>
+                            <strong>{{ __('Your clinic workspace') }}</strong>
+                            <small>{{ __('Access for your authorized team.') }}</small>
                         </p>
                     </div>
                 </div>
             </div>
 
             <div class="clinicora-brand-footer">
-                Built around the way your clinic works.
+                {{ __('Built around the way your clinic works.') }}
             </div>
         </div>
 
@@ -82,9 +81,9 @@
                 </div>
 
                 <div class="auth-heading">
-                    <p class="eyebrow">GET STARTED</p>
-                    <h2>Create your clinic account</h2>
-                    <p>Enter your clinic and owner details.</p>
+                    <p class="eyebrow">{{ __('GET STARTED') }}</p>
+                    <h2>{{ __('Create your clinic account') }}</h2>
+                    <p>{{ __('Enter your clinic and owner details.') }}</p>
                 </div>
 
                 @if ($errors->any())
@@ -93,12 +92,12 @@
                             type="button"
                             class="btn-close float-end"
                             data-dismiss-alert
-                            aria-label="Close"
+                            aria-label="{{ __('Close') }}"
                         ></button>
 
                         <ul class="mb-0 ps-3">
                             @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
+                                <li>{{ __($error) }}</li>
                             @endforeach
                         </ul>
                     </div>
@@ -114,7 +113,7 @@
                     <div class="register-form-grid">
                         <div>
                             <label for="clinic_name" class="form-label">
-                                Clinic name *
+                                {{ __('Clinic name') }} *
                             </label>
 
                             <input
@@ -124,7 +123,7 @@
                                 class="form-control"
                                 value="{{ old('clinic_name') }}"
                                 maxlength="160"
-                                placeholder="Your clinic name"
+                                placeholder="{{ __('Your clinic name') }}"
                                 autocomplete="organization"
                                 required
                             >
@@ -132,7 +131,7 @@
 
                         <div>
                             <label for="owner_name" class="form-label">
-                                Owner name *
+                                {{ __('Owner name') }} *
                             </label>
 
                             <input
@@ -142,7 +141,7 @@
                                 class="form-control"
                                 value="{{ old('owner_name') }}"
                                 maxlength="120"
-                                placeholder="Full name"
+                                placeholder="{{ __('Full name') }}"
                                 autocomplete="name"
                                 required
                             >
@@ -150,7 +149,7 @@
 
                         <div>
                             <label for="email" class="form-label">
-                                Email address *
+                                {{ __('Email address') }} *
                             </label>
 
                             <input
@@ -168,7 +167,7 @@
 
                         <div>
                             <label for="phone" class="form-label">
-                                Clinic phone *
+                                {{ __('Clinic phone') }} *
                             </label>
 
                             <x-phone-input
@@ -180,7 +179,7 @@
 
                         <div>
                             <label for="country_code" class="form-label">
-                                Clinic country *
+                                {{ __('Clinic country') }} *
                             </label>
 
                             <select
@@ -190,7 +189,7 @@
                                 data-signup-country
                                 required
                             >
-                                <option value="">Select country</option>
+                                <option value="">{{ __('Select country') }}</option>
 
                                 @foreach ($countries as $code => $name)
                                     <option
@@ -206,7 +205,7 @@
 
                         <div>
                             <label for="currency" class="form-label">
-                                Clinic currency *
+                                {{ __('Clinic currency') }} *
                             </label>
 
                             <select
@@ -216,7 +215,7 @@
                                 data-signup-currency
                                 required
                             >
-                                <option value="">Select currency</option>
+                                <option value="">{{ __('Select currency') }}</option>
 
                                 @foreach ($currencies as $code => $name)
                                     <option
@@ -234,20 +233,18 @@
 
                             <div>
                                 <span data-signup-currency-help>
-                                    Country currency is selected automatically.
-                                    You can choose another before signup.
+                                    {{ __('Country currency is selected automatically. You can choose another before signup.') }}
                                 </span>
 
                                 <small>
-                                    After signup, currency changes are managed
-                                    by the platform administrator.
+                                    {{ __('After signup, currency changes are managed by the platform administrator.') }}
                                 </small>
                             </div>
                         </div>
 
                         <div>
                             <label for="password" class="form-label">
-                                Password *
+                                {{ __('Password') }} *
                             </label>
 
                             <input
@@ -256,7 +253,7 @@
                                 name="password"
                                 class="form-control"
                                 minlength="8"
-                                placeholder="At least 8 characters"
+                                placeholder="{{ __('At least 8 characters') }}"
                                 autocomplete="new-password"
                                 required
                             >
@@ -264,7 +261,7 @@
 
                         <div>
                             <label for="password_confirmation" class="form-label">
-                                Confirm password *
+                                {{ __('Confirm password') }} *
                             </label>
 
                             <input
@@ -273,7 +270,7 @@
                                 name="password_confirmation"
                                 class="form-control"
                                 minlength="8"
-                                placeholder="Repeat your password"
+                                placeholder="{{ __('Repeat your password') }}"
                                 autocomplete="new-password"
                                 required
                             >
@@ -292,10 +289,10 @@
                         >
 
                         <label for="terms" class="form-check-label">
-                            I agree to the
-                            <a href="#" class="auth-link">Terms of Service</a>
-                            and
-                            <a href="#" class="auth-link">Privacy Policy</a>.
+                            {{ __('I agree to the') }}
+                            <a href="#" class="auth-link">{{ __('Terms of Service') }}</a>
+                            {{ __('and') }}
+                            <a href="#" class="auth-link">{{ __('Privacy Policy') }}</a>.
                         </label>
                     </div>
 
@@ -303,14 +300,14 @@
                         type="submit"
                         class="btn btn-primary w-100 clinicora-submit"
                     >
-                        Create clinic account
+                        {{ __('Create clinic account') }}
                         <i class="bi bi-arrow-right" aria-hidden="true"></i>
                     </button>
                 </form>
 
                 <div class="auth-footer">
-                    <span>Already have an account?</span>
-                    <a href="{{ route('login') }}" class="auth-link">Sign in</a>
+                    <span>{{ __('Already have an account?') }}</span>
+                    <a href="{{ route('login') }}" class="auth-link">{{ __('Sign in') }}</a>
                 </div>
             </div>
         </div>

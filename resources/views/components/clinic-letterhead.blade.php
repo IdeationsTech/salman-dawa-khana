@@ -77,13 +77,13 @@
 
         <div class="clh-practitioner">
             <span class="clh-practitioner-label">
-                Consulting Doctor / Hakeem
+                {{ __('Consulting Doctor / Hakeem') }}
             </span>
 
             <h2>{{ $practitioner?->name ?: 'Not assigned' }}</h2>
 
-            <p>Patient care &amp; consultation</p>
-            <p>Consultation by appointment</p>
+            <p>{{ __('Patient care & consultation') }}</p>
+            <p>{{ __('Consultation by appointment') }}</p>
         </div>
 
         <div class="clh-clinic">
@@ -96,9 +96,9 @@
             @endif
 
             <div class="clh-clinic-text">
-                <h1>{{ $clinic?->name ?: 'Clinic' }}</h1>
+                <h1>{{ $clinic?->name ?: __('Clinic') }}</h1>
 
-                <p>Patient care &amp; consultation</p>
+                <p>{{ __('Patient care & consultation') }}</p>
 
                 @if ($headerLocation)
                     <p class="clh-location">{{ $headerLocation }}</p>
@@ -111,47 +111,47 @@
         <h2>{{ $documentTitle }}</h2>
 
         <span>
-            Reference <strong>{{ $reference ?: '—' }}</strong>
+            {{ __('Reference') }} <strong>{{ $reference ?: '—' }}</strong>
         </span>
     </div>
 
     <div class="clh-frame">
-        <section class="clh-patient-info" aria-label="Patient information">
+        <section class="clh-patient-info" aria-label="{{ __('Patient information') }}">
             <div>
-                <span>Patient name</span>
+                <span>{{ __('Patient name') }}</span>
                 <strong>{{ $patient?->full_name ?: '—' }}</strong>
             </div>
 
             <div>
-                <span>Patient ID</span>
+                <span>{{ __('Patient ID') }}</span>
                 <strong>{{ $nationalId ?: '—' }}</strong>
             </div>
 
             <div>
-                <span>Date of birth / Age</span>
+                <span>{{ __('Date of birth / Age') }}</span>
 
                 <strong>
                     {{ $dob?->format('d M Y') ?? '—' }}
                     @if ($age !== null)
-                        / {{ $age }} years
+                        / {{ $age }} {{ __('years') }}
                     @endif
                 </strong>
             </div>
 
             <div>
-                <span>Date &amp; time</span>
+                <span>{{ __('Date & time') }}</span>
                 <strong>
                     {{ $documentDate?->format('d M Y · h:i A') ?? '—' }}
                 </strong>
             </div>
 
             <div>
-                <span>Phone number</span>
+                <span>{{ __('Phone number') }}</span>
                 <strong>{{ $patient?->phone ?: '—' }}</strong>
             </div>
 
             <div>
-                <span>Gender / Visit type</span>
+                <span>{{ __('Gender / Visit type') }}</span>
 
                 <strong>
                     {{ $patient?->gender ? ucfirst($patient->gender) : '—' }}
@@ -168,12 +168,12 @@
 
         <div class="clh-signatures">
             <div>
-                <span>Consulting Doctor / Hakeem</span>
+                <span>{{ __('Consulting Doctor / Hakeem') }}</span>
                 <strong>{{ $practitioner?->name ?: 'Not assigned' }}</strong>
             </div>
 
             <div class="clh-signature-line">
-                Doctor’s signature / clinic stamp
+                {{ __('Doctor’s signature / clinic stamp') }}
             </div>
         </div>
     </div>

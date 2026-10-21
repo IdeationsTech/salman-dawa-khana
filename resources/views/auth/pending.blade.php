@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ur' ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Registration received</title>
+    <title>{{ __('Registration received') }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -60,29 +60,29 @@
             font-weight: 600;
         }
     </style>
+    @include('layouts._language-script')
 </head>
 
 <body class="registration-pending-page">
+<div class="public-language-switcher"><x-language-switcher /></div>
+
     <main class="registration-pending-card">
         <span class="registration-pending-label">
-            Registration received
+            {{ __('Registration received') }}
         </span>
 
-        <h1>Your clinic is awaiting approval</h1>
+        <h1>{{ __('Your clinic is awaiting approval') }}</h1>
 
         <p>
-            Your clinic registration has been submitted. Once your
-            manual payment is confirmed and a subscription is assigned,
-            your account will be activated.
+            {{ __('Your clinic registration has been submitted. Once your manual payment is confirmed and a subscription is assigned, your account will be activated.') }}
         </p>
 
         <p>
-            Contact the software provider for payment details and
-            confirmation.
+            {{ __('Contact the software provider for payment details and confirmation.') }}
         </p>
 
         <a href="{{ route('login') }}">
-            Go to login
+            {{ __('Go to login') }}
         </a>
     </main>
 </body>

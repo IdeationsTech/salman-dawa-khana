@@ -10,12 +10,12 @@
             href="{{ route('platform-admin.clinics.edit', $clinic->clinic_id) }}"
             class="pa-back-link"
         >
-            Back to clinic
+            {{ __('Back to clinic') }}
         </a>
 
         <h1 class="pa-page-title">{{ $clinic->name }}</h1>
         <p class="pa-page-description">
-            Manage the clinic’s country and currency.
+            {{ __('Manage the clinic’s country and currency.') }}
         </p>
     </div>
 </div>
@@ -24,7 +24,7 @@
     <div class="pa-notice pa-notice-error" role="alert">
         <ul>
             @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
+                <li>{{ __($error) }}</li>
             @endforeach
         </ul>
     </div>
@@ -33,7 +33,7 @@
 <section class="pa-panel">
     <header class="pa-panel-header">
         <div>
-            <h2 class="pa-panel-title">Current settings</h2>
+            <h2 class="pa-panel-title">{{ __('Current settings') }}</h2>
             <p class="pa-panel-description">
                 {{ $countries[$clinic->country_code ?? ''] ?? 'Country not recorded' }}
                 · {{ $clinic->currency }}
@@ -43,10 +43,7 @@
 
     <div class="pa-panel-body">
         <p class="pa-form-description">
-            Existing bills, payments, expenses and orders retain their original currency.
-            Their amounts will not be converted. Reports show each currency separately;
-            dashboard totals use the clinic’s selected currency.
-            New records use the new currency.
+            {{ __('Existing bills, payments, expenses and orders retain their original currency. Their amounts will not be converted. Reports show each currency separately; dashboard totals use the clinic’s selected currency. New records use the new currency.') }}
         </p>
 
         <form
@@ -70,7 +67,7 @@
 
             <div class="pa-form-grid">
                 <div class="pa-field">
-                    <label for="country_code">Clinic country *</label>
+                    <label for="country_code">{{ __('Clinic country') }} *</label>
 
                     <select
                         id="country_code"
@@ -78,7 +75,7 @@
                         class="pa-input"
                         required
                     >
-                        <option value="">Select country</option>
+                        <option value="">{{ __('Select country') }}</option>
                         @foreach ($countries as $code => $name)
                             <option
                                 value="{{ $code }}"
@@ -91,7 +88,7 @@
                 </div>
 
                 <div class="pa-field">
-                    <label for="currency">Clinic currency *</label>
+                    <label for="currency">{{ __('Clinic currency') }} *</label>
 
                     <select
                         id="currency"
@@ -99,7 +96,7 @@
                         class="pa-input"
                         required
                     >
-                        <option value="">Select currency</option>
+                        <option value="">{{ __('Select currency') }}</option>
                         @foreach ($currencies as $code => $name)
                             <option
                                 value="{{ $code }}"
@@ -113,7 +110,7 @@
             </div>
 
             <div class="pa-field">
-                <label for="reason">Reason for change *</label>
+                <label for="reason">{{ __('Reason for change') }} *</label>
                 <textarea
                     id="reason"
                     name="reason"
@@ -132,7 +129,7 @@
                     @checked(old('client_consulted'))
                     required
                 >
-                <span>I discussed this change with the client.</span>
+                <span>{{ __('I discussed this change with the client.') }}</span>
             </label>
 
             <label class="pa-logo-remove">
@@ -144,13 +141,12 @@
                     required
                 >
                 <span>
-                    The client understands that existing amounts retain their
-                    original currency and are not converted.
+                    {{ __('The client understands that existing amounts retain their original currency and are not converted.') }}
                 </span>
             </label>
 
             <button type="submit" class="pa-button pa-button-primary">
-                Save country and currency
+                {{ __('Save country and currency') }}
             </button>
         </form>
     </div>
@@ -158,7 +154,7 @@
 
 <section class="pa-panel">
     <header class="pa-panel-header">
-        <h2 class="pa-panel-title">Existing financial records</h2>
+        <h2 class="pa-panel-title">{{ __('Existing financial records') }}</h2>
     </header>
 
     <div class="pa-panel-body">
@@ -169,11 +165,11 @@
                     <dd>
                         @forelse ($records as $record)
                             <p>
-                                {{ $record->currency ?: 'Currency not recorded' }}
-                                — {{ $record->record_count }} records
+                                {{ $record->currency ?: __('Currency not recorded') }}
+                                — {{ $record->record_count }} {{ __('records') }}
                             </p>
                         @empty
-                            No records
+                            {{ __('No records') }}
                         @endforelse
                     </dd>
                 </div>

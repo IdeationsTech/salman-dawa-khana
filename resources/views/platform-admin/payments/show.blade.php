@@ -13,7 +13,7 @@
                 ← Back to payments
             </a>
             <h1 class="pa-page-title">
-                Payment #{{ $payment->license_payment_id }}
+                {{ __('Payment #') }}{{ $payment->license_payment_id }}
             </h1>
             <p class="pa-page-description">
                 {{ $payment->clinic_name }} · {{ $payment->plan_name }}
@@ -27,7 +27,7 @@
                 target="_blank"
                 rel="noopener"
             >
-                Print Receipt
+                {{ __('Print Receipt') }}
             </a>
         @endif
     </div>
@@ -35,44 +35,44 @@
     <div class="pa-detail-grid">
         <section class="pa-panel">
             <header class="pa-panel-header">
-                <h2 class="pa-panel-title">Payment information</h2>
+                <h2 class="pa-panel-title">{{ __('Payment information') }}</h2>
             </header>
             <dl class="pa-detail-list">
                 <div>
-                    <dt>Amount</dt>
+                    <dt>{{ __('Amount') }}</dt>
                     <dd>
                         {{ $payment->currency }}
                         {{ number_format((float) $payment->amount, 2) }}
                     </dd>
                 </div>
                 <div>
-                    <dt>Status</dt>
+                    <dt>{{ __('Status') }}</dt>
                     <dd>{{ \Illuminate\Support\Str::headline($payment->status) }}</dd>
                 </div>
                 <div>
-                    <dt>Method</dt>
+                    <dt>{{ __('Method') }}</dt>
                     <dd>{{ \Illuminate\Support\Str::headline($payment->payment_method) }}</dd>
                 </div>
                 <div>
-                    <dt>Reference</dt>
+                    <dt>{{ __('Reference') }}</dt>
                     <dd>{{ $payment->reference_no ?? 'Not provided' }}</dd>
                 </div>
                 <div>
-                    <dt>Payment date</dt>
+                    <dt>{{ __('Payment date') }}</dt>
                     <dd>
                         {{ \Illuminate\Support\Carbon::parse($payment->paid_at)->format('d M Y') }}
                     </dd>
                 </div>
                 <div>
-                    <dt>Recorded by</dt>
+                    <dt>{{ __('Recorded by') }}</dt>
                     <dd>{{ $payment->recorded_by_name ?? 'Not available' }}</dd>
                 </div>
                 <div>
-                    <dt>Verified by</dt>
+                    <dt>{{ __('Verified by') }}</dt>
                     <dd>{{ $payment->verified_by_name ?? 'Not applicable' }}</dd>
                 </div>
                 <div>
-                    <dt>Verified on</dt>
+                    <dt>{{ __('Verified on') }}</dt>
                     <dd>
                         {{ $payment->verified_at
                             ? \Illuminate\Support\Carbon::parse($payment->verified_at)->format('d M Y, h:i A')
@@ -84,11 +84,11 @@
 
         <section class="pa-panel">
             <header class="pa-panel-header">
-                <h2 class="pa-panel-title">Clinic and subscription</h2>
+                <h2 class="pa-panel-title">{{ __('Clinic and subscription') }}</h2>
             </header>
             <dl class="pa-detail-list">
                 <div>
-                    <dt>Clinic</dt>
+                    <dt>{{ __('Clinic') }}</dt>
                     <dd>
                         <a
                             href="{{ route('platform-admin.clinics.show', $payment->clinic_id) }}"
@@ -99,29 +99,29 @@
                     </dd>
                 </div>
                 <div>
-                    <dt>Customer</dt>
+                    <dt>{{ __('Customer') }}</dt>
                     <dd>{{ $payment->contact_name ?? 'Not provided' }}</dd>
                 </div>
                 <div>
-                    <dt>Email</dt>
+                    <dt>{{ __('Email') }}</dt>
                     <dd>{{ $payment->customer_email ?? 'Not provided' }}</dd>
                 </div>
                 <div>
-                    <dt>License</dt>
+                    <dt>{{ __('License') }}</dt>
                     <dd>#{{ $payment->clinic_license_id }}</dd>
                 </div>
                 <div>
-                    <dt>Plan</dt>
+                    <dt>{{ __('Plan') }}</dt>
                     <dd>{{ $payment->plan_name }}</dd>
                 </div>
                 <div>
-                    <dt>Starts</dt>
+                    <dt>{{ __('Starts') }}</dt>
                     <dd>
                         {{ \Illuminate\Support\Carbon::parse($payment->license_starts_at)->format('d M Y') }}
                     </dd>
                 </div>
                 <div>
-                    <dt>Expires</dt>
+                    <dt>{{ __('Expires') }}</dt>
                     <dd>
                         {{ $payment->license_ends_at
                             ? \Illuminate\Support\Carbon::parse($payment->license_ends_at)->format('d M Y')
@@ -134,7 +134,7 @@
 
     <section class="pa-panel">
         <header class="pa-panel-header">
-            <h2 class="pa-panel-title">Notes</h2>
+            <h2 class="pa-panel-title">{{ __('Notes') }}</h2>
         </header>
         <div class="pa-panel-body pa-payment-notes">
             {{ $payment->notes ?? 'No notes recorded.' }}

@@ -1,0 +1,86 @@
+/* Urdu and right-to-left layout adjustments. Keep clinical identifiers readable. */
+@font-face {
+    font-family: "Noto Sans Arabic";
+    src: url("../fonts/noto-sans-arabic.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+html[dir="rtl"] body {
+    font-family: "Noto Sans Arabic", "Segoe UI", Arial, sans-serif;
+}
+
+html[dir="rtl"] .app-shell {
+    direction: rtl;
+}
+
+html[dir="rtl"] .sidebar-link,
+html[dir="rtl"] .sidebar-brand,
+html[dir="rtl"] .clinic-sidebar-heading,
+html[dir="rtl"] .clinic-mobile-bar {
+    direction: rtl;
+}
+
+html[dir="rtl"] .sidebar-subnav {
+    padding-left: 0;
+    padding-right: 12px;
+    border-left: 0;
+    border-right: 1px solid rgb(255 255 255 / 20%);
+}
+
+/* Bootstrap's offcanvas-start is physically left in its default stylesheet. */
+@media (max-width: 991.98px) {
+    html[dir="rtl"] .app-sidebar.offcanvas-start {
+        right: 0;
+        left: auto;
+        transform: translateX(100%);
+    }
+
+    html[dir="rtl"] .app-sidebar.offcanvas-start.show,
+    html[dir="rtl"] .app-sidebar.offcanvas-start.showing {
+        transform: none;
+    }
+
+    html[dir="rtl"] .app-sidebar.offcanvas-start.hiding {
+        transform: translateX(100%);
+    }
+}
+
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+    text-align: start;
+}
+
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] input[type="number"],
+html[dir="rtl"] input[type="date"],
+html[dir="rtl"] input[type="time"],
+html[dir="rtl"] input[type="datetime-local"],
+html[dir="rtl"] .ltr,
+html[dir="rtl"] [dir="ltr"] {
+    direction: ltr;
+    text-align: left;
+}
+
+html[dir="rtl"] .table {
+    direction: rtl;
+}
+
+html[dir="rtl"] .dropdown-menu {
+    text-align: right;
+}
+
+html[dir="rtl"] .form-check {
+    padding-right: 1.5em;
+    padding-left: 0;
+}
+
+html[dir="rtl"] .form-check .form-check-input {
+    float: right;
+    margin-right: -1.5em;
+    margin-left: 0;
+}

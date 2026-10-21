@@ -56,19 +56,18 @@
             </h1>
 
             <p>
-                Save ingredients, quantities and instructions
-                for future prescriptions.
+                {{ __('Save ingredients, quantities and instructions for future prescriptions.') }}
             </p>
         </div>
 
         {{-- NUSKHA TEMPLATE — Validation Errors --}}
         @if ($errors->any())
             <div class="alert alert-danger no-print" role="alert">
-                <strong>Please correct the following:</strong>
+                <strong>{{ __('Please correct the following:') }}</strong>
 
                 <ul class="mb-0 mt-2">
                     @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
+                        <li>{{ __($error) }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -95,15 +94,15 @@
                     <div class="form-section-number">01</div>
 
                     <div>
-                        <h2>Basic information</h2>
-                        <p>Give this reusable nuskha a clear name.</p>
+                        <h2>{{ __('Basic information') }}</h2>
+                        <p>{{ __('Give this reusable nuskha a clear name.') }}</p>
                     </div>
                 </div>
 
                 <div class="template-form-grid">
                     <div class="form-field">
                         <label for="template_name" class="form-label">
-                            Template name *
+                            {{ __('Template name') }} *
                         </label>
 
                         <input
@@ -113,20 +112,20 @@
                             class="form-control @error('name') is-invalid @enderror"
                             value="{{ old('name', $template->name ?? '') }}"
                             maxlength="160"
-                            placeholder="Enter nuskha name"
+                            placeholder="{{ __('Enter nuskha name') }}"
                             required
                         >
 
                         @error('name')
                             <div class="invalid-feedback">
-                                {{ $message }}
+                                {{ __($message) }}
                             </div>
                         @enderror
                     </div>
 
                     <div class="form-field">
                         <label for="template_status" class="form-label">
-                            Status *
+                            {{ __('Status') }} *
                         </label>
 
                         <select
@@ -139,19 +138,19 @@
                                 value="1"
                                 @selected($selectedStatus === '1')
                             >
-                                Active
+                                {{ __('Active') }}
                             </option>
 
                             <option
                                 value="0"
                                 @selected($selectedStatus === '0')
                             >
-                                Inactive
+                                {{ __('Inactive') }}
                             </option>
                         </select>
 
                         <small class="form-help">
-                            Only active templates appear when creating a prescription.
+                            {{ __('Only active templates appear when creating a prescription.') }}
                         </small>
                     </div>
                 </div>
@@ -163,10 +162,9 @@
                     <div class="form-section-number">02</div>
 
                     <div>
-                        <h2>Nuskha ingredients</h2>
+                        <h2>{{ __('Nuskha ingredients') }}</h2>
                         <p>
-                            Add each ingredient and its quantity/unit.
-                            Dosage is kept separately for a patient's prescription.
+                            {{ __('Add each ingredient and its quantity/unit. Dosage is kept separately for a patient\'s prescription.') }}
                         </p>
                     </div>
                 </div>
@@ -185,7 +183,7 @@
                             <button
                                 type="button"
                                 class="remove-item-button"
-                                aria-label="Remove ingredient"
+                                aria-label="{{ __('Remove ingredient') }}"
                             >
                                 ×
                             </button>
@@ -202,7 +200,7 @@
                 </button>
 
                 <p class="form-help mt-2 mb-0">
-                    Maximum 100 ingredients. Quantity supports up to three decimal places.
+                    {{ __('Maximum 100 ingredients. Quantity supports up to three decimal places.') }}
                 </p>
             </section>
 
@@ -212,17 +210,16 @@
                     <div class="form-section-number">03</div>
 
                     <div>
-                        <h2>General instructions</h2>
+                        <h2>{{ __('General instructions') }}</h2>
                         <p>
-                            These notes are copied into a prescription
-                            when this template is loaded.
+                            {{ __('These notes are copied into a prescription when this template is loaded.') }}
                         </p>
                     </div>
                 </div>
 
                 <div class="form-field">
                     <label for="template_instructions" class="form-label">
-                        Instructions and notes
+                        {{ __('Instructions and notes') }}
                     </label>
 
                     <textarea
@@ -231,13 +228,13 @@
                         class="form-control"
                         rows="4"
                         maxlength="10000"
-                        placeholder="Enter general instructions..."
+                        placeholder="{{ __('Enter general instructions...') }}"
                     >{{ old('instructions', $template->instructions ?? '') }}</textarea>
                 </div>
 
                 @if ($editing)
                     <p class="form-help mt-2 mb-0">
-                        Updating this template does not change prescriptions already saved for patients.
+                        {{ __('Updating this template does not change prescriptions already saved for patients.') }}
                     </p>
                 @endif
             </section>
@@ -250,7 +247,7 @@
                         class="btn btn-outline-primary"
                         data-print-nuskha
                     >
-                        Print for Pansar
+                        {{ __('Print for Pansar') }}
                     </button>
                 @endif
 
@@ -258,7 +255,7 @@
                     href="{{ route('prescriptions.templates.index') }}"
                     class="btn btn-light"
                 >
-                    Cancel
+                    {{ __('Cancel') }}
                 </a>@endclinicCan
 
                 <button type="submit" class="btn btn-primary">
@@ -272,7 +269,7 @@
             <section
                 class="nuskha-print-sheet"
                 data-nuskha-print-sheet
-                aria-label="Nuskha ingredient list for pansar"
+                aria-label="{{ __('Nuskha ingredient list for pansar') }}"
             >
                 <header class="nuskha-print-header">
                     <div>
@@ -283,12 +280,12 @@
                         <h1>{{ $template->name }}</h1>
 
                         <p class="nuskha-print-subtitle">
-                            Nuskha preparation list
+                            {{ __('Nuskha preparation list') }}
                         </p>
                     </div>
 
                     <div class="nuskha-print-date">
-                        Prepared on<br>
+                        {{ __('Prepared on') }}<br>
                         <strong>
                             {{ \App\Support\ClinicClock::now()->format('d M Y') }}
                         </strong>
@@ -299,9 +296,9 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Ingredient</th>
-                            <th class="nuskha-print-quantity">Quantity</th>
-                            <th>Unit</th>
+                            <th>{{ __('Ingredient') }}</th>
+                            <th class="nuskha-print-quantity">{{ __('Quantity') }}</th>
+                            <th>{{ __('Unit') }}</th>
                         </tr>
                     </thead>
 

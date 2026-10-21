@@ -14,7 +14,7 @@
             </a>
 
             <h1 class="pa-page-title">
-                Complimentary Lifetime license
+                {{ __('Complimentary Lifetime license') }}
             </h1>
 
             <p class="pa-page-description">
@@ -26,11 +26,11 @@
 
     @if($errors->any())
         <div class="pa-notice pa-notice-error" role="alert">
-            <strong>Please correct the following:</strong>
+            <strong>{{ __('Please correct the following:') }}</strong>
 
             <ul>
                 @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    <li>{{ __($error) }}</li>
                 @endforeach
             </ul>
         </div>
@@ -40,12 +40,11 @@
         <header class="pa-panel-header">
             <div>
                 <h2 class="pa-panel-title">
-                    Grant Lifetime access
+                    {{ __('Grant Lifetime access') }}
                 </h2>
 
                 <p class="pa-panel-description">
-                    A Lifetime license and an AED 0 complimentary
-                    payment record will be created.
+                    {{ __('A Lifetime license and an AED 0 complimentary payment record will be created.') }}
                 </p>
             </div>
         </header>
@@ -53,20 +52,20 @@
         <div class="pa-panel-body">
             <dl class="pa-detail-list">
                 <div>
-                    <dt>Clinic</dt>
+                    <dt>{{ __('Clinic') }}</dt>
                     <dd>{{ $clinic->name }}</dd>
                 </div>
 
                 <div>
-                    <dt>Current status</dt>
+                    <dt>{{ __('Current status') }}</dt>
                     <dd>
                         {{ \Illuminate\Support\Str::headline($clinic->onboarding_status) }}
                     </dd>
                 </div>
 
                 <div>
-                    <dt>Amount received</dt>
-                    <dd>AED 0.00 — complimentary</dd>
+                    <dt>{{ __('Amount received') }}</dt>
+                    <dd>{{ __('AED 0.00 — complimentary') }}</dd>
                 </div>
             </dl>
 
@@ -74,7 +73,7 @@
 
             @if($clinic->onboarding_status === 'rejected')
                 <p class="pa-form-description">
-                    A rejected clinic cannot receive this license.
+                    {{ __('A rejected clinic cannot receive this license.') }}
                 </p>
             @else
                 <form
@@ -86,7 +85,7 @@
 
                     <div class="pa-field">
                         <label for="complimentary-reason">
-                            Reason for complimentary access *
+                            {{ __('Reason for complimentary access') }} *
                         </label>
 
                         <textarea
@@ -103,7 +102,7 @@
                         type="submit"
                         class="pa-button pa-button-primary"
                     >
-                        Issue complimentary Lifetime license
+                        {{ __('Issue complimentary Lifetime license') }}
                     </button>
                 </form>
             @endif
