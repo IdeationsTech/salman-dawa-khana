@@ -225,3 +225,117 @@
     margin-top: 6px;
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| Color accents — clinic tables, forms and action buttons
+|--------------------------------------------------------------------------
+*/
+
+table.table:not(.table-dark) {
+    --bs-table-bg: #ffffff;
+    --bs-table-color: var(--text-main);
+    --bs-table-striped-bg: #f1f6fb;
+    --bs-table-hover-bg: #e7f7f6;
+    --bs-table-border-color: #dce5ec;
+}
+
+table.table:not(.table-dark) > thead > tr > th {
+    --bs-table-bg: var(--brand-navy);
+    --bs-table-color: #ffffff;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    border-color: rgb(255 255 255 / 14%);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+table.table:not(.table-dark) > tbody > tr {
+    transition: background-color 0.16s ease;
+}
+
+table.table:not(.table-dark) > tfoot > tr > * {
+    --bs-table-bg: #e8f2fc;
+    color: var(--brand-navy);
+    font-weight: 700;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--brand-teal-dark);
+    --bs-btn-bg: #eaf8f7;
+    --bs-btn-border-color: #b9e7e3;
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: var(--brand-teal-dark);
+    --bs-btn-hover-border-color: var(--brand-teal-dark);
+    --bs-btn-active-color: #ffffff;
+    --bs-btn-active-bg: var(--brand-navy);
+    --bs-btn-active-border-color: var(--brand-navy);
+}
+
+.btn-info {
+    --bs-btn-color: #ffffff;
+    --bs-btn-bg: var(--info);
+    --bs-btn-border-color: var(--info);
+    --bs-btn-hover-color: #ffffff;
+    --bs-btn-hover-bg: #2368c4;
+    --bs-btn-hover-border-color: #2368c4;
+}
+
+.table-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 5px 10px;
+    border: 1px solid #b9e7e3;
+    border-radius: 7px;
+    background: #eaf8f7;
+    color: var(--brand-teal-dark);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.table-action:hover {
+    background: var(--brand-teal-dark);
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.patient-form-panel,
+.visit-form-panel,
+.template-form-panel,
+.user-form-panel {
+    border-top: 3px solid var(--brand-teal);
+}
+
+.payment-form-panel {
+    border-top: 3px solid var(--info);
+}
+
+.expense-form-panel {
+    border-top: 3px solid var(--warning);
+}
+
+form .form-label {
+    color: var(--brand-navy-light);
+    font-weight: 600;
+}
+
+form .form-control:not(:focus),
+form .form-select:not(:focus) {
+    border-color: #cbd9e5;
+    background-color: #fbfdff;
+}
+
+.form-text,
+.form-help {
+    color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    table.table:not(.table-dark) > tbody > tr,
+    .table-action {
+        transition: none;
+    }
+}
