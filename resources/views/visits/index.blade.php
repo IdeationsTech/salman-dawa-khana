@@ -43,7 +43,7 @@
             </div>
 
             @clinicCan('visits.create')<a href="{{ route('visits.create') }}" class="btn btn-primary">
-                + New Visit
+                + {{ __('New visit') }}
             </a>@endclinicCan
         </header>
 
@@ -235,7 +235,7 @@
                                 <td>{{ $visit->visit_reason ?: '—' }}</td>
 
                                 <td>
-                                    {{ $visit->patient?->phone ?: '—' }}
+                                    <bdi class="phone-number" dir="ltr">&#x2066;{{ $visit->patient?->phone ?: '—' }}&#x2069;</bdi>
                                 </td>
 
                                 <td>
