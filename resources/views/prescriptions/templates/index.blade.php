@@ -21,7 +21,7 @@
                 href="{{ route('prescriptions.templates.create') }}"
                 class="btn btn-primary"
             >
-                + Create Template
+                + {{ __('Create template') }}
             </a>@endclinicCan
         </header>
 
