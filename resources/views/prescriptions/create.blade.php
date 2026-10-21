@@ -157,7 +157,7 @@
                         <div class="rx-patient-results" id="rx-patient-results" role="listbox" aria-label="{{ __('Matching patients') }}" data-rx-patient-results hidden></div>
                         <small id="rx-patient-search-help" class="form-help" data-rx-patient-feedback role="status" aria-live="polite">
                             @if ($currentPatient)
-                                {{ __('Selected:') }} {{ $currentPatient->patient_code }}{{ $currentPatient->phone ? ' · '.$currentPatient->phone : '' }}
+                                {{ __('Selected:') }} {{ $currentPatient->patient_code }}{{ $currentPatient->phone ? ' · ' : '' }}@if ($currentPatient->phone)<bdi class="phone-number" dir="ltr">{{ $currentPatient->phone }}</bdi>@endif
                                 {{ $editing ? ' · Patient cannot be changed on an existing prescription.' : '' }}
                             @else
                                 {{ __('Type a name, then select the matching patient.') }}
