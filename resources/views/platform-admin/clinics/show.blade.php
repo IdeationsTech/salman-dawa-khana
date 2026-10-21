@@ -94,7 +94,7 @@
 
                 <div>
                     <dt>{{ __('Phone') }}</dt>
-                    <dd>{{ $clinic->phone ?? 'Not provided' }}</dd>
+                    <dd><bdi class="phone-number" dir="ltr">&#x2066;{{ $clinic->phone ?? __('Not provided') }}&#x2069;</bdi></dd>
                 </div>
 
                 <div>
@@ -159,7 +159,7 @@
 
                 <div>
                     <dt>{{ __('Phone') }}</dt>
-                    <dd>{{ $clinic->customer_phone ?? 'Not provided' }}</dd>
+                    <dd><bdi class="phone-number" dir="ltr">&#x2066;{{ $clinic->customer_phone ?? __('Not provided') }}&#x2069;</bdi></dd>
                 </div>
 
                 <div>
