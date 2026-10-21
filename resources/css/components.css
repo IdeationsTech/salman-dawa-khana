@@ -302,18 +302,18 @@ table.table:not(.table-dark) > tfoot > tr > * {
     text-decoration: none;
 }
 
-.patient-form-panel,
-.visit-form-panel,
-.template-form-panel,
-.user-form-panel {
+.app-shell .patient-form-panel,
+.app-shell .visit-form-panel,
+.app-shell .template-form-panel,
+.app-shell .user-form-panel {
     border-top: 3px solid var(--brand-teal);
 }
 
-.payment-form-panel {
+.app-shell .payment-form-panel {
     border-top: 3px solid var(--info);
 }
 
-.expense-form-panel {
+.app-shell .expense-form-panel {
     border-top: 3px solid var(--warning);
 }
 
