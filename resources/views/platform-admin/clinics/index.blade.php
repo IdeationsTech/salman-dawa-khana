@@ -172,7 +172,7 @@
                                     </span>
 
                                     <span class="pa-cell-subtitle">
-                                        {{ $clinic->phone ?? $clinic->customer_phone ?? 'No phone' }}
+                                        <bdi class="phone-number" dir="ltr">&#x2066;{{ $clinic->phone ?? $clinic->customer_phone ?? __('No phone') }}&#x2069;</bdi>
                                     </span>
                                 </td>
 
