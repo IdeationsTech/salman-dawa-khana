@@ -12,7 +12,7 @@ class DatabaseBackupService
     public function create(): string
     {
         $schema = DB::getSchemaBuilder();
-        $tables = $schema->getTableListing(null, false);
+        $tables = $schema->getTableListing($schema->getCurrentSchemaName(), false);
         sort($tables);
         $snapshot = DB::transaction(function () use ($tables, $schema) {
             $data = [];
@@ -34,7 +34,7 @@ class DatabaseBackupService
                 if ($file->isLink()) {
                     continue;
                 }
-                $publicFiles[$file->getRelativePathname()] = base64_encode(File::get($file->getPathname()));
+                $publicFiles[str_replace('\\', '/', $file->getRelativePathname())] = base64_encode(File::get($file->getPathname()));
             }
         }
         $payload = json_encode([
@@ -65,7 +65,7 @@ class DatabaseBackupService
             throw new RuntimeException('Invalid backup format.');
         }
         $schema = DB::getSchemaBuilder();
-        $expected = $schema->getTableListing(null, false);
+        $expected = $schema->getTableListing($schema->getCurrentSchemaName(), false);
         $actual = array_keys($payload['tables']);
         sort($expected);
         sort($actual);

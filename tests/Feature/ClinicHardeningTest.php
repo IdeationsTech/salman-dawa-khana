@@ -171,13 +171,14 @@ class ClinicHardeningTest extends TestCase
     {
         $directory = storage_path('framework/testing/backups-'.Str::uuid());
         config(['backups.path' => $directory]);
-        $upload = storage_path('app/public/review-test.txt');
+        $upload = storage_path('app/public/review-backup-fixture/avatar.txt');
         File::ensureDirectoryExists(dirname($upload));
         File::put($upload, 'Original upload');
         try {
             $backups = app(DatabaseBackupService::class);
             $path = $backups->create();
             $this->assertStringNotContainsString('Patient One', File::get($path));
+            $this->assertArrayHasKey('review-backup-fixture/avatar.txt', $backups->inspect($path)['public_files']);
             $this->artisan('clinic:restore', ['file' => $path])->assertExitCode(0);
             DB::table('patients')->where('patient_id', $this->patient)->update(['full_name' => 'Changed']);
             File::put($upload, 'Changed upload');
@@ -240,10 +241,38 @@ class ClinicHardeningTest extends TestCase
                 $backups->restore($path);
                 $this->fail('Invalid foreign key must fail.');
             } catch (\RuntimeException $exception) {
-                $this->assertStringContainsString('foreign key',$exception->getMessage());
+                $this->assertStringContainsString('foreign key', $exception->getMessage());
             }
-            $this->assertDatabaseHas('patients',['patient_id' => $this->patient, 'clinic_id' => $this->clinic, 'full_name' => 'Patient One']);
+            $this->assertDatabaseHas('patients', ['patient_id' => $this->patient, 'clinic_id' => $this->clinic, 'full_name' => 'Patient One']);
         } finally {
+            File::deleteDirectory($directory);
+        }
+    }
+
+    public function test_backup_and_restore_ignore_tables_in_other_databases(): void
+    {
+        $original = DB::getDefaultConnection();
+        $directory = storage_path('framework/testing/backups-'.Str::uuid());
+        config(['backups.path' => $directory, 'database.connections.backup_scope_test' => [
+            'driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true,
+        ]]);
+        DB::setDefaultConnection('backup_scope_test');
+        try {
+            DB::statement('CREATE TABLE patients (patient_id INTEGER PRIMARY KEY, full_name TEXT NOT NULL)');
+            DB::table('patients')->insert(['patient_id' => 1, 'full_name' => 'Clinic patient']);
+            DB::statement("ATTACH DATABASE ':memory:' AS school");
+            DB::statement('CREATE TABLE school.academic_sessions (id INTEGER PRIMARY KEY, name TEXT NOT NULL)');
+            DB::table('school.academic_sessions')->insert(['id' => 1, 'name' => 'School data']);
+            $backups = app(DatabaseBackupService::class);
+            $path = $backups->create();
+            $this->assertSame(['patients'], array_keys($backups->inspect($path)['tables']));
+            DB::table('patients')->update(['full_name' => 'Changed']);
+            $backups->restore($path);
+            $this->assertSame('Clinic patient', DB::table('patients')->value('full_name'));
+            $this->assertSame('School data', DB::table('school.academic_sessions')->value('name'));
+        } finally {
+            DB::setDefaultConnection($original);
+            DB::purge('backup_scope_test');
             File::deleteDirectory($directory);
         }
     }
