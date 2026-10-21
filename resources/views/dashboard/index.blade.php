@@ -77,7 +77,7 @@
                     href="{{ route('patients.create') }}"
                     class="btn btn-primary"
                 >
-                    + Add Patient
+                    + {{ __('Add Patient') }}
                 </a>@endclinicCan
             </div>
 
@@ -190,7 +190,7 @@
                                     </td>
 
                                     <td>
-                                        {{ $patient->phone ?? '—' }}
+                                        <bdi class="phone-number" dir="ltr">&#x2066;{{ $patient->phone ?? '—' }}&#x2069;</bdi>
                                     </td>
 
                                     <td>
