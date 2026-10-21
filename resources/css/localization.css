@@ -71,6 +71,16 @@ html[dir="rtl"] [dir="ltr"] {
     text-align: left;
 }
 
+
+html[dir="rtl"] .phone-number,
+html[dir="rtl"] a[href^="tel:"],
+html[dir="rtl"] [data-phone-number] {
+    display: inline-block;
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: left;
+}
+
 html[dir="rtl"] .table {
     direction: rtl;
 }
