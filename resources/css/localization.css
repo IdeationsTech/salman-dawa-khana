@@ -1,4 +1,5 @@
 /* Urdu and right-to-left layout adjustments. Keep clinical identifiers readable. */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap");
 @font-face {
     font-family: "Noto Sans Arabic";
     src: url("../fonts/noto-sans-arabic.woff2") format("woff2");
@@ -8,7 +9,8 @@
 }
 
 html[dir="rtl"] body {
-    font-family: "Noto Sans Arabic", "Segoe UI", Arial, sans-serif;
+    font-family: "Noto Nastaliq Urdu", "Noto Sans Arabic", serif;
+    line-height: 2;
 }
 
 html[dir="rtl"] .app-shell {
@@ -53,6 +55,9 @@ html[dir="rtl"] select {
     text-align: start;
 }
 
+html[dir="rtl"] .phone-number,
+html[dir="rtl"] a[href^="tel:"],
+html[dir="rtl"] [data-phone-number],
 html[dir="rtl"] input[type="email"],
 html[dir="rtl"] input[type="tel"],
 html[dir="rtl"] input[type="url"],
