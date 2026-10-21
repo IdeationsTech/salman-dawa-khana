@@ -172,7 +172,7 @@
                                 <td>
                                     {{ $user->email }}
                                     <small class="d-block text-muted">
-                                        <bdi class="phone-number" dir="ltr">{{ $user->phone ?: __('Phone not recorded') }}</bdi>
+                                        <bdi class="phone-number" dir="ltr">&#x2066;{{ $user->phone ?: __('Phone not recorded') }}&#x2069;</bdi>
                                     </small>
                                 </td>
 
