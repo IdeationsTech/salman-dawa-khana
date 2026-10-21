@@ -261,7 +261,7 @@
                                         {{ $payment->patient?->patient_code ?? '—' }}
                                     </small>
                                     <small>
-                                        {{ $payment->patient?->phone ?? '—' }}
+                                        <bdi class="phone-number" dir="ltr">&#x2066;{{ $payment->patient?->phone ?? '—' }}&#x2069;</bdi>
                                     </small>
                                 </td>
 
