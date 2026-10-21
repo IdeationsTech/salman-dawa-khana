@@ -103,7 +103,7 @@
 
                 <div class="form-field">
                     <span class="form-label">{{ __('Phone number') }}</span>
-                    <p class="mb-0">{{ $user->phone ?: 'Not provided' }}</p>
+                    <p class="mb-0"><bdi class="phone-number" dir="ltr">&#x2066;{{ $user->phone ?: __('Not provided') }}&#x2069;</bdi></p>
                 </div>
 
                 <div class="form-field">
