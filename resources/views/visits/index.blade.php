@@ -42,9 +42,9 @@
                 </p>
             </div>
 
-            <a href="{{ route('visits.create') }}" class="btn btn-primary">
+            @clinicCan('visits.create')<a href="{{ route('visits.create') }}" class="btn btn-primary">
                 + New Visit
-            </a>
+            </a>@endclinicCan
         </header>
 
         @if (session('success'))
@@ -74,7 +74,7 @@
             <article class="visit-summary-card">
                 <span>This month's visits</span>
                 <strong>{{ $monthVisits }}</strong>
-                <small>{{ now('Asia/Dubai')->format('F Y') }}</small>
+                <small>{{ \App\Support\ClinicClock::now()->format('F Y') }}</small>
             </article>
 
             <article class="visit-summary-card">

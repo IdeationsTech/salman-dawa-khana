@@ -50,6 +50,7 @@
     data-existing-paid="{{ $paidAmount }}"
 >
     @csrf
+            <input type="hidden" name="request_key" value="{{ old('request_key', (string) \Illuminate\Support\Str::uuid()) }}">
     @if ($editing)
         @method('PUT')
     @endif
@@ -92,7 +93,7 @@
                     type="datetime-local"
                     name="ordered_at"
                     class="form-control"
-                    value="{{ old('ordered_at', isset($order) ? $order->ordered_at->format('Y-m-d\TH:i') : now('Asia/Dubai')->format('Y-m-d\TH:i')) }}"
+                    value="{{ old('ordered_at', isset($order) ? $order->ordered_at->format('Y-m-d\TH:i') : \App\Support\ClinicClock::now()->format('Y-m-d\TH:i')) }}"
                     min="1000-01-01T00:00"
                     max="9999-12-31T23:59"
                     required

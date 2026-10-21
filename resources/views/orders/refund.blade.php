@@ -69,7 +69,7 @@
                             type="datetime-local"
                             name="refunded_at"
                             class="form-control"
-                            value="{{ old('refunded_at', now('Asia/Dubai')->format('Y-m-d\TH:i')) }}"
+                            value="{{ old('refunded_at', \App\Support\ClinicClock::now()->format('Y-m-d\TH:i')) }}"
                             min="1000-01-01T00:00"
                             max="9999-12-31T23:59"
                             required

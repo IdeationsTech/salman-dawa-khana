@@ -40,13 +40,13 @@
                 </p>
             </div>
 
-            <a
+            @clinicCan('users.edit')<a
                 href="{{ route('users.edit', $user) }}"
                 class="btn btn-primary"
             >
                 <i class="bi bi-pencil-square app-icon" aria-hidden="true"></i>
                 Edit user
-            </a>
+            </a>@endclinicCan
         </header>
 
         @if(session('success'))

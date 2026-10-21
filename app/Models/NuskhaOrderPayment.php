@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ClinicDateTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -25,7 +26,7 @@ class NuskhaOrderPayment extends Model
     protected function casts(): array
     {
         return [
-            'paid_at' => 'datetime',
+            'paid_at' => ClinicDateTime::class,
             'amount' => 'decimal:2',
         ];
     }

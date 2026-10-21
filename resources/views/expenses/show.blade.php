@@ -51,13 +51,13 @@
             </a>
 
             <div class="expense-toolbar-actions">
-                <a
+                @clinicCan('expenses.edit')<a
                     href="{{ route('expenses.edit', $expense) }}"
                     class="btn btn-outline-secondary"
                 >
                     <i class="bi bi-pencil-square" aria-hidden="true"></i>
                     Edit expense
-                </a>
+                </a>@endclinicCan
 
                 <button type="button" class="btn btn-primary" data-print-page>
                     <i class="bi bi-printer" aria-hidden="true"></i>

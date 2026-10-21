@@ -20,8 +20,10 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\ClinicAuditService;
+use App\Support\ClinicPermissions;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -34,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+        Blade::if('clinicCan', fn (string $route) => ClinicPermissions::allows(auth()->user(), $route));
 
         ResetPassword::createUrlUsing(function ($user, string $token) {
             $path = route('password.reset', ['token' => $token], false);

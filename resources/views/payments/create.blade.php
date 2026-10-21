@@ -38,7 +38,7 @@
         'payment_date',
         $editing
             ? $payment->payment_date->format('Y-m-d\TH:i')
-            : now('Asia/Dubai')->format('Y-m-d\TH:i')
+            : \App\Support\ClinicClock::now()->format('Y-m-d\TH:i')
     );
 @endphp
 
@@ -72,6 +72,7 @@
                 ? route('payments.update', $payment)
                 : route('payments.store') }}"
             data-currency-payment-form
+            data-bills-url="{{ route('payments.patient-bills', ['patient' => '__PATIENT__']) }}"
             data-clinic-currency="{{ $clinicCurrency }}"
             data-saved-currency="{{ $editing ? $currency : '' }}"
             data-editing="{{ $editing ? '1' : '0' }}"
@@ -79,6 +80,7 @@
             data-allow-partial="{{ $allowPartialPayments ? '1' : '0' }}"
         >
             @csrf
+            <input type="hidden" name="request_key" value="{{ old('request_key', (string) \Illuminate\Support\Str::uuid()) }}">
             @if ($editing)
                 @method('PUT')
                 <input type="hidden" name="mode" value="{{ $defaultMode }}">
@@ -129,28 +131,7 @@
                         </select>
                     </div>
 
-                    <div class="form-field">
-                        <label for="patient" class="form-label">Patient *</label>
-                        <select
-                            id="patient"
-                            name="{{ $editing ? 'patient_display' : 'patient_id' }}"
-                            class="form-select"
-                            data-cp-patient
-                            @disabled($editing)
-                            required
-                        >
-                            <option value="">Select patient</option>
-                            @foreach ($patients as $patient)
-                                <option
-                                    value="{{ $patient->patient_id }}"
-                                    @selected($selectedPatient === (string) $patient->patient_id)
-                                >
-                                    {{ $patient->full_name }} — {{ $patient->patient_code }}
-                                    {{ $patient->phone ? ' — ' . $patient->phone : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                    <x-patient-search :patient="$patients->first()" :locked="$editing" :billing="true" />
                 </div>
 
                 @if ($editing)

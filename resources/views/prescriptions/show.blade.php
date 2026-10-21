@@ -34,13 +34,13 @@
             </a>
 
             <div class="clh-toolbar-actions">
-                <a
+                @clinicCan('prescriptions.edit')<a
                     href="{{ route('prescriptions.edit', $prescription) }}"
                     class="btn btn-outline-secondary"
                 >
                     <i class="bi bi-pencil" aria-hidden="true"></i>
                     Edit prescription
-                </a>
+                </a>@endclinicCan
 
                 <button
                     type="button"

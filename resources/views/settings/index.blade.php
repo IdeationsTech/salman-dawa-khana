@@ -174,6 +174,16 @@
                             </div>
 
                             <div class="form-field settings-field-wide">
+                                <label for="clinic_timezone" class="form-label">Clinic timezone</label>
+                                <select id="clinic_timezone" name="settings[timezone]" class="form-select" @disabled(!$isOwner)>
+                                    @foreach (\DateTimeZone::listIdentifiers() as $zone)
+                                        <option value="{{ $zone }}" @selected(old('settings.timezone', \App\Support\ClinicClock::zone()) === $zone)>{{ $zone }}</option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">Choose Asia/Karachi for Pakistan or Asia/Dubai for UAE. Forms, history and report boundaries use this timezone.</small>
+                            </div>
+
+                            <div class="form-field settings-field-wide">
                                 <label for="print_location" class="form-label">
                                     Short location for print header
                                 </label>

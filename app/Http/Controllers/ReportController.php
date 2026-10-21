@@ -7,7 +7,9 @@ use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Visit;
+use App\Support\ClinicClock;
 use App\Support\ClinicLocaleCatalog;
+use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,16 +29,18 @@ class ReportController extends Controller
         $currency = strtoupper($clinic->currency ?: 'AED');
 
         $from = filled($data['from'] ?? null)
-            ? Carbon::parse($data['from'], 'Asia/Dubai')->startOfDay()
-            : Carbon::now('Asia/Dubai')->startOfMonth();
+            ? Carbon::parse($data['from'], ClinicClock::zone())->startOfDay()
+            : ClinicClock::now()->startOfMonth();
 
         $to = filled($data['to'] ?? null)
-            ? Carbon::parse($data['to'], 'Asia/Dubai')->endOfDay()
-            : Carbon::now('Asia/Dubai')->endOfDay();
+            ? Carbon::parse($data['to'], ClinicClock::zone())->endOfDay()
+            : ClinicClock::now()->endOfDay();
 
         abort_if($from->gt($to), 422, 'From date must not exceed To date.');
 
-        $range = [$from->format('Y-m-d H:i:s'), $to->format('Y-m-d H:i:s')];
+        $range = [ClinicClock::stored($from), ClinicClock::stored($to)];
+        $utcRange = [$from->copy()->utc()->format('Y-m-d H:i:s'), $to->copy()->utc()->format('Y-m-d H:i:s')];
+        $expenseRange = [$from->toDateString(), $to->toDateString()];
 
         $patientPayments = Payment::where('clinic_id', $clinicId)
             ->whereBetween('payment_date', $range)
@@ -61,7 +65,7 @@ class ReportController extends Controller
 
         $collections = $patientPayments->map(fn ($payment) => [
             'source' => 'Patient payment',
-            'reference' => 'PAY-' . $payment->payment_id,
+            'reference' => 'PAY-'.$payment->payment_id,
             'name' => $payment->patient?->full_name ?? 'Patient unavailable',
             'date' => $payment->payment_date->format('Y-m-d H:i:s'),
             'amount' => $payment->amount,
@@ -72,7 +76,7 @@ class ReportController extends Controller
             'source' => 'Nuskha order payment',
             'reference' => $payment->order_no,
             'name' => $payment->customer_name,
-            'date' => $payment->paid_at,
+            'date' => ClinicClock::display($payment->paid_at, 'Y-m-d H:i:s'),
             'amount' => $payment->amount,
             'currency' => $this->currencyCode($payment->currency),
             'method' => $payment->method,
@@ -80,7 +84,7 @@ class ReportController extends Controller
         ]))->sortByDesc('date')->values();
 
         $expenses = Expense::where('clinic_id', $clinicId)
-            ->whereBetween('expense_date', $range)
+            ->whereBetween('expense_date', $expenseRange)
             ->orderByDesc('expense_date')->orderByDesc('expense_id')->get();
 
         $totals = [$currency => ['received' => 0, 'expenses' => 0]];
@@ -93,6 +97,7 @@ class ReportController extends Controller
 
             if ($code === null) {
                 $unconfirmedCurrencyCount++;
+
                 continue;
             }
 
@@ -114,6 +119,7 @@ class ReportController extends Controller
 
             if ($code === null) {
                 $unconfirmedCurrencyCount++;
+
                 continue;
             }
 
@@ -157,7 +163,7 @@ class ReportController extends Controller
             'currencySummary' => $currencySummary,
             'unconfirmedCurrencyCount' => $unconfirmedCurrencyCount,
             'totalPatients' => Patient::where('clinic_id', $clinicId)
-                ->whereBetween('created_at', $range)->count(),
+                ->whereBetween('created_at', $utcRange)->count(),
             'totalVisits' => Visit::where('clinic_id', $clinicId)
                 ->whereBetween('visit_date', $range)->count(),
         ]);
@@ -172,7 +178,7 @@ class ReportController extends Controller
 
     private function toCents($amount): int
     {
-        return \App\Support\Money::scaled($amount, 2);
+        return Money::scaled($amount, 2);
     }
 
     private function decimal(int $cents): string
@@ -180,7 +186,7 @@ class ReportController extends Controller
         $prefix = $cents < 0 ? '-' : '';
         $absolute = abs($cents);
 
-        return $prefix . intdiv($absolute, 100) . '.'
-            . str_pad((string) ($absolute % 100), 2, '0', STR_PAD_LEFT);
+        return $prefix.intdiv($absolute, 100).'.'
+            .str_pad((string) ($absolute % 100), 2, '0', STR_PAD_LEFT);
     }
 }

@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Clinic;
 use App\Models\Expense;
 use App\Models\Payment;
+use App\Models\Setting;
+use App\Support\ClinicClock;
+use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +35,7 @@ class ExpenseController extends Controller
         $clinic = Clinic::findOrFail($clinicId);
         $currency = strtoupper($clinic->currency ?: 'AED');
 
-        $decimalSetting = \App\Models\Setting::query()
+        $decimalSetting = Setting::query()
             ->where('clinic_id', $clinicId)
             ->where('setting_key', 'decimal_places')
             ->value('setting_value');
@@ -112,7 +115,7 @@ class ExpenseController extends Controller
             );
         }
 
-        $today = Carbon::now('Asia/Dubai')->startOfDay();
+        $today = ClinicClock::now()->startOfDay();
         $monthStart = $today->copy()->startOfMonth();
         $nextMonth = $monthStart->copy()->addMonth();
 
@@ -379,26 +382,16 @@ class ExpenseController extends Controller
                 Rule::in(['cash', 'bank', 'card']),
             ],
         ], [
-            'description.required' =>
-                'Please enter the expense description.',
-            'category.required' =>
-                'Please select an expense category.',
-            'category.in' =>
-                'Please select a category from the list.',
-            'expense_date.required' =>
-                'Please enter the expense date.',
-            'expense_date.date_format' =>
-                'Please enter a valid expense date.',
-            'amount.required' =>
-                'Please enter the expense amount.',
-            'amount.min' =>
-                'The expense amount must be greater than zero.',
-            'amount.regex' =>
-                'Use no more than two decimal places.',
-            'payment_method.required' =>
-                'Please select the payment method.',
-            'payment_method.in' =>
-                'Please select Cash, Bank transfer or Card.',
+            'description.required' => 'Please enter the expense description.',
+            'category.required' => 'Please select an expense category.',
+            'category.in' => 'Please select a category from the list.',
+            'expense_date.required' => 'Please enter the expense date.',
+            'expense_date.date_format' => 'Please enter a valid expense date.',
+            'amount.required' => 'Please enter the expense amount.',
+            'amount.min' => 'The expense amount must be greater than zero.',
+            'amount.regex' => 'Use no more than two decimal places.',
+            'payment_method.required' => 'Please select the payment method.',
+            'payment_method.in' => 'Please select Cash, Bank transfer or Card.',
         ]);
     }
 
@@ -436,7 +429,7 @@ class ExpenseController extends Controller
 
     private function toCents($amount): int
     {
-        return \App\Support\Money::scaled($amount, 2);
+        return Money::scaled($amount, 2);
     }
 
     private function ensureClinicAccess(Expense $expense): void

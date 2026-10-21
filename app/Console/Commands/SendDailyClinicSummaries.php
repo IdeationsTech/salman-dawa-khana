@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Mail\DailyClinicSummary;
+use App\Support\ClinicClock;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +18,8 @@ class SendDailyClinicSummaries extends Command
         {--clinic= : Process one clinic ID}
         {--date= : Summary date in YYYY-MM-DD}
         {--send : Send instead of previewing}
-        {--retry-failed : Retry previously failed deliveries}';
+        {--retry-failed : Retry previously failed deliveries}
+        {--due-only : Only send at 00:10 in each clinic timezone}';
 
     protected $description =
         'Preview or send currency-aware clinic summaries with delivery tracking.';
@@ -30,7 +33,7 @@ class SendDailyClinicSummaries extends Command
                 $dateInput &&
                 ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateInput)
             ) {
-                throw new \InvalidArgumentException();
+                throw new \InvalidArgumentException;
             }
 
             $day = $dateInput
@@ -47,7 +50,7 @@ class SendDailyClinicSummaries extends Command
                 ! $day ||
                 ($dateInput && $day->format('Y-m-d') !== $dateInput)
             ) {
-                throw new \InvalidArgumentException();
+                throw new \InvalidArgumentException;
             }
         } catch (Throwable $exception) {
             $this->error('Use a valid --date=YYYY-MM-DD.');
@@ -91,6 +94,15 @@ class SendDailyClinicSummaries extends Command
         $failed = 0;
 
         foreach ($query->orderBy('clinic_id')->get() as $clinic) {
+            $zone = ClinicClock::zone((int) $clinic->clinic_id);
+            $localNow = CarbonImmutable::now($zone);
+            if ($this->option('due-only') && $localNow->format('H:i') !== '00:10') {
+                continue;
+            }
+            $day = $dateInput ? CarbonImmutable::parse($dateInput, $zone)->startOfDay() : $localNow->subDay()->startOfDay();
+            $start = $day->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s');
+            $end = $day->addDay()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s');
+
             $settings = DB::table('settings')
                 ->where('clinic_id', $clinic->clinic_id)
                 ->pluck('setting_value', 'setting_key');
@@ -152,8 +164,8 @@ class SendDailyClinicSummaries extends Command
             $expenseAmount = DB::table('expenses')
                 ->where('clinic_id', $clinic->clinic_id)
                 ->where('currency', $summaryCurrency)
-                ->where('expense_date', '>=', $start)
-                ->where('expense_date', '<', $end)
+                ->where('expense_date', '>=', $day->toDateString())
+                ->where('expense_date', '<', $day->addDay()->toDateString())
                 ->sum('amount');
 
             $receivedCents =
@@ -173,8 +185,7 @@ class SendDailyClinicSummaries extends Command
                 'expenses' => $expenses,
                 'net' => $this->decimal($receivedCents - $expenseCents),
                 'currency' => $summaryCurrency,
-                'decimal_places' =>
-                    (string) $settings->get('decimal_places', '2') === '0'
+                'decimal_places' => (string) $settings->get('decimal_places', '2') === '0'
                         ? 0
                         : 2,
                 'dashboard_url' => route('dashboard'),
@@ -187,8 +198,8 @@ class SendDailyClinicSummaries extends Command
                     $clinic->name,
                     $summary['date_label'],
                     $visits,
-                    $summaryCurrency . ' ' . $received,
-                    $summaryCurrency . ' ' . $expenses,
+                    $summaryCurrency.' '.$received,
+                    $summaryCurrency.' '.$expenses,
                 ]]
             );
 
@@ -387,7 +398,7 @@ class SendDailyClinicSummaries extends Command
 
     private function toCents($amount): int
     {
-        return \App\Support\Money::scaled($amount, 2);
+        return Money::scaled($amount, 2);
     }
 
     private function decimal(int $cents): string
@@ -396,9 +407,9 @@ class SendDailyClinicSummaries extends Command
         $absolute = abs($cents);
 
         return $prefix
-            . intdiv($absolute, 100)
-            . '.'
-            . str_pad(
+            .intdiv($absolute, 100)
+            .'.'
+            .str_pad(
                 (string) ($absolute % 100),
                 2,
                 '0',

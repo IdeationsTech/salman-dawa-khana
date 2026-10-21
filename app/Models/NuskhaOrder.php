@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ClinicDateTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -34,7 +35,7 @@ class NuskhaOrder extends Model
     protected function casts(): array
     {
         return [
-            'ordered_at' => 'datetime',
+            'ordered_at' => ClinicDateTime::class,
             'subtotal' => 'decimal:2',
             'discount' => 'decimal:2',
             'delivery_fee' => 'decimal:2',

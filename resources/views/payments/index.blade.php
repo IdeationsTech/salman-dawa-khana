@@ -16,10 +16,10 @@
                 </p>
             </div>
 
-            <a href="{{ route('payments.create') }}" class="btn btn-primary">
+            @clinicCan('payments.create')<a href="{{ route('payments.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i>
                 Record payment
-            </a>
+            </a>@endclinicCan
         </header>
 
         @if (session('success'))

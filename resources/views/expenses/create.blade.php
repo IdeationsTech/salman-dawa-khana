@@ -40,7 +40,7 @@
         'expense_date',
         $editing
             ? $expense->expense_date?->format('Y-m-d')
-            : now('Asia/Dubai')->format('Y-m-d')
+            : \App\Support\ClinicClock::now()->format('Y-m-d')
     );
 @endphp
 

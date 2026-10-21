@@ -7,6 +7,7 @@ use App\Models\NuskhaOrder;
 use App\Models\NuskhaTemplate;
 use App\Models\Setting;
 use App\Rules\InternationalPhone;
+use App\Support\ClinicClock;
 use App\Support\ClinicLocaleCatalog;
 use App\Support\Money;
 use Illuminate\Http\Request;
@@ -54,11 +55,11 @@ class NuskhaOrderController extends Controller
         }
 
         if (filled($filters['from'] ?? null)) {
-            $query->where('ordered_at', '>=', $filters['from'] . ' 00:00:00');
+            $query->where('ordered_at', '>=', ClinicClock::stored($filters['from'].' 00:00:00'));
         }
 
         if (filled($filters['to'] ?? null)) {
-            $query->where('ordered_at', '<=', $filters['to'] . ' 23:59:59');
+            $query->where('ordered_at', '<=', ClinicClock::stored($filters['to'].' 23:59:59'));
         }
 
         return view('orders.index', [
@@ -99,7 +100,7 @@ class NuskhaOrderController extends Controller
             $order = NuskhaOrder::create([
                 'clinic_id' => $this->clinicId(),
                 'created_by_user_id' => auth()->id(),
-                'order_no' => 'TMP-' . Str::ulid(),
+                'order_no' => 'TMP-'.Str::ulid(),
                 'ordered_at' => $this->dateValue($data['ordered_at']),
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
@@ -116,7 +117,7 @@ class NuskhaOrderController extends Controller
             ]);
 
             $order->update([
-                'order_no' => 'NO-' . str_pad(
+                'order_no' => 'NO-'.str_pad(
                     (string) $order->nuskha_order_id,
                     5,
                     '0',
@@ -201,7 +202,7 @@ class NuskhaOrderController extends Controller
                 if ($id) {
                     $item = $existing->get((int) $id);
 
-                    if (!$item) {
+                    if (! $item) {
                         throw ValidationException::withMessages([
                             'items' => 'The order changed. Reload the edit page.',
                         ]);
@@ -216,7 +217,7 @@ class NuskhaOrderController extends Controller
             }
 
             foreach ($existing as $item) {
-                if (!in_array((int) $item->nuskha_order_item_id, $keepIds, true)) {
+                if (! in_array((int) $item->nuskha_order_item_id, $keepIds, true)) {
                     $item->delete();
                 }
             }
@@ -389,7 +390,7 @@ class NuskhaOrderController extends Controller
         $rules = [
             'customer_name' => ['required', 'string', 'max:160'],
             'customer_phone' => [
-                'bail', 'required', 'string', 'max:16', new InternationalPhone(),
+                'bail', 'required', 'string', 'max:16', new InternationalPhone,
             ],
             'ordered_at' => $this->dateRules(),
             'order_source' => ['required', 'in:walk_in,phone'],
@@ -424,7 +425,7 @@ class NuskhaOrderController extends Controller
             'items.*.instructions' => ['nullable', 'string', 'max:500'],
         ];
 
-        if (!$order) {
+        if (! $order) {
             $rules['payment_amount'] = $this->moneyRules();
 
             $rules['payment_method'] = [
@@ -451,16 +452,16 @@ class NuskhaOrderController extends Controller
         $subtotal = 0;
 
         foreach ($data['items'] as $index => $input) {
-            $id = !empty($input['item_id']) ? (int) $input['item_id'] : null;
+            $id = ! empty($input['item_id']) ? (int) $input['item_id'] : null;
             $old = $id ? $existing->get($id) : null;
 
-            if ($id && !$old) {
+            if ($id && ! $old) {
                 throw ValidationException::withMessages([
                     'items' => 'The order items changed. Reload the edit page.',
                 ]);
             }
 
-            $templateId = !empty($input['nuskha_template_id'])
+            $templateId = ! empty($input['nuskha_template_id'])
                 ? (int) $input['nuskha_template_id']
                 : null;
 
@@ -475,10 +476,9 @@ class NuskhaOrderController extends Controller
                     ->where('is_active', true)
                     ->whereKey($templateId)->with('items')->first();
 
-                if (!$template) {
+                if (! $template) {
                     throw ValidationException::withMessages([
-                        "items.{$index}.nuskha_template_id" =>
-                            'Select an active template belonging to your clinic.',
+                        "items.{$index}.nuskha_template_id" => 'Select an active template belonging to your clinic.',
                     ]);
                 }
 
@@ -486,12 +486,11 @@ class NuskhaOrderController extends Controller
                 $snapshot = [
                     'template_name' => $template->name,
                     'instructions' => $template->instructions,
-                    'items' => $template->items->map(fn ($ingredient) =>
-                        $ingredient->only([
-                            'item_name', 'quantity', 'unit', 'dosage',
-                            'frequency', 'duration', 'timing',
-                            'instructions', 'sort_order',
-                        ]))->values()->all(),
+                    'items' => $template->items->map(fn ($ingredient) => $ingredient->only([
+                        'item_name', 'quantity', 'unit', 'dosage',
+                        'frequency', 'duration', 'timing',
+                        'instructions', 'sort_order',
+                    ]))->values()->all(),
                 ];
             } else {
                 $name = trim($input['nuskha_name'] ?? '');
@@ -500,8 +499,7 @@ class NuskhaOrderController extends Controller
 
             if ($name === '') {
                 throw ValidationException::withMessages([
-                    "items.{$index}.nuskha_name" =>
-                        'Select a template or enter a nuskha name.',
+                    "items.{$index}.nuskha_name" => 'Select a template or enter a nuskha name.',
                 ]);
             }
 
@@ -640,7 +638,7 @@ class NuskhaOrderController extends Controller
 
     private function dateValue(string $value): string
     {
-        return str_replace('T', ' ', $value) . ':00';
+        return str_replace('T', ' ', $value).':00';
     }
 
     private function clinicId(): int

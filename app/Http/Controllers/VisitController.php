@@ -6,6 +6,7 @@ use App\Models\Patient;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Visit;
+use App\Support\ClinicClock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -50,17 +51,14 @@ class VisitController extends Controller
         ]);
 
         $clinicId = (int) Auth::user()->clinic_id;
-        $today = now('Asia/Dubai');
+        $today = ClinicClock::now();
 
         $query = Visit::query()
             ->where('clinic_id', $clinicId)
             ->with([
-                'patient' => fn ($query) =>
-                    $query->where('clinic_id', $clinicId),
-                'recordedBy' => fn ($query) =>
-                    $query->where('clinic_id', $clinicId),
-                'doctor' => fn ($query) =>
-                    $query->where('clinic_id', $clinicId),
+                'patient' => fn ($query) => $query->where('clinic_id', $clinicId),
+                'recordedBy' => fn ($query) => $query->where('clinic_id', $clinicId),
+                'doctor' => fn ($query) => $query->where('clinic_id', $clinicId),
             ]);
 
         $search = trim($filters['search'] ?? '');
@@ -107,8 +105,8 @@ class VisitController extends Controller
 
         if ($start !== null) {
             $query
-                ->where('visit_date', '>=', $start->format('Y-m-d H:i:s'))
-                ->where('visit_date', '<', $end->format('Y-m-d H:i:s'));
+                ->where('visit_date', '>=', $start->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'))
+                ->where('visit_date', '<', $end->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'));
         }
 
         $type = $filters['visit_type'] ?? 'all';
@@ -136,12 +134,13 @@ class VisitController extends Controller
         $totalVisits = (clone $base)->count();
 
         $todayVisits = (clone $base)
-            ->whereDate('visit_date', $today->toDateString())
+            ->where('visit_date', '>=', ClinicClock::stored($today->copy()->startOfDay()))
+            ->where('visit_date', '<', ClinicClock::stored($today->copy()->startOfDay()->addDay()))
             ->count();
 
         $monthVisits = (clone $base)
-            ->where('visit_date', '>=', $today->copy()->startOfMonth()->format('Y-m-d H:i:s'))
-            ->where('visit_date', '<', $today->copy()->startOfMonth()->addMonth()->format('Y-m-d H:i:s'))
+            ->where('visit_date', '>=', $today->copy()->startOfMonth()->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'))
+            ->where('visit_date', '<', $today->copy()->startOfMonth()->addMonth()->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'))
             ->count();
 
         $followUpVisits = (clone $base)
@@ -159,7 +158,7 @@ class VisitController extends Controller
 
     public function create()
     {
-        $patients = $this->patientOptions();
+        $patients = $this->patientOptions($visit ?? null);
         $doctors = $this->doctorOptions();
 
         return view('visits.create', compact('patients', 'doctors'));
@@ -188,12 +187,9 @@ class VisitController extends Controller
 
         $visit->load([
             'clinic',
-            'patient' => fn ($query) =>
-                $query->where('clinic_id', $clinicId),
-            'recordedBy' => fn ($query) =>
-                $query->where('clinic_id', $clinicId),
-            'doctor' => fn ($query) =>
-                $query->where('clinic_id', $clinicId)->with('role'),
+            'patient' => fn ($query) => $query->where('clinic_id', $clinicId),
+            'recordedBy' => fn ($query) => $query->where('clinic_id', $clinicId),
+            'doctor' => fn ($query) => $query->where('clinic_id', $clinicId)->with('role'),
         ]);
 
         return view('visits.show', compact('visit'));
@@ -203,7 +199,7 @@ class VisitController extends Controller
     {
         $this->ensureClinicAccess($visit);
 
-        $patients = $this->patientOptions();
+        $patients = $this->patientOptions($visit ?? null);
         $doctors = $this->doctorOptions($visit);
 
         return view('visits.create', compact(
@@ -232,8 +228,7 @@ class VisitController extends Controller
             return redirect()
                 ->route('visits.index')
                 ->withErrors([
-                    'visit' =>
-                        'This visit has a prescription or bill and cannot be deleted.',
+                    'visit' => 'This visit has a prescription or bill and cannot be deleted.',
                 ]);
         }
 
@@ -244,11 +239,11 @@ class VisitController extends Controller
             ->with('success', 'Visit deleted successfully.');
     }
 
-    private function patientOptions()
+    private function patientOptions(?Visit $visit = null)
     {
         return Patient::query()
             ->where('clinic_id', Auth::user()->clinic_id)
-            ->orderBy('full_name')
+            ->whereKey($visit?->patient_id ?? (filter_var(old('patient_id', request('patient_id')), FILTER_VALIDATE_INT) ?: 0))
             ->get(['patient_id', 'patient_code', 'full_name']);
     }
 
@@ -355,27 +350,23 @@ class VisitController extends Controller
         ], [
             'patient_id.required' => 'Please select a patient.',
             'patient_id.exists' => 'Select a patient from your clinic.',
-            'patient_id.in' =>
-                'The patient cannot be changed for an existing visit.',
+            'patient_id.in' => 'The patient cannot be changed for an existing visit.',
 
-            'doctor_user_id.required' =>
-                'Please select the treating Doctor/Hakeem.',
-            'doctor_user_id.exists' =>
-                'Select an active Owner or Doctor from your clinic.',
+            'doctor_user_id.required' => 'Please select the treating Doctor/Hakeem.',
+            'doctor_user_id.exists' => 'Select an active Owner or Doctor from your clinic.',
 
             'visit_date.required' => 'Please select the visit date.',
             'visit_time.required' => 'Please enter the visit time.',
             'visit_reason.required' => 'Please select the visit type.',
             'status.required' => 'Please select the visit status.',
             'status.in' => 'Please select a valid visit status.',
-            'diagnosis_name.max' =>
-                'The diagnosis name must not exceed 255 characters.',
+            'diagnosis_name.max' => 'The diagnosis name must not exceed 255 characters.',
         ]);
 
         $data['doctor_user_id'] = (int) $data['doctor_user_id'];
 
         $data['visit_date'] =
-            $data['visit_date'] . ' ' . $data['visit_time'] . ':00';
+            $data['visit_date'].' '.$data['visit_time'].':00';
 
         unset($data['visit_time']);
 

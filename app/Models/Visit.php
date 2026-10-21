@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ClinicDateTime;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -36,7 +37,7 @@ class Visit extends Model
     protected function casts(): array
     {
         return [
-            'visit_date' => 'datetime',
+            'visit_date' => ClinicDateTime::class,
         ];
     }
 

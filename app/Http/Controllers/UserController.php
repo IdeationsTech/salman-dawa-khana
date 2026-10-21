@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Rules\InternationalPhone;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -99,6 +102,7 @@ class UserController extends Controller
             'Owner',
             'Doctor',
             'Receptionist',
+            'Accountant',
         ])
             ->orderBy('name')
             ->get();
@@ -133,7 +137,7 @@ class UserController extends Controller
                 'required',
                 'string',
                 'max:16',
-                new \App\Rules\InternationalPhone(),
+                new InternationalPhone,
             ],
 
             'role_id' => [
@@ -143,6 +147,7 @@ class UserController extends Controller
                     'Owner',
                     'Doctor',
                     'Receptionist',
+                    'Accountant',
                 ]),
             ],
 
@@ -208,6 +213,7 @@ class UserController extends Controller
             'Owner',
             'Doctor',
             'Receptionist',
+            'Accountant',
         ])
             ->orderBy('name')
             ->get();
@@ -248,7 +254,7 @@ class UserController extends Controller
                 'required',
                 'string',
                 'max:16',
-                new \App\Rules\InternationalPhone(),
+                new InternationalPhone,
             ],
 
             'role_id' => [
@@ -258,6 +264,7 @@ class UserController extends Controller
                     'Owner',
                     'Doctor',
                     'Receptionist',
+                    'Accountant',
                 ]),
             ],
 
@@ -285,8 +292,7 @@ class UserController extends Controller
         ) {
             return back()
                 ->withErrors([
-                    'is_active' =>
-                        'You cannot deactivate your own account.',
+                    'is_active' => 'You cannot deactivate your own account.',
                 ])
                 ->withInput($request->except([
                     'password',
@@ -306,8 +312,7 @@ class UserController extends Controller
         ) {
             return back()
                 ->withErrors([
-                    'role_id' =>
-                        'You cannot change your own role.',
+                    'role_id' => 'You cannot change your own role.',
                 ])
                 ->withInput($request->except([
                     'password',
@@ -351,7 +356,7 @@ class UserController extends Controller
         $clinicId = (int) Auth::user()->clinic_id;
 
         try {
-            $deleted = \Illuminate\Support\Facades\DB::transaction(
+            $deleted = DB::transaction(
                 function () use ($user, $clinicId) {
                     $locked = User::query()
                         ->where('clinic_id', $clinicId)
@@ -378,7 +383,7 @@ class UserController extends Controller
                     ];
 
                     foreach ($references as $table => $column) {
-                        $hasRecords = \Illuminate\Support\Facades\DB::table($table)
+                        $hasRecords = DB::table($table)
                             ->where($column, $locked->user_id)
                             ->exists();
 
@@ -393,7 +398,7 @@ class UserController extends Controller
                 },
                 3
             );
-        } catch (\Illuminate\Database\QueryException $exception) {
+        } catch (QueryException $exception) {
             // Handle an additional/concurrent foreign-key reference safely.
             if ((int) ($exception->errorInfo[1] ?? 0) !== 1451) {
                 throw $exception;
@@ -406,9 +411,8 @@ class UserController extends Controller
             return redirect()
                 ->route('users.edit', $user)
                 ->withErrors([
-                    'user' =>
-                        'This user has linked records and cannot be deleted. '
-                        . 'Turn off Active account and save to deactivate them instead.',
+                    'user' => 'This user has linked records and cannot be deleted. '
+                        .'Turn off Active account and save to deactivate them instead.',
                 ]);
         }
 

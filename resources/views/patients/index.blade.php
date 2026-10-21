@@ -16,10 +16,10 @@
                 </p>
             </div>
 
-            <a href="{{ route('patients.create') }}" class="btn btn-primary">
+            @clinicCan('patients.create')<a href="{{ route('patients.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i>
                 Add patient
-            </a>
+            </a>@endclinicCan
         </header>
 
         @if (session('success'))
@@ -91,13 +91,13 @@
                         Export CSV
                     </button>
 
-                    <a
+                    @clinicCan('patients.create')<a
                         href="{{ route('patients.create') }}"
                         class="btn btn-primary"
                     >
                         <i class="bi bi-plus-circle" aria-hidden="true"></i>
                         New patient
-                    </a>
+                    </a>@endclinicCan
                 </div>
             </div>
 

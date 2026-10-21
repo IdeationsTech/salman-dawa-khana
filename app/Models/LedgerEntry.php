@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ClinicDateTime;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -36,7 +37,7 @@ class LedgerEntry extends Model
     protected function casts(): array
     {
         return [
-            'entry_date' => 'datetime',
+            'entry_date' => ClinicDateTime::class,
             'debit' => 'decimal:2',
             'credit' => 'decimal:2',
         ];

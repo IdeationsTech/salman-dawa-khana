@@ -2284,7 +2284,39 @@ function initializeCurrencyPaymentForm() {
         update();
     };
 
-    patient.addEventListener('change', () => rebuildBills(''));
+    let billsRequest;
+    let billsLoading = false;
+    let billsFailed = false;
+    patient.addEventListener('change', async () => {
+        billsRequest?.abort();
+        bills = [];
+        billsFailed = false;
+        billsLoading = Boolean(patient.value);
+        rebuildBills('');
+        if (!patient.value) return;
+        const patientId = patient.value;
+        billsRequest = new AbortController();
+        help.textContent = 'Loading patient bills…';
+        submit.disabled = true;
+        try {
+            const response = await fetch(form.dataset.billsUrl.replace('__PATIENT__', encodeURIComponent(patientId)), {
+                signal: billsRequest.signal, credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' },
+            });
+            if (!response.ok) throw new Error('Bills unavailable');
+            const data = await response.json();
+            if (patient.value !== patientId) return;
+            bills = data.bills;
+            billsLoading = false;
+            rebuildBills('');
+        } catch (error) {
+            if (error.name !== 'AbortError' && patient.value === patientId) {
+                billsLoading = false;
+                billsFailed = true;
+                help.textContent = 'Bills could not load. Reselect the patient to retry.';
+                submit.disabled = true;
+            }
+        }
+    });
 
     [mode, bill, method].forEach((element) => {
         element.addEventListener('change', update);
@@ -2296,6 +2328,7 @@ function initializeCurrencyPaymentForm() {
 
     form.addEventListener('submit', (event) => {
         update();
+        if (billsLoading || billsFailed) { event.preventDefault(); help.textContent = 'Wait for patient bills to load, or reselect the patient to retry.'; return; }
 
         if (!form.checkValidity()) {
             event.preventDefault();
@@ -2679,6 +2712,7 @@ function initializePrescriptionPatientSearch() {
     };
 
     const emptyVisits = () => {
+        if (!visit) return;
         visitsRequest?.abort();
         visit.replaceChildren(new Option('No linked visit', ''));
         visit.disabled = true;
@@ -2686,6 +2720,7 @@ function initializePrescriptionPatientSearch() {
     };
 
     const loadVisits = async (patientId) => {
+        if (!visit) return;
         emptyVisits();
         visitsRequest = new AbortController();
         try {

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -26,6 +28,12 @@ class LoginController extends Controller
             'email' => ['required', 'email', 'max:160'],
             'password' => ['required', 'string'],
         ]);
+
+        $throttleKey = 'clinic-login:'.hash('sha256', strtolower(trim($credentials['email'])).'|'.$request->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            throw ValidationException::withMessages(['email' => 'Too many login attempts. Try again in '.RateLimiter::availableIn($throttleKey).' seconds.']);
+        }
+        RateLimiter::hit($throttleKey, 60);
 
         $guard = Auth::guard('web');
         $provider = $guard->getProvider();
@@ -78,8 +86,7 @@ class LoginController extends Controller
         ) {
             return back()
                 ->withErrors([
-                    'email' =>
-                        'Your account or clinic is not currently approved for access.',
+                    'email' => 'Your account or clinic is not currently approved for access.',
                 ])
                 ->withInput(
                     $request->only('email', 'remember')
@@ -91,6 +98,7 @@ class LoginController extends Controller
             'password' => $credentials['password'],
             'is_active' => true,
         ], $request->boolean('remember'))) {
+            RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
 
             // Clinic access middleware checks the current license.
@@ -112,8 +120,7 @@ class LoginController extends Controller
     {
         return back()
             ->withErrors([
-                'email' =>
-                    'These credentials do not match our records.',
+                'email' => 'These credentials do not match our records.',
             ])
             ->withInput(
                 $request->only('email', 'remember')

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ClinicDateTime;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -35,7 +36,7 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
-            'payment_date' => 'datetime',
+            'payment_date' => ClinicDateTime::class,
             'amount' => 'decimal:2',
         ];
     }

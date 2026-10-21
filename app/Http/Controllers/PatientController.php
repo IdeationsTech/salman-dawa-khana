@@ -6,6 +6,7 @@ use App\Models\Patient;
 use App\Models\Setting;
 use App\Rules\InternationalPhone;
 use App\Services\ClinicNotificationService;
+use App\Support\ClinicClock;
 use App\Support\ClinicLocaleCatalog;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
@@ -39,8 +40,7 @@ class PatientController extends Controller
             ->select('patients.*')
             ->selectRaw('COALESCE(patient_balances.balance_due, 0) AS balance_due')
             ->withMax([
-                'visits as last_visit_at' => fn ($query) =>
-                    $query->where('clinic_id', $clinicId),
+                'visits as last_visit_at' => fn ($query) => $query->where('clinic_id', $clinicId),
             ], 'visit_date')
             ->withCasts([
                 'last_visit_at' => 'datetime',
@@ -87,7 +87,7 @@ class PatientController extends Controller
 
         if (($filters['export'] ?? null) === 'csv') {
             $exportQuery = (clone $query)->orderBy('patients.patient_id');
-            $filename = 'patients-' . now()->format('Y-m-d-His') . '.csv';
+            $filename = 'patients-'.now()->format('Y-m-d-His').'.csv';
 
             return response()->streamDownload(function () use (
                 $exportQuery,
@@ -105,7 +105,7 @@ class PatientController extends Controller
                     $text = (string) ($value ?? '');
 
                     return preg_match('/^[\s]*[=+\-@]/u', $text)
-                        ? "'" . $text
+                        ? "'".$text
                         : $text;
                 };
 
@@ -139,7 +139,7 @@ class PatientController extends Controller
                                     $patient->national_id_type
                                         ?: ($patient->emirates_id ? 'emirates_id' : '')
                                 ),
-                                $idNumber ? "'" . $idNumber : '',
+                                $idNumber ? "'".$idNumber : '',
                                 $patient->date_of_birth?->format('Y-m-d') ?? '',
                                 $safeText($patient->gender),
                                 $patient->last_visit_at?->format('Y-m-d H:i') ?? '',
@@ -244,12 +244,12 @@ class PatientController extends Controller
             $patient = Patient::create([
                 ...$validated,
                 'clinic_id' => Auth::user()->clinic_id,
-                'patient_code' => 'TMP-' . (string) Str::ulid(),
+                'patient_code' => 'TMP-'.(string) Str::ulid(),
                 'status' => 'active',
             ]);
 
             $patient->update([
-                'patient_code' => 'P-' . str_pad(
+                'patient_code' => 'P-'.str_pad(
                     (string) $patient->patient_id,
                     4,
                     '0',
@@ -297,9 +297,8 @@ class PatientController extends Controller
                 + (int) str_pad(substr($fraction, 0, 2), 2, '0', STR_PAD_RIGHT);
         };
 
-        $toDecimal = static fn (int $cents): string =>
-            intdiv($cents, 100) . '.'
-            . str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
+        $toDecimal = static fn (int $cents): string => intdiv($cents, 100).'.'
+            .str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
 
         $currencyCode = static function ($value): ?string {
             $code = strtoupper(trim((string) $value));
@@ -320,6 +319,7 @@ class PatientController extends Controller
 
             if ($code === null) {
                 $unconfirmedFinancialRecords++;
+
                 continue;
             }
 
@@ -340,6 +340,7 @@ class PatientController extends Controller
 
             if ($code === null) {
                 $unconfirmedFinancialRecords++;
+
                 continue;
             }
 
@@ -489,11 +490,11 @@ class PatientController extends Controller
             'full_name' => ['required', 'string', 'max:160'],
             'father_or_husband_name' => ['nullable', 'string', 'max:160'],
             'phone' => [
-                'bail', 'required', 'string', 'max:16', new InternationalPhone(),
+                'bail', 'required', 'string', 'max:16', new InternationalPhone,
             ],
             'national_id_number' => $idRules,
             'date_of_birth' => [
-                'bail', 'nullable', 'date_format:Y-m-d', 'before_or_equal:today',
+                'bail', 'nullable', 'date_format:Y-m-d', 'before_or_equal:'.ClinicClock::now()->toDateString(),
             ],
             'gender' => ['required', Rule::in(['Male', 'Female', 'Other'])],
             'marital_status' => ['required', Rule::in(['married', 'unmarried'])],

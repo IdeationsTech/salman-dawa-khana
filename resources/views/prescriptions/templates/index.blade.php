@@ -17,12 +17,12 @@
                 </p>
             </div>
 
-            <a
+            @clinicCan('prescriptions.templates.create')<a
                 href="{{ route('prescriptions.templates.create') }}"
                 class="btn btn-primary"
             >
                 + Create Template
-            </a>
+            </a>@endclinicCan
         </header>
 
         @if (session('success'))
@@ -81,12 +81,12 @@
                 Apply
             </button>
 
-            <a
+            @clinicCan('prescriptions.templates.index')<a
                 href="{{ route('prescriptions.templates.index') }}"
                 class="btn btn-light"
             >
                 Reset
-            </a>
+            </a>@endclinicCan
         </form>
 
         {{-- NUSKHA TEMPLATES — Saved Records --}}
@@ -121,12 +121,12 @@
                     </div>
 
                     <div class="template-card-actions">
-                        <a
+                        @clinicCan('prescriptions.templates.edit')<a
                             href="{{ route('prescriptions.templates.edit', $template) }}"
                             class="template-action"
                         >
                             View / edit
-                        </a>
+                        </a>@endclinicCan
 
                         @if ($template->is_active && $template->items_count > 0)
                             <a

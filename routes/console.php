@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -13,9 +14,9 @@ Artisan::command('inspire', function () {
 |--------------------------------------------------------------------------
 */
 
-\Illuminate\Support\Facades\Schedule::command(
-    'clinics:daily-summary --send'
+Schedule::command(
+    'clinics:daily-summary --send --due-only'
 )
-    ->dailyAt('00:10')
-    ->timezone('Asia/Dubai')
-    ->withoutOverlapping(60); 
+    ->everyMinute()
+    ->withoutOverlapping(60);
+Schedule::command('clinic:backup --prune')->dailyAt('02:00')->timezone('UTC')->withoutOverlapping(120);

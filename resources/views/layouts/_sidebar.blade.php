@@ -37,13 +37,14 @@
 
     <nav class="sidebar-nav" aria-label="Main navigation">
         @foreach ($sidebarNavigation as [$routeName, $pattern, $icon, $label])
+            @if (!\App\Support\ClinicPermissions::allows(auth()->user(), $routeName)) @continue @endif
             @if (in_array($routeName, ['users.index', 'audit.index'], true) && $sidebarRole !== 'Owner')
                 @continue
             @endif
 
             @if (
                 in_array($routeName, ['expenses.index', 'reports.index'], true)
-                && !in_array($sidebarRole, ['Owner', 'Doctor'], true)
+                && !in_array($sidebarRole, ['Owner', 'Doctor', 'Accountant'], true)
             )
                 @continue
             @endif

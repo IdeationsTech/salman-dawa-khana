@@ -18,7 +18,7 @@
 
     $canAccessExpenses = in_array(
         $clinicRole,
-        ['Owner', 'Doctor'],
+        ['Owner', 'Doctor', 'Accountant'],
         true
     );
 @endphp
@@ -51,7 +51,7 @@
                     Patient prescriptions
                 </a>
 
-                <a
+                @clinicCan('prescriptions.templates.index')<a
                     href="{{ route('prescriptions.templates.index') }}"
                     class="sidebar-subnav-link {{ request()->routeIs('prescriptions.templates.*') ? 'active' : '' }}"
                     @if(request()->routeIs('prescriptions.templates.*'))
@@ -59,7 +59,7 @@
                     @endif
                 >
                     Nuskha templates
-                </a>
+                </a>@endclinicCan
             </div>
         </template>
     @endif

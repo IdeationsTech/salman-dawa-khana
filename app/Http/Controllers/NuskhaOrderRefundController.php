@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\NuskhaOrder;
 use App\Services\ClinicAuditService;
+use App\Support\ClinicClock;
 use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -106,14 +107,14 @@ class NuskhaOrderRefundController extends Controller
                 ]);
             }
 
-            $refundedAt = str_replace('T', ' ', $data['refunded_at']) . ':00';
+            $refundedAt = str_replace('T', ' ', $data['refunded_at']).':00';
 
             $latestPayment = $locked->payments()
                 ->where('clinic_id', $clinicId)
                 ->where('amount', '>', 0)
                 ->max('paid_at');
 
-            if ($latestPayment && $refundedAt < $latestPayment) {
+            if ($latestPayment && ClinicClock::stored($refundedAt) < (string) $latestPayment) {
                 throw ValidationException::withMessages([
                     'refunded_at' => 'Refund date cannot be before the latest received payment.',
                 ]);
@@ -126,7 +127,7 @@ class NuskhaOrderRefundController extends Controller
                 'amount' => Money::decimal(-$refund),
                 'method' => $data['method'],
                 'reference_no' => $data['reference_no'] ?? null,
-                'notes' => Str::limit('Refund: ' . $data['reason'], 500, ''),
+                'notes' => Str::limit('Refund: '.$data['reason'], 500, ''),
             ]);
 
             $refundId = DB::table('nuskha_order_refunds')->insertGetId([
@@ -135,7 +136,7 @@ class NuskhaOrderRefundController extends Controller
                 'refunded_by_user_id' => auth()->id(),
                 'refund_payment_id' => $adjustment->nuskha_order_payment_id,
                 'request_key' => $data['request_key'],
-                'refunded_at' => $refundedAt,
+                'refunded_at' => ClinicClock::stored($refundedAt),
                 'amount' => Money::decimal($refund),
                 'currency' => $locked->currency,
                 'method' => $data['method'],

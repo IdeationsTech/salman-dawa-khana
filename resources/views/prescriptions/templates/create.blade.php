@@ -42,12 +42,12 @@
 
         {{-- NUSKHA TEMPLATE — Heading --}}
         <div class="form-page-header no-print">
-            <a
+            @clinicCan('prescriptions.templates.index')<a
                 href="{{ route('prescriptions.templates.index') }}"
                 class="back-link"
             >
                 ← Back to templates
-            </a>
+            </a>@endclinicCan
 
             <h1>
                 {{ $editing
@@ -254,12 +254,12 @@
                     </button>
                 @endif
 
-                <a
+                @clinicCan('prescriptions.templates.index')<a
                     href="{{ route('prescriptions.templates.index') }}"
                     class="btn btn-light"
                 >
                     Cancel
-                </a>
+                </a>@endclinicCan
 
                 <button type="submit" class="btn btn-primary">
                     {{ $editing ? 'Update template' : 'Save template' }}
@@ -290,7 +290,7 @@
                     <div class="nuskha-print-date">
                         Prepared on<br>
                         <strong>
-                            {{ now('Asia/Dubai')->format('d M Y') }}
+                            {{ \App\Support\ClinicClock::now()->format('d M Y') }}
                         </strong>
                     </div>
                 </header>

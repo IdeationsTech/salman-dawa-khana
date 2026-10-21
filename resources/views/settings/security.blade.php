@@ -217,6 +217,14 @@
 
             </div>
         </section>
+        @if (auth()->user()->role?->name === 'Owner')
+            <section class="settings-panel mt-4">
+                <h2>Encrypted backups</h2>
+                <p>Server backups include the database and uploaded clinic files. The daily schedule keeps 30 days of backups.</p>
+                <p>Server operator: run <code>php artisan clinic:backup</code> to create a backup. Run <code>php artisan clinic:restore /absolute/path/to/file.backup</code> to verify one without changing data.</p>
+                <p>Enable the Laravel scheduler on your server with <code>php artisan schedule:run</code> every minute. Keep a secure copy of backups and the original APP_KEY outside the server.</p>
+            </section>
+        @endif
     </main>
 </div>
 @endsection

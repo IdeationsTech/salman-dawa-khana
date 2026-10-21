@@ -19,19 +19,19 @@
             </div>
 
             <div class="d-flex flex-wrap gap-2">
-                <a
+                @clinicCan('prescriptions.templates.index')<a
                     href="{{ route('prescriptions.templates.index') }}"
                     class="btn btn-outline-primary"
                 >
                     Nuskha Templates
-                </a>
+                </a>@endclinicCan
 
-                <a
+                @clinicCan('prescriptions.create')<a
                     href="{{ route('prescriptions.create') }}"
                     class="btn btn-primary"
                 >
                     + Create Prescription
-                </a>
+                </a>@endclinicCan
             </div>
         </header>
 
@@ -252,12 +252,12 @@
 
                                 <td class="text-end">
                                     <a
-                                        href="{{ $status === 'draft'
+                                        href="{{ $status === 'draft' && \App\Support\ClinicPermissions::allows(auth()->user(), 'prescriptions.edit')
                                             ? route('prescriptions.edit', $prescription)
                                             : route('prescriptions.show', $prescription) }}"
                                         class="table-action"
                                     >
-                                        {{ $status === 'draft' ? 'Continue' : 'View' }}
+                                        {{ $status === 'draft' && \App\Support\ClinicPermissions::allows(auth()->user(), 'prescriptions.edit') ? 'Continue' : 'View' }}
                                     </a>
                                 </td>
                             </tr>

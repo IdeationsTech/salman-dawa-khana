@@ -61,7 +61,7 @@
         'prescribed_at',
         $editing
             ? $prescription->prescribed_at->format('Y-m-d\TH:i')
-            : now('Asia/Dubai')->format('Y-m-d\TH:i')
+            : \App\Support\ClinicClock::now()->format('Y-m-d\TH:i')
     );
 @endphp
 

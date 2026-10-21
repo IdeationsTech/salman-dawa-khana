@@ -46,13 +46,13 @@
                     </a>
                 @endif
 
-                <a
+                @clinicCan('visits.edit')<a
                     href="{{ route('visits.edit', $visit) }}"
                     class="btn btn-outline-secondary"
                 >
                     <i class="bi bi-pencil" aria-hidden="true"></i>
                     Edit visit
-                </a>
+                </a>@endclinicCan
 
                 <button
                     type="button"

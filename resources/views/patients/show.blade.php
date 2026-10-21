@@ -19,7 +19,7 @@
     );
 
     $age = $patient->date_of_birth
-        ? (int) $patient->date_of_birth->diffInYears(now('Asia/Dubai'))
+        ? (int) $patient->date_of_birth->diffInYears(\App\Support\ClinicClock::now())
         : null;
 
     $status = strtolower((string) $patient->status);
@@ -133,13 +133,13 @@
             </div>
 
             <div class="patient-profile-actions no-print">
-                <a
+                @clinicCan('patients.edit')<a
                     href="{{ route('patients.edit', $patient) }}"
                     class="btn btn-outline-secondary"
                 >
                     <i class="bi bi-pencil-square" aria-hidden="true"></i>
                     Edit patient
-                </a>
+                </a>@endclinicCan
 
                 <a
                     href="{{ route('visits.create', [

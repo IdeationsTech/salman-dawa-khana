@@ -43,17 +43,17 @@
 
             <div class="d-flex flex-wrap gap-2">
                 @if (!$cancelled)
-                    <a href="{{ route('orders.edit', $order) }}" class="btn btn-outline-secondary">
+                    @clinicCan('orders.edit')<a href="{{ route('orders.edit', $order) }}" class="btn btn-outline-secondary">
                         <i class="bi bi-pencil" aria-hidden="true"></i>
                         Edit order
-                    </a>
+                    </a>@endclinicCan
                 @endif
 
                 @if ($canRefund)
-                    <a href="{{ route('orders.refunds.create', $order) }}" class="btn btn-outline-danger">
+                    @clinicCan('orders.refunds.create')<a href="{{ route('orders.refunds.create', $order) }}" class="btn btn-outline-danger">
                         <i class="bi bi-arrow-return-left" aria-hidden="true"></i>
                         Refund
-                    </a>
+                    </a>@endclinicCan
                 @endif
 
                 <button type="button" class="btn btn-primary" data-print-page>
@@ -169,6 +169,7 @@
 
                 <form method="POST" action="{{ route('orders.status.update', $order) }}">
                     @csrf
+            <input type="hidden" name="request_key" value="{{ old('request_key', (string) \Illuminate\Support\Str::uuid()) }}">
                     @method('PATCH')
                     <input type="hidden" name="status" value="confirmed">
                     <button type="submit" class="btn btn-primary">Restore order</button>
@@ -178,6 +179,7 @@
 
                 <form method="POST" action="{{ route('orders.status.update', $order) }}" class="orders-filter-actions">
                     @csrf
+            <input type="hidden" name="request_key" value="{{ old('request_key', (string) \Illuminate\Support\Str::uuid()) }}">
                     @method('PATCH')
                     <select name="status" class="form-select w-auto" required>
                         @foreach ($statuses as $status)
@@ -197,6 +199,7 @@
 
                 <form method="POST" action="{{ route('orders.payments.store', $order) }}">
                     @csrf
+            <input type="hidden" name="request_key" value="{{ old('request_key', (string) \Illuminate\Support\Str::uuid()) }}">
 
                     <div class="payment-form-grid">
                         <label class="form-field">
@@ -206,7 +209,7 @@
 
                         <label class="form-field">
                             <span class="form-label">Payment date/time *</span>
-                            <input type="datetime-local" name="paid_at" class="form-control" value="{{ old('paid_at', now('Asia/Dubai')->format('Y-m-d\TH:i')) }}" min="1000-01-01T00:00" max="9999-12-31T23:59" required>
+                            <input type="datetime-local" name="paid_at" class="form-control" value="{{ old('paid_at', \App\Support\ClinicClock::now()->format('Y-m-d\TH:i')) }}" min="1000-01-01T00:00" max="9999-12-31T23:59" required>
                         </label>
 
                         <label class="form-field">

@@ -9,6 +9,7 @@ use App\Models\PrescriptionNuskha;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Visit;
+use App\Support\ClinicClock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +35,7 @@ class PrescriptionController extends Controller
         ]);
 
         $clinicId = (int) Auth::user()->clinic_id;
-        $now = now('Asia/Dubai');
+        $now = ClinicClock::now();
 
         $query = Prescription::query()
             ->where('clinic_id', $clinicId)
@@ -82,17 +83,18 @@ class PrescriptionController extends Controller
         $range = $filters['date_range'] ?? 'all dates';
 
         if ($range === 'today') {
-            $query->whereDate('prescribed_at', $now->toDateString());
+            $query->where('prescribed_at', '>=', ClinicClock::stored($now->copy()->startOfDay()))
+                ->where('prescribed_at', '<', ClinicClock::stored($now->copy()->startOfDay()->addDay()));
         } elseif ($range === 'this week') {
             $query->whereBetween('prescribed_at', [
-                $now->copy()->startOfWeek(1)->format('Y-m-d H:i:s'),
+                $now->copy()->startOfWeek(1)->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'),
                 $now->copy()->startOfWeek(1)->addDays(6)->endOfDay()
-                    ->format('Y-m-d H:i:s'),
+                    ->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'),
             ]);
         } elseif ($range === 'this month') {
             $query->whereBetween('prescribed_at', [
-                $now->copy()->startOfMonth()->format('Y-m-d H:i:s'),
-                $now->copy()->endOfMonth()->format('Y-m-d H:i:s'),
+                $now->copy()->startOfMonth()->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'),
+                $now->copy()->endOfMonth()->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'),
             ]);
         }
 
@@ -108,13 +110,14 @@ class PrescriptionController extends Controller
 
         $monthlyPrescriptions = (clone $base)
             ->whereBetween('prescribed_at', [
-                $now->copy()->startOfMonth()->format('Y-m-d H:i:s'),
-                $now->copy()->endOfMonth()->format('Y-m-d H:i:s'),
+                $now->copy()->startOfMonth()->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'),
+                $now->copy()->endOfMonth()->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'),
             ])
             ->count();
 
         $todayPrescriptions = (clone $base)
-            ->whereDate('prescribed_at', $now->toDateString())
+            ->where('prescribed_at', '>=', ClinicClock::stored($now->copy()->startOfDay()))
+            ->where('prescribed_at', '<', ClinicClock::stored($now->copy()->startOfDay()->addDay()))
             ->count();
 
         $savedTemplates = NuskhaTemplate::query()

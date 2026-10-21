@@ -9,7 +9,10 @@ use App\Models\LedgerEntry;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Setting;
+use App\Services\ClinicNotificationService;
+use App\Support\ClinicClock;
 use App\Support\ClinicLocaleCatalog;
+use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,7 +81,7 @@ class PaymentController extends Controller
             );
         }
 
-        $today = Carbon::now('Asia/Dubai')->startOfDay();
+        $today = ClinicClock::now()->startOfDay();
         $tomorrow = $today->copy()->addDay();
         $monthStart = $today->copy()->startOfMonth();
         $nextMonth = $monthStart->copy()->addMonth();
@@ -96,8 +99,8 @@ class PaymentController extends Controller
                 ],
             };
 
-            $query->where('payment_date', '>=', $start->format('Y-m-d H:i:s'))
-                ->where('payment_date', '<', $end->format('Y-m-d H:i:s'));
+            $query->where('payment_date', '>=', $start->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'))
+                ->where('payment_date', '<', $end->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'));
         }
 
         $payments = $query->orderByDesc('payment_date')
@@ -144,23 +147,23 @@ class PaymentController extends Controller
 
             if ($start !== null && $end !== null) {
                 $patientQuery
-                    ->where('payment_date', '>=', $start->format('Y-m-d H:i:s'))
-                    ->where('payment_date', '<', $end->format('Y-m-d H:i:s'));
+                    ->where('payment_date', '>=', $start->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'))
+                    ->where('payment_date', '<', $end->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s'));
 
                 $orderQuery
                     ->where(
                         'order_payments.paid_at',
                         '>=',
-                        $start->format('Y-m-d H:i:s')
+                        $start->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s')
                     )
                     ->where(
                         'order_payments.paid_at',
                         '<',
-                        $end->format('Y-m-d H:i:s')
+                        $end->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s')
                     );
             }
 
-            $patientCents = \App\Support\Money::scaled(
+            $patientCents = Money::scaled(
                 $patientQuery->sum('amount')
             );
 
@@ -175,19 +178,19 @@ class PaymentController extends Controller
                 ), 0) AS refunded'
             )->first();
 
-            $orderCents = \App\Support\Money::scaled(
+            $orderCents = Money::scaled(
                 $orderRow->gross_received ?? '0'
             );
 
-            $refundCents = \App\Support\Money::scaled(
+            $refundCents = Money::scaled(
                 $orderRow->refunded ?? '0'
             );
 
             return [
-                'patient' => \App\Support\Money::decimal($patientCents),
-                'orders' => \App\Support\Money::decimal($orderCents),
-                'refunds' => \App\Support\Money::decimal($refundCents),
-                'net' => \App\Support\Money::decimal(
+                'patient' => Money::decimal($patientCents),
+                'orders' => Money::decimal($orderCents),
+                'refunds' => Money::decimal($refundCents),
+                'net' => Money::decimal(
                     $patientCents + $orderCents - $refundCents
                 ),
             ];
@@ -266,6 +269,13 @@ class PaymentController extends Controller
         ));
     }
 
+    public function patientBills(Patient $patient)
+    {
+        abort_unless((int) $patient->clinic_id === $this->clinicId(), 404);
+
+        return response()->json(['bills' => $this->billOptions(null, (int) $patient->patient_id)->values()->all()])->header('Cache-Control', 'no-store, private');
+    }
+
     public function create()
     {
         return view('payments.create', $this->formData());
@@ -292,7 +302,7 @@ class PaymentController extends Controller
                     'patient_id' => $data['patient_id'],
                     'visit_id' => null,
                     'created_by_user_id' => auth()->id(),
-                    'bill_no' => 'B-' . Str::ulid(),
+                    'bill_no' => 'B-'.Str::ulid(),
                     'bill_date' => $data['payment_date'],
                     'subtotal' => $this->decimal($subtotal),
                     'discount' => $this->decimal($discount),
@@ -321,7 +331,7 @@ class PaymentController extends Controller
                     'entry_type' => 'bill',
                     'debit' => $this->decimal($total),
                     'credit' => '0.00',
-                    'description' => 'Bill ' . $bill->bill_no,
+                    'description' => 'Bill '.$bill->bill_no,
                 ]);
             } else {
                 $bill = $this->lockBill(
@@ -332,7 +342,7 @@ class PaymentController extends Controller
 
             $billCurrency = strtoupper(trim((string) $bill->currency));
 
-            if (!ClinicLocaleCatalog::knownCurrency($billCurrency)) {
+            if (! ClinicLocaleCatalog::knownCurrency($billCurrency)) {
                 throw ValidationException::withMessages([
                     'bill_id' => 'This bill has no confirmed currency. Confirm its original currency before recording payment.',
                 ]);
@@ -357,7 +367,7 @@ class PaymentController extends Controller
             $this->refreshBill($bill);
 
             if ($payment) {
-                app(\App\Services\ClinicNotificationService::class)
+                app(ClinicNotificationService::class)
                     ->paymentReceived($payment);
             }
 
@@ -476,7 +486,7 @@ class PaymentController extends Controller
 
             $outstandingCents += $remaining;
 
-            if (!$bill || (int) $patientBill->bill_id !== (int) $bill->bill_id) {
+            if (! $bill || (int) $patientBill->bill_id !== (int) $bill->bill_id) {
                 $otherBillsCents += $remaining;
             }
         }
@@ -523,7 +533,7 @@ class PaymentController extends Controller
 
             $savedCurrency = strtoupper(trim((string) $locked->currency));
 
-            if (!ClinicLocaleCatalog::knownCurrency($savedCurrency)) {
+            if (! ClinicLocaleCatalog::knownCurrency($savedCurrency)) {
                 throw ValidationException::withMessages([
                     'amount' => 'This payment has no confirmed currency.',
                 ]);
@@ -624,7 +634,7 @@ class PaymentController extends Controller
             'amount' => [...$moneyRules, $newBill ? 'min:0' : 'min:0.01'],
             'method' => [
                 Rule::requiredIf($receiving),
-                Rule::excludeIf(!$receiving),
+                Rule::excludeIf(! $receiving),
                 'nullable',
                 Rule::in($this->enabledPaymentMethods()),
             ],
@@ -635,7 +645,7 @@ class PaymentController extends Controller
                 'nullable', 'string', 'max:80',
             ],
             'notes' => [
-                Rule::excludeIf(!$receiving), 'nullable', 'string', 'max:255',
+                Rule::excludeIf(! $receiving), 'nullable', 'string', 'max:255',
             ],
         ];
 
@@ -694,7 +704,7 @@ class PaymentController extends Controller
         }
 
         $data['amount'] = $this->decimal($this->cents($data['amount']));
-        $data['payment_date'] = str_replace('T', ' ', $data['payment_date']) . ':00';
+        $data['payment_date'] = str_replace('T', ' ', $data['payment_date']).':00';
 
         return $data;
     }
@@ -718,7 +728,7 @@ class PaymentController extends Controller
             ? strtoupper(trim((string) $payment->currency))
             : $clinicCurrency;
 
-        if ($payment && !ClinicLocaleCatalog::knownCurrency($currency)) {
+        if ($payment && ! ClinicLocaleCatalog::knownCurrency($currency)) {
             abort(422, 'This payment has no confirmed currency.');
         }
 
@@ -734,19 +744,21 @@ class PaymentController extends Controller
             'allowPartialPayments' => (string) $preferences->get('allow_partial_payments', '1') === '1',
             'enabledMethods' => $this->enabledPaymentMethods(),
             'patients' => Patient::where('clinic_id', $this->clinicId())
-                ->orderBy('full_name')
+                ->whereKey($payment?->patient_id ?? (filter_var(old('patient_id', request('patient_id')), FILTER_VALIDATE_INT) ?: 0))
                 ->get(['patient_id', 'patient_code', 'full_name', 'phone']),
             'billData' => $this->billOptions(
-                $payment ? (int) $payment->payment_id : null
+                $payment ? (int) $payment->payment_id : null,
+                $payment?->patient_id ?? (filter_var(old('patient_id', request('patient_id')), FILTER_VALIDATE_INT) ?: 0)
             )->values()->all(),
         ];
     }
 
-    private function billOptions(?int $excludePaymentId = null)
+    private function billOptions(?int $excludePaymentId = null, int $patientId = 0)
     {
         $clinicId = $this->clinicId();
 
         return Bill::where('clinic_id', $clinicId)
+            ->where('patient_id', $patientId)
             ->where(fn ($query) => $query->whereNull('status')
                 ->orWhereNotIn('status', ['cancelled', 'void']))
             ->withSum([
@@ -790,7 +802,7 @@ class PaymentController extends Controller
             ->where('patient_id', $patientId)
             ->whereKey($billId)->lockForUpdate()->first();
 
-        if (!$bill || in_array($bill->status, ['cancelled', 'void'], true)) {
+        if (! $bill || in_array($bill->status, ['cancelled', 'void'], true)) {
             throw ValidationException::withMessages([
                 'bill_id' => 'This bill is unavailable or cancelled.',
             ]);
@@ -816,7 +828,7 @@ class PaymentController extends Controller
         string $amount,
         ?int $excludePaymentId = null
     ): void {
-        if (!$bill) {
+        if (! $bill) {
             return;
         }
 
@@ -831,7 +843,7 @@ class PaymentController extends Controller
         if ($received > $available) {
             throw ValidationException::withMessages([
                 'amount' => 'Amount exceeds the remaining bill balance: '
-                    . $this->decimal($available) . '.',
+                    .$this->decimal($available).'.',
             ]);
         }
 
@@ -841,10 +853,10 @@ class PaymentController extends Controller
 
         $allowPartial = $partialSetting === null || (string) $partialSetting === '1';
 
-        if (!$allowPartial && $received > 0 && $received < $available) {
+        if (! $allowPartial && $received > 0 && $received < $available) {
             throw ValidationException::withMessages([
                 'amount' => 'Partial payments are disabled. Enter the full remaining balance: '
-                    . $this->decimal($available) . '.',
+                    .$this->decimal($available).'.',
             ]);
         }
     }
@@ -869,8 +881,7 @@ class PaymentController extends Controller
 
         if (
             $entries->count() > 1
-            || $entries->contains(fn ($entry) =>
-                $entry->entry_type !== 'payment' || $this->cents($entry->debit) !== 0)
+            || $entries->contains(fn ($entry) => $entry->entry_type !== 'payment' || $this->cents($entry->debit) !== 0)
         ) {
             throw ValidationException::withMessages([
                 'payment' => 'This payment has ledger entries that need review before editing or deleting.',
@@ -894,7 +905,7 @@ class PaymentController extends Controller
             'entry_type' => 'payment',
             'debit' => '0.00',
             'credit' => $payment->amount,
-            'description' => 'Payment PAY-' . $payment->payment_id,
+            'description' => 'Payment PAY-'.$payment->payment_id,
         ];
 
         if ($entries->isEmpty()) {
@@ -938,8 +949,8 @@ class PaymentController extends Controller
         $sign = $cents < 0 ? '-' : '';
         $cents = abs($cents);
 
-        return $sign . intdiv($cents, 100) . '.'
-            . str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
+        return $sign.intdiv($cents, 100).'.'
+            .str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
     }
 
     private function enabledPaymentMethods(): array

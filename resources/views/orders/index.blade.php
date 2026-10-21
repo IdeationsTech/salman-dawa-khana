@@ -13,10 +13,10 @@
                 <h1>Nuskha Orders</h1>
                 <p class="page-subtitle">Manage walk-in and phone orders.</p>
             </div>
-            <a href="{{ route('orders.create') }}" class="btn btn-primary">
+            @clinicCan('orders.create')<a href="{{ route('orders.create') }}" class="btn btn-primary">
                 <i class="bi bi-bag-plus" aria-hidden="true"></i>
                 New order
-            </a>
+            </a>@endclinicCan
         </header>
 
         @if (session('success'))
@@ -109,7 +109,7 @@
                                     <div class="d-flex justify-content-end gap-3">
                                         <a href="{{ route('orders.show', $order) }}" class="table-action">View</a>
                                         @if ($order->status !== 'cancelled')
-                                            <a href="{{ route('orders.edit', $order) }}" class="table-action">Edit</a>
+                                            @clinicCan('orders.edit')<a href="{{ route('orders.edit', $order) }}" class="table-action">Edit</a>@endclinicCan
                                         @else
                                             <a href="{{ route('orders.show', $order) }}#order-status-panel" class="table-action">Restore</a>
                                         @endif

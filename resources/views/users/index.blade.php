@@ -16,10 +16,10 @@
                 </p>
             </div>
 
-            <a href="{{ route('users.create') }}" class="btn btn-primary">
+            @clinicCan('users.create')<a href="{{ route('users.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i>
                 Add user
-            </a>
+            </a>@endclinicCan
         </header>
 
         @if (session('success'))

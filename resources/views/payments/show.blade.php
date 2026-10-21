@@ -82,13 +82,13 @@
 
             <div class="payment-toolbar-actions flex-wrap">
                 @if ($payment)
-                    <a
+                    @clinicCan('payments.edit')<a
                         href="{{ route('payments.edit', $payment) }}"
                         class="btn btn-outline-secondary"
                     >
                         <i class="bi bi-pencil-square app-icon" aria-hidden="true"></i>
                         Edit payment
-                    </a>
+                    </a>@endclinicCan
                 @endif
 
                 @if (

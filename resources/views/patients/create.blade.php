@@ -192,7 +192,7 @@
                             name="date_of_birth"
                             class="form-control"
                             value="{{ old('date_of_birth', $birthDate) }}"
-                            max="{{ now()->format('Y-m-d') }}"
+                            max="{{ \App\Support\ClinicClock::now()->format('Y-m-d') }}"
                             autocomplete="bday"
                         >
                     </div>

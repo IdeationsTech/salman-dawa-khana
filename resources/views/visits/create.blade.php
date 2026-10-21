@@ -5,7 +5,7 @@
 @section('content')
 @php
     $editing = isset($visit) && $visit->exists;
-    $currentTime = now('Asia/Dubai');
+    $currentTime = \App\Support\ClinicClock::now();
 
     $defaultDate = $editing
         ? $visit->visit_date->format('Y-m-d')
@@ -96,49 +96,7 @@
                 </div>
 
                 <div class="visit-form-grid">
-                    <div class="form-field">
-                        <label for="patient" class="form-label">Patient *</label>
-
-                        @if ($editing)
-                            <input
-                                type="hidden"
-                                name="patient_id"
-                                value="{{ $visit->patient_id }}"
-                            >
-                        @endif
-
-                        <select
-                            id="patient"
-                            name="{{ $editing ? 'patient_display' : 'patient_id' }}"
-                            class="form-select @error('patient_id') is-invalid @enderror"
-                            required
-                            @disabled($editing)
-                        >
-                            <option value="">Select patient</option>
-                            @foreach ($patients as $patient)
-                                <option
-                                    value="{{ $patient->patient_id }}"
-                                    @selected(
-                                        (string) ($editing ? $visit->patient_id : $selectedPatient)
-                                        === (string) $patient->patient_id
-                                    )
-                                >
-                                    {{ $patient->full_name }} — {{ $patient->patient_code }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        @error('patient_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-
-                        @if (!$editing)
-                            <small class="form-help">
-                                Patient not registered?
-                                <a href="{{ route('patients.create') }}">Add new patient</a>
-                            </small>
-                        @endif
-                    </div>
+                    <x-patient-search :patient="$patients->first()" :locked="$editing" />
 
                     <div class="form-field">
                         <label for="doctor_user_id" class="form-label">

@@ -21,10 +21,10 @@
                 </p>
             </div>
 
-            <a href="{{ route('expenses.create') }}" class="btn btn-primary">
+            @clinicCan('expenses.create')<a href="{{ route('expenses.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i>
                 Add expense
-            </a>
+            </a>@endclinicCan
         </header>
 
         @if (session('success'))
@@ -69,7 +69,7 @@
                     {{ $currency }}
                     {{ number_format($monthExpenses, $moneyDecimals) }}
                 </strong>
-                <small>{{ now('Asia/Dubai')->format('F Y') }}</small>
+                <small>{{ \App\Support\ClinicClock::now()->format('F Y') }}</small>
             </article>
 
             <article class="expense-summary-card">

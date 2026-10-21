@@ -72,7 +72,7 @@ class SettingController extends Controller
                 'required',
                 'string',
                 'max:16',
-                new InternationalPhone(),
+                new InternationalPhone,
             ],
 
             'clinic_address' => ['nullable', 'string', 'max:255'],
@@ -87,7 +87,8 @@ class SettingController extends Controller
             ],
 
             'remove_logo' => ['nullable', 'boolean'],
-            'settings' => ['nullable', 'array:print_location'],
+            'settings' => ['nullable', 'array:print_location,timezone'],
+            'settings.timezone' => ['sometimes', 'required', 'timezone'],
             'settings.print_location' => ['nullable', 'string', 'max:160'],
 
             'currency' => ['prohibited'],
@@ -100,20 +101,13 @@ class SettingController extends Controller
             'show_previous_due' => ['prohibited'],
             'allow_partial_payments' => ['prohibited'],
         ], [
-            'clinic_logo.prohibited_if' =>
-                'Choose either a new logo or Remove current logo.',
-            'clinic_logo.max' =>
-                'The clinic logo must not exceed 2 MB.',
-            'clinic_logo.dimensions' =>
-                'The clinic logo must not exceed 3000 × 3000 pixels.',
-            'settings.array' =>
-                'Only the print location can be changed through Clinic Profile.',
-            'currency.prohibited' =>
-                'Only the platform administrator can change clinic currency.',
-            'country_code.prohibited' =>
-                'Only the platform administrator can change clinic country.',
-            'patient_id_country.prohibited' =>
-                'Use the Patient identification form to change this preference.',
+            'clinic_logo.prohibited_if' => 'Choose either a new logo or Remove current logo.',
+            'clinic_logo.max' => 'The clinic logo must not exceed 2 MB.',
+            'clinic_logo.dimensions' => 'The clinic logo must not exceed 3000 × 3000 pixels.',
+            'settings.array' => 'Only print location and timezone can be changed through Clinic Profile.',
+            'currency.prohibited' => 'Only the platform administrator can change clinic currency.',
+            'country_code.prohibited' => 'Only the platform administrator can change clinic country.',
+            'patient_id_country.prohibited' => 'Use the Patient identification form to change this preference.',
         ]);
 
         $clinicId = (int) $request->user()->clinic_id;
@@ -125,7 +119,7 @@ class SettingController extends Controller
                 $newLogoPath = $request->file('clinic_logo')
                     ->store("clinics/{$clinicId}/logos", 'public');
 
-                if (!$newLogoPath) {
+                if (! $newLogoPath) {
                     throw ValidationException::withMessages([
                         'clinic_logo' => 'The clinic logo could not be uploaded.',
                     ]);
@@ -170,6 +164,10 @@ class SettingController extends Controller
                 }
 
                 $preferences = $validated['settings'] ?? [];
+                if (isset($preferences['timezone'])) {
+                    Setting::updateOrCreate(['clinic_id' => $clinicId, 'setting_key' => 'timezone'], ['setting_value' => $preferences['timezone']]);
+                    request()->attributes->remove('clinic.timezone.'.$clinicId);
+                }
 
                 if (array_key_exists('print_location', $preferences)) {
                     $location = trim((string) ($preferences['print_location'] ?? ''));

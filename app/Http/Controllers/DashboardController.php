@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Visit;
-use Carbon\Carbon;
+use App\Support\ClinicClock;
+use App\Support\Money;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -16,9 +17,9 @@ class DashboardController extends Controller
         $clinicId = (int) Auth::user()->clinic_id;
         $currency = strtoupper(Auth::user()->clinic->currency ?: 'AED');
 
-        $today = Carbon::now('Asia/Dubai')->startOfDay();
-        $dayFrom = $today->format('Y-m-d H:i:s');
-        $dayUntil = $today->copy()->addDay()->format('Y-m-d H:i:s');
+        $today = ClinicClock::now()->startOfDay();
+        $dayFrom = $today->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s');
+        $dayUntil = $today->copy()->addDay()->copy()->setTimezone(ClinicClock::STORAGE_ZONE)->format('Y-m-d H:i:s');
 
         /*
         |--------------------------------------------------------------------------
@@ -168,11 +169,11 @@ class DashboardController extends Controller
 
     private function toCents($amount): int
     {
-        return \App\Support\Money::scaled($amount, 2);
+        return Money::scaled($amount, 2);
     }
 
     private function decimal(int $cents): string
     {
-        return \App\Support\Money::decimal($cents, 2);
+        return Money::decimal($cents, 2);
     }
 }

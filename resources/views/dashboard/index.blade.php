@@ -39,7 +39,7 @@
         <header class="dashboard-topbar">
             <div>
                 <p class="dashboard-date">
-                    {{ now('Asia/Dubai')->format('l, d F Y') }}
+                    {{ \App\Support\ClinicClock::now()->format('l, d F Y') }}
                 </p>
 
                 <h1>Welcome, {{ $signedInUser->name }}</h1>
@@ -73,12 +73,12 @@
                     <h2>Clinic summary</h2>
                 </div>
 
-                <a
+                @clinicCan('patients.create')<a
                     href="{{ route('patients.create') }}"
                     class="btn btn-primary"
                 >
                     + Add Patient
-                </a>
+                </a>@endclinicCan
             </div>
 
             <div class="summary-grid">
@@ -225,7 +225,7 @@
                 </div>
 
                 <div class="quick-actions">
-                    <a
+                    @clinicCan('patients.create')<a
                         href="{{ route('patients.create') }}"
                         class="quick-action"
                     >
@@ -237,9 +237,9 @@
                         </span>
 
                         <span>›</span>
-                    </a>
+                    </a>@endclinicCan
 
-                    <a
+                    @clinicCan('visits.create')<a
                         href="{{ route('visits.create') }}"
                         class="quick-action"
                     >
@@ -251,9 +251,9 @@
                         </span>
 
                         <span>›</span>
-                    </a>
+                    </a>@endclinicCan
 
-                    <a
+                    @clinicCan('prescriptions.create')<a
                         href="{{ route('prescriptions.create') }}"
                         class="quick-action"
                     >
@@ -265,9 +265,9 @@
                         </span>
 
                         <span>›</span>
-                    </a>
+                    </a>@endclinicCan
 
-                    <a
+                    @clinicCan('payments.create')<a
                         href="{{ route('payments.create') }}"
                         class="quick-action"
                     >
@@ -279,7 +279,7 @@
                         </span>
 
                         <span>›</span>
-                    </a>
+                    </a>@endclinicCan
                 </div>
             </div>
 
