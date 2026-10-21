@@ -46,7 +46,7 @@
                 href="{{ route('prescriptions.templates.index') }}"
                 class="back-link"
             >
-                ← Back to templates
+                ← {{ __('Back to templates') }}
             </a>@endclinicCan
 
             <h1>
@@ -196,7 +196,7 @@
                     class="btn btn-outline-primary add-item-button"
                     data-add-item
                 >
-                    + Add another item
+                    + {{ __('Add another item') }}
                 </button>
 
                 <p class="form-help mt-2 mb-0">
