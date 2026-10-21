@@ -75,7 +75,7 @@
                     </div>
                     <div>
                         <h1>{{ $clinic->name }}</h1>
-                        @if ($clinic->phone)<p>{{ $clinic->phone }}</p>@endif
+                        @if ($clinic->phone)<p><bdi class="phone-number" dir="ltr">{{ $clinic->phone }}</bdi></p>@endif
                         @if ($clinic->address)<p>{{ $clinic->address }}</p>@endif
                     </div>
                 </div>
@@ -90,7 +90,7 @@
 
             <section class="r2-patient">
                 <div><span>{{ __('Customer name') }}</span><strong>{{ $order->customer_name }}</strong></div>
-                <div><span>{{ __('Customer phone') }}</span><strong>{{ $order->customer_phone }}</strong></div>
+                <div><span>{{ __('Customer phone') }}</span><strong><bdi class="phone-number" dir="ltr">{{ $order->customer_phone }}</bdi></strong></div>
                 <div>
                     <span>{{ __('Order source') }}</span>
                     <strong>{{ $order->order_source === 'phone' ? __('Phone order') : __('Walk-in') }}</strong>
