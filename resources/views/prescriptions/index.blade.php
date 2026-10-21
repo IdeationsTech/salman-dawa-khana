@@ -30,7 +30,7 @@
                     href="{{ route('prescriptions.create') }}"
                     class="btn btn-primary"
                 >
-                    + Create Prescription
+                    + {{ __('Create prescription') }}
                 </a>@endclinicCan
             </div>
         </header>
@@ -218,7 +218,7 @@
 
                                     @if ($prescription->patient?->phone)
                                         <small class="d-block">
-                                            {{ $prescription->patient->phone }}
+                                            <bdi class="phone-number" dir="ltr">&#x2066;{{ $prescription->patient->phone }}&#x2069;</bdi>
                                         </small>
                                     @endif
                                 </td>
