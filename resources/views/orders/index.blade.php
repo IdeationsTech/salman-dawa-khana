@@ -94,7 +94,7 @@
                                 <td><strong>{{ $order->order_no }}</strong></td>
                                 <td>
                                     <strong>{{ $order->customer_name }}</strong>
-                                    <small>{{ $order->customer_phone }}</small>
+                                    <small><bdi class="phone-number" dir="ltr">&#x2066;{{ $order->customer_phone }}&#x2069;</bdi></small>
                                 </td>
                                 <td>
                                     {{ $order->ordered_at->format('d M Y') }}
