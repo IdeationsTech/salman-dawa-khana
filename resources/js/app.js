@@ -2782,6 +2782,8 @@ function initializePrescriptionPatientSearch() {
             name.textContent = patient.name;
             const detail = document.createElement('small');
             detail.textContent = `${patient.code || ''}${patient.phone ? ' · ' + patient.phone : ''}`;
+            detail.dir = 'ltr';
+            detail.style.unicodeBidi = 'isolate';
             button.append(name, detail);
             results.appendChild(button);
         });
