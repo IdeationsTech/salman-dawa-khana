@@ -125,7 +125,7 @@
                             · {{ $age }} {{ __('years') }}
                         @endif
                         @if ($patient->phone)
-                            · <bdi class="phone-number" dir="ltr">{{ $patient->phone }}</bdi>
+                            · <bdi class="phone-number" dir="ltr">&#x2066;{{ $patient->phone }}&#x2069;</bdi>
                         @endif
                     </p>
                 </div>
@@ -186,7 +186,7 @@
 
                         <div>
                             <span class="detail-label">{{ __('Phone number') }}</span>
-                            <strong><bdi class="phone-number" dir="ltr">{{ $patient->phone ?: __('Not recorded') }}</bdi></strong>
+                            <strong><bdi class="phone-number" dir="ltr">&#x2066;{{ $patient->phone ?: __('Not recorded') }}&#x2069;</bdi></strong>
                         </div>
 
                         <div>
