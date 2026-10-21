@@ -254,6 +254,10 @@ table.table:not(.table-dark) > tbody > tr {
     transition: background-color 0.16s ease;
 }
 
+table.table:not(.table-dark) > tbody > tr:nth-of-type(even) > * {
+    --bs-table-bg-type: var(--bs-table-striped-bg);
+}
+
 table.table:not(.table-dark) > tfoot > tr > * {
     --bs-table-bg: #e8f2fc;
     color: var(--brand-navy);
