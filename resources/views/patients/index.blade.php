@@ -188,7 +188,7 @@
                                             {{ __('Active') }}
                                         </span>
                                     @else
-                                        <span class="status-badge due-badge">
+                                        <span class="status-badge inactive-badge">
                                             {{ __('Inactive') }}
                                         </span>
                                     @endif
