@@ -181,6 +181,10 @@
                                         'pa-badge',
                                         'pa-badge-attention' =>
                                             $clinic->onboarding_status === 'pending_review',
+                                        'pa-badge-success' =>
+                                            $clinic->onboarding_status === 'approved',
+                                        'pa-badge-danger' =>
+                                            $clinic->onboarding_status === 'rejected',
                                     ])>
                                         {{ \Illuminate\Support\Str::headline($clinic->onboarding_status) }}
                                     </span>
