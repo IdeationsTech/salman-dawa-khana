@@ -188,7 +188,7 @@
                                     @if ($user->is_active)
                                         <span class="status-badge active-badge">{{ __('Active') }}</span>
                                     @else
-                                        <span class="status-badge due-badge">{{ __('Inactive') }}</span>
+                                        <span class="status-badge inactive-badge">{{ __('Inactive') }}</span>
                                     @endif
                                 </td>
 
