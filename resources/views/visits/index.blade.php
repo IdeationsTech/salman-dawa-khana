@@ -248,7 +248,7 @@
                                             {{ __('Completed') }}
                                         </span>
                                     @elseif ($visit->status === 'follow_up_required')
-                                        <span class="status-badge due-badge">
+                                        <span class="status-badge pending-badge">
                                             {{ __('Follow-up required') }}
                                         </span>
                                     @elseif ($visit->status)
