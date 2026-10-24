@@ -107,8 +107,8 @@
         sidebar.classList.toggle('is-expanded', expanded);
         toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
 
-        if (!expanded && document.activeElement === toggle) {
-            toggle.blur();
+        if (!expanded && sidebar.contains(document.activeElement)) {
+            document.activeElement.blur();
         }
     };
 
