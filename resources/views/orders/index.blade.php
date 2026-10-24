@@ -86,6 +86,13 @@
                         @forelse ($orders as $order)
                             @php
                                 $paid = (float) ($order->payments_sum_amount ?? 0);
+                                $statusBadgeClass = match ($order->status) {
+                                    'confirmed', 'ready', 'completed', 'paid' => 'active-badge',
+                                    'cancelled', 'canceled', 'refunded', 'void' => 'inactive-badge',
+                                    'preparing', 'pending', 'partial' => 'pending-badge',
+                                    'unpaid' => 'status-neutral-badge',
+                                    default => 'status-neutral-badge',
+                                };
                                 $due = $order->status === 'cancelled'
                                     ? 0
                                     : max(0, (float) $order->total_amount - $paid);
@@ -104,7 +111,7 @@
                                 <td>{{ $order->currency }} {{ number_format($order->total_amount, $decimalPlaces) }}</td>
                                 <td>{{ $order->currency }} {{ number_format($paid, $decimalPlaces) }}</td>
                                 <td>{{ $order->currency }} {{ number_format($due, $decimalPlaces) }}</td>
-                                <td><span class="status-badge">{{ ucfirst($order->status) }}</span></td>
+                                <td><span class="status-badge {{ $statusBadgeClass }}">{{ ucfirst($order->status) }}</span></td>
                                 <td class="text-end text-nowrap">
                                     <div class="d-flex justify-content-end gap-3">
                                         <a href="{{ route('orders.show', $order) }}" class="table-action">{{ __('View') }}</a>
