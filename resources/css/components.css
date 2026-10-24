@@ -343,3 +343,107 @@ form .form-select:not(:focus) {
         transition: none;
     }
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| Top language selector
+|--------------------------------------------------------------------------
+*/
+
+.language-switcher {
+    position: relative;
+    display: inline-flex;
+    margin: 0;
+}
+
+.language-switcher-trigger {
+    display: inline-grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--brand-navy);
+    box-shadow: var(--shadow-sm);
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.language-switcher-trigger:hover,
+.language-switcher-trigger:focus-visible,
+.language-switcher.is-open .language-switcher-trigger {
+    border-color: var(--brand-teal);
+    background: #eaf8f7;
+    color: var(--brand-teal-dark);
+}
+
+.language-switcher-trigger:focus-visible {
+    outline: 3px solid rgba(8, 182, 178, 0.28);
+    outline-offset: 2px;
+}
+
+.language-switcher-options {
+    position: absolute;
+    z-index: 1090;
+    inset-block-start: 100%;
+    inset-inline-end: 0;
+    display: none;
+    min-width: 148px;
+    padding: 7px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+}
+
+.language-switcher-options::before {
+    position: absolute;
+    inset-block-start: -8px;
+    inset-inline: 0;
+    height: 8px;
+    content: "";
+}
+
+.language-switcher:hover .language-switcher-options,
+.language-switcher:focus-within .language-switcher-options,
+.language-switcher.is-open .language-switcher-options {
+    display: grid;
+    gap: 3px;
+}
+
+.language-switcher-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-main);
+    text-align: start;
+    cursor: pointer;
+}
+
+.language-switcher-option:hover,
+.language-switcher-option:focus-visible,
+.language-switcher-option.is-current {
+    background: #eaf8f7;
+    color: var(--brand-teal-dark);
+}
+
+.language-switcher-option:focus-visible {
+    outline: 2px solid var(--brand-teal);
+    outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .language-switcher-trigger {
+        transition: none;
+    }
+}
