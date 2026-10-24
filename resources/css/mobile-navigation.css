@@ -1,13 +1,11 @@
-/* Shared clinic navigation: desktop sidebar and mobile overlay drawer. */
+/* Shared clinic navigation: desktop sidebar and compact mobile icon rail. */
 .clinic-mobile-bar,
-.clinic-sidebar-close {
+.clinic-sidebar-close,
+.clinic-sidebar-expand {
     display: none;
 }
 
-.app-sidebar.offcanvas-lg {
-    --bs-offcanvas-width: min(290px, 86vw);
-    --bs-offcanvas-bg: var(--brand-navy);
-    --bs-offcanvas-color: #fff;
+.app-sidebar {
     background-color: var(--brand-navy) !important;
 }
 
@@ -35,84 +33,193 @@
 }
 
 @media screen and (max-width: 991.98px) {
-    .clinic-sidebar-heading > .language-switcher {
-        display: none;
+    .clinic-mobile-bar {
+        display: none !important;
     }
 
     .app-shell {
-        display: block;
-    }
-
-    .clinic-mobile-bar {
-        position: sticky;
-        top: 0;
-        z-index: 1020;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-height: 60px;
-        padding: 8px 16px;
-        border-bottom: 1px solid var(--border);
-        background: var(--surface);
-        color: var(--brand-navy);
-        font-weight: 600;
-    }
-
-    .clinic-mobile-bar > span {
-        min-width: 0;
-        overflow-wrap: anywhere;
-    }
-
-    .clinic-menu-toggle {
         display: grid;
-        flex: 0 0 44px;
-        width: 44px;
-        height: 44px;
-        place-items: center;
-        border: 1px solid var(--border);
-        border-radius: 9px;
-        background: transparent;
-        color: var(--brand-navy);
-        font-size: 27px;
+        grid-template-columns: 64px minmax(0, 1fr);
+        align-items: start;
     }
 
-    .clinic-sidebar-close {
-        display: block;
-        flex-shrink: 0;
-        margin: 6px 0 0;
-        padding: 10px;
-    }
-
-    .app-sidebar.offcanvas-lg {
+    .app-sidebar {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 1030;
+        display: flex;
+        flex-direction: column;
+        width: 64px;
         height: 100vh;
         height: 100dvh;
-        min-height: 0;
-        padding: 24px 14px max(18px, env(safe-area-inset-bottom));
-    }
-
-    .clinic-sidebar-body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 12px 7px max(14px, env(safe-area-inset-bottom));
+        overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior: contain;
+        transition: width 180ms ease, box-shadow 180ms ease;
+    }
+
+    .app-sidebar:hover,
+    .app-sidebar.is-expanded,
+    .app-sidebar:focus-within {
+        position: fixed;
+        inset-block: 0;
+        inset-inline-start: 0;
+        width: min(270px, calc(100vw - 32px));
+        height: 100vh;
+        height: 100dvh;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 14px 14px max(18px, env(safe-area-inset-bottom));
+        overflow-y: auto;
+        box-shadow: 0 12px 35px rgb(3 18 32 / 34%);
+    }
+
+    .clinic-sidebar-expand {
+        display: grid;
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        margin: 0 auto 12px;
+        place-items: center;
+        border: 1px solid rgb(255 255 255 / 18%);
+        border-radius: 10px;
+        background: rgb(255 255 255 / 7%);
+        color: #ffffff;
+        font-size: 18px;
+    }
+
+    .clinic-sidebar-expand:hover,
+    .clinic-sidebar-expand:focus-visible {
+        background: #078f8c;
+        color: #ffffff;
+    }
+
+    .app-sidebar .clinic-sidebar-heading {
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .app-sidebar .sidebar-brand {
+        justify-content: center;
+        gap: 0;
+        padding: 0 0 8px;
+    }
+
+    .app-sidebar .sidebar-brand > span {
+        display: none;
+    }
+
+    .app-sidebar .clinic-sidebar-heading > .language-switcher {
+        display: block;
     }
 
     .app-sidebar .sidebar-nav {
         flex-direction: column;
-        overflow-x: visible;
+        gap: 5px;
+        overflow: visible;
+    }
+
+    .app-sidebar .sidebar-link {
+        justify-content: center;
+        gap: 0;
+        min-height: 44px;
+        padding: 9px 0;
+    }
+
+    .app-sidebar .sidebar-link > span:first-child {
+        width: auto;
+        font-size: 20px;
+    }
+
+    .app-sidebar .sidebar-link > span:nth-child(2),
+    .app-sidebar .sidebar-signout > span {
+        display: none;
+    }
+
+    .app-sidebar .sidebar-divider {
+        display: block;
+        margin: 12px 4px;
     }
 
     .app-sidebar .sidebar-footer {
         display: flex;
         margin-top: auto;
-        padding-top: 24px;
+        padding: 16px 0 0;
     }
 
-    .app-sidebar .sidebar-divider {
+    .app-sidebar .sidebar-footer form {
+        width: 100%;
+    }
+
+    .app-sidebar .sidebar-signout {
+        justify-content: center;
+        width: 44px;
+        min-height: 44px;
+        margin: 0 auto;
+        padding: 8px 0;
+    }
+
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .clinic-sidebar-heading {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .sidebar-brand {
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 0 0 18px;
+    }
+
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .sidebar-brand > span,
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .sidebar-link > span:nth-child(2),
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .sidebar-signout > span {
         display: block;
+    }
+
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .sidebar-link {
+        justify-content: flex-start;
+        gap: 12px;
+        padding: 10px 12px;
+    }
+
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .sidebar-link > span:first-child {
+        width: 20px;
+    }
+
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .sidebar-footer {
+        padding: 18px 10px 0;
+    }
+
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .sidebar-signout {
+        justify-content: center;
+        width: 100%;
+        margin: 0;
+        padding: 10px 14px;
+    }
+
+    .app-sidebar:is(:hover, .is-expanded, :focus-within) .clinic-sidebar-expand {
+        display: none;
+    }
+
+    .app-sidebar .clinic-sidebar-heading > .language-switcher {
+        position: relative;
+        z-index: 2;
+    }
+
+    .dashboard-main {
+        min-width: 0;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .app-sidebar.offcanvas-lg {
+    .app-sidebar {
         transition: none;
     }
 }
