@@ -767,3 +767,65 @@ img {
     background: #76232d;
     color: #ffffff;
 }
+
+
+/* Sidebar link motion, active state and colorful navigation icons. */
+.app-sidebar .sidebar-link {
+    border-inline-start: 3px solid transparent;
+    transition:
+        transform 0.18s ease,
+        background-color 0.18s ease,
+        color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+@media (hover: hover) {
+    .app-sidebar .sidebar-link:hover {
+        transform: translateX(4px);
+        background: #123d54;
+        color: #ffffff;
+    }
+
+    html[dir="rtl"] .app-sidebar .sidebar-link:hover {
+        transform: translateX(-4px);
+    }
+}
+
+.app-sidebar .sidebar-link:focus-visible {
+    outline: 2px solid #54d5c4;
+    outline-offset: 2px;
+}
+
+.app-sidebar .sidebar-link.active {
+    border-inline-start-color: #52d2b5;
+    background: #174d3d;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.app-sidebar .sidebar-link.active .app-icon {
+    color: #ffffff;
+}
+
+.app-sidebar .sidebar-link[href$="/dashboard"] .app-icon { color: #65d8c5; }
+.app-sidebar .sidebar-link[href$="/patients"] .app-icon { color: #75c9ff; }
+.app-sidebar .sidebar-link[href$="/visits"] .app-icon { color: #ffd166; }
+.app-sidebar .sidebar-link[href*="/prescriptions"] .app-icon { color: #ff9b85; }
+.app-sidebar .sidebar-link[href$="/orders"] .app-icon { color: #a994ff; }
+.app-sidebar .sidebar-link[href$="/payments"] .app-icon { color: #61dfa1; }
+.app-sidebar .sidebar-link[href$="/expenses"] .app-icon { color: #ffad66; }
+.app-sidebar .sidebar-link[href$="/reports"] .app-icon { color: #82adff; }
+.app-sidebar .sidebar-link[href$="/notifications"] .app-icon { color: #ff91b0; }
+.app-sidebar .sidebar-link[href$="/users"] .app-icon { color: #9cdb67; }
+.app-sidebar .sidebar-link[href$="/activity-history"] .app-icon { color: #b5a3ff; }
+.app-sidebar .sidebar-link[href$="/settings"] .app-icon { color: #70d1dc; }
+
+@media (prefers-reduced-motion: reduce) {
+    .app-sidebar .sidebar-link {
+        transition: none;
+    }
+
+    .app-sidebar .sidebar-link:hover {
+        transform: none;
+    }
+}
