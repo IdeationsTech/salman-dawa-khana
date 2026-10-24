@@ -1,0 +1,43 @@
+name: Build frontend assets
+
+on:
+  push:
+    branches:
+      - feature/frontend-ui
+    paths-ignore:
+      - "public/build/**"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out deployment branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/frontend-ui
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build production assets
+        run: npm run build
+
+      - name: Commit compiled assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f public/build
+          if ! git diff --cached --quiet; then
+            git commit -m "Build production frontend assets"
+            git push origin HEAD:feature/frontend-ui
+          fi
