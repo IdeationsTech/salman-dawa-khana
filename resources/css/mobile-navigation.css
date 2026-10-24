@@ -35,6 +35,10 @@
 }
 
 @media screen and (max-width: 991.98px) {
+    .clinic-sidebar-heading > .language-switcher {
+        display: none;
+    }
+
     .app-shell {
         display: block;
     }
