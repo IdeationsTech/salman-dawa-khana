@@ -5,6 +5,7 @@ import 'intl-tel-input/styles';
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeMobileSidebar();
+    initializeLanguageSwitcher();
     initPasswordToggles();
     initAlerts();
     initPrintButtons();
@@ -2913,4 +2914,44 @@ function initializeMobileSidebar() {
     sidebar.addEventListener('submit', () => { if (mobile.matches) close(); });
     mobile.addEventListener('change', () => { if (!mobile.matches) close(); });
     window.addEventListener('pageshow', () => { if (mobile.matches) close(); });
+}
+
+
+function initializeLanguageSwitcher() {
+    document.querySelectorAll('[data-language-switcher]').forEach((menu) => {
+        const trigger = menu.querySelector('[data-language-trigger]');
+        if (!trigger || menu.dataset.initialized === '1') return;
+        menu.dataset.initialized = '1';
+
+        const setOpen = (open) => {
+            menu.classList.toggle('is-open', open);
+            trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        };
+
+        trigger.addEventListener('click', (event) => {
+            event.stopPropagation();
+            setOpen(!menu.classList.contains('is-open'));
+        });
+
+        menu.addEventListener('mouseenter', () => setOpen(true));
+        menu.addEventListener('mouseleave', () => {
+            if (!menu.contains(document.activeElement)) setOpen(false);
+        });
+
+        menu.addEventListener('focusin', () => setOpen(true));
+        menu.addEventListener('focusout', (event) => {
+            if (!menu.contains(event.relatedTarget)) setOpen(false);
+        });
+
+        menu.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                setOpen(false);
+                trigger.focus();
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!menu.contains(event.target)) setOpen(false);
+        });
+    });
 }
