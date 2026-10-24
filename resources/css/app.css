@@ -601,3 +601,156 @@ img {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
+
+/* Dashboard and app-wide icon/status treatment — preserve sidebar icon styling. */
+
+.app-icon:not(.app-sidebar .app-icon) {
+    font-size: calc(1em + 2px);
+}
+
+.bi:not(.app-icon):not(.app-sidebar .bi) {
+    font-size: calc(1em + 2px);
+}
+
+.summary-icon {
+    font-size: 24px;
+}
+
+.quick-action-icon,
+.template-icon,
+.create-template-icon,
+.expense-detail-icon,
+.account-role-icon,
+.security-icon,
+.session-device-icon,
+.clinic-alert-icon,
+.report-card-icon,
+.activity-icon,
+.role-info-icon,
+.pa-stat-icon {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.teal-icon,
+.blue-icon,
+.orange-icon,
+.purple-icon,
+.quick-action-icon,
+.template-icon,
+.create-template-icon,
+.expense-detail-icon,
+.account-role-icon,
+.security-icon,
+.session-device-icon,
+.clinic-alert-icon,
+.report-card-icon,
+.activity-icon,
+.role-info-icon {
+    background-color: transparent !important;
+}
+
+.template-icon { font-size: 24px !important; }
+.create-template-icon { font-size: 29px !important; }
+.expense-detail-icon { font-size: 25px !important; }
+.security-icon { font-size: 23px !important; }
+.session-device-icon { font-size: 20px !important; }
+.clinic-alert-icon { font-size: 22px !important; }
+.report-card-icon { font-size: 22px !important; }
+.activity-icon { font-size: 18px !important; }
+.role-info-icon { font-size: 15px !important; }
+
+.pa-app .pa-button .pa-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.pa-app .pa-stat-icon {
+    background: transparent !important;
+    border-color: transparent !important;
+}
+
+.pa-app .pa-stat-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* Dark, high-contrast state badges. */
+.status-badge {
+    min-height: 26px;
+    padding: 5px 10px;
+    border: 1px solid transparent;
+    color: #ffffff !important;
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.2;
+}
+
+.active-badge,
+.paid-badge,
+.completed-badge,
+.ready-badge,
+.confirmed-badge,
+.bg-success-subtle.text-success {
+    border-color: #236447 !important;
+    background-color: #174a35 !important;
+    color: #ffffff !important;
+}
+
+.inactive-badge,
+.cancelled-badge,
+.expired-badge,
+.rejected-badge,
+.void-badge,
+.due-badge,
+.bg-danger-subtle.text-danger {
+    border-color: #8f3039 !important;
+    background-color: #76232d !important;
+    color: #ffffff !important;
+}
+
+.pending-badge,
+.preparing-badge,
+.follow-up-badge,
+.partial-badge,
+.expiring-badge,
+.bg-warning-subtle.text-warning {
+    border-color: #80591b !important;
+    background-color: #67450f !important;
+    color: #ffffff !important;
+}
+
+.draft-badge,
+.issued-badge,
+.status-neutral-badge,
+.bg-secondary-subtle.text-secondary {
+    border-color: #47596a !important;
+    background-color: #354657 !important;
+    color: #ffffff !important;
+}
+
+.badge.bg-success-subtle,
+.badge.bg-danger-subtle,
+.badge.bg-warning-subtle,
+.badge.bg-secondary-subtle {
+    color: #ffffff !important;
+}
+
+.pa-app .pa-badge {
+    border-color: #47596a;
+    background: #354657;
+    color: #ffffff;
+}
+
+.pa-app .pa-badge-attention {
+    border-color: #80591b;
+    background: #67450f;
+    color: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-icon:not(.app-sidebar .app-icon),
+    .bi:not(.app-icon):not(.app-sidebar .bi) {
+        transition: none;
+    }
+}
