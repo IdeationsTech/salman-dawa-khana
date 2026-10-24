@@ -182,7 +182,12 @@
                                     {{ \Illuminate\Support\Carbon::parse($payment->paid_at)->format('d M Y') }}
                                 </td>
                                 <td>
-                                    <span class="pa-badge">
+                                    <span @class([
+                                        'pa-badge',
+                                        'pa-badge-success' => in_array($payment->status, ['verified', 'paid', 'completed', 'succeeded'], true),
+                                        'pa-badge-danger' => in_array($payment->status, ['rejected', 'failed', 'cancelled', 'canceled'], true),
+                                        'pa-badge-attention' => in_array($payment->status, ['pending', 'processing', 'review'], true),
+                                    ])>
                                         {{ \Illuminate\Support\Str::headline($payment->status) }}
                                     </span>
                                 </td>
