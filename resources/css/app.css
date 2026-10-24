@@ -829,3 +829,28 @@ img {
         transform: none;
     }
 }
+
+.app-sidebar .sidebar-link.active {
+    border-inline-start-color: #08b6b2;
+    background: #078f8c;
+    color: #fff;
+}
+
+.app-sidebar .sidebar-link.active .app-icon {
+    color: #fff;
+}
+
+.active-badge,
+.paid-badge,
+.completed-badge,
+.ready-badge,
+.confirmed-badge,
+.bg-success-subtle.text-success {
+    border-color: #08b6b2 !important;
+    background-color: #078f8c !important;
+    color: #fff !important;
+}
+
+.quick-action-icon {
+    font-size: 29px !important;
+}
