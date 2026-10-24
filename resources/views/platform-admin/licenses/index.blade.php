@@ -239,12 +239,20 @@
                                 <td>
                                     <span @class([
                                         'pa-badge',
-                                        'pa-badge-attention' =>
+                                        'pa-badge-success' =>
                                             in_array(
                                                 $license->display_status,
-                                                ['expired', 'suspended'],
+                                                ['active', 'trial', 'lifetime'],
                                                 true
                                             ),
+                                        'pa-badge-danger' =>
+                                            in_array(
+                                                $license->display_status,
+                                                ['expired', 'suspended', 'revoked'],
+                                                true
+                                            ),
+                                        'pa-badge-attention' =>
+                                            $license->display_status === 'expiring',
                                     ])>
                                         {{ \Illuminate\Support\Str::headline($license->display_status) }}
                                     </span>
