@@ -754,3 +754,16 @@ img {
         transition: none;
     }
 }
+
+
+.pa-app .pa-badge-success {
+    border-color: #236447;
+    background: #174a35;
+    color: #ffffff;
+}
+
+.pa-app .pa-badge-danger {
+    border-color: #8f3039;
+    background: #76232d;
+    color: #ffffff;
+}
