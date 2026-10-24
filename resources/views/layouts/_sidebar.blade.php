@@ -43,6 +43,7 @@
         </div>
         <span id="clinic-sidebar-title">{{ $sidebarClinic->name }}</span>
     </div>
+        <x-language-switcher />
         <button type="button" class="btn-close btn-close-white clinic-sidebar-close" data-bs-dismiss="offcanvas" data-bs-target="#clinic-sidebar" aria-label="{{ __('Close navigation') }}"></button>
     </div>
     <div class="clinic-sidebar-body">
@@ -77,7 +78,6 @@
     </nav>
 
     <div class="sidebar-footer">
-        <x-language-switcher />
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="sidebar-signout">
