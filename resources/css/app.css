@@ -1316,7 +1316,8 @@ html[dir="rtl"] textarea {
     .app-sidebar .sidebar-brand .bi,
     .app-sidebar .sidebar-link .bi.app-icon,
     .app-sidebar .sidebar-signout > .bi,
-    .dashboard-main .bi.app-icon {
+    .dashboard-main .summary-icon > .bi.app-icon,
+    .dashboard-main .quick-action-icon > .bi.app-icon {
         display: none !important;
     }
 
