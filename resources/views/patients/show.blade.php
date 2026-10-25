@@ -113,7 +113,7 @@
                 <strong>{{ __('Patient summary') }}</strong>
                 <span>{{ auth()->user()->clinic->name }}</span>
             </div>
-            <small>{{ __('Printed on') }} {{ \\App\\Support\\ClinicClock::now()->format('d M Y, h:i A') }}</small>
+            <small>{{ __('Printed on') }} {{ \App\Support\ClinicClock::now()->format('d M Y, h:i A') }}</small>
         </div>
 
         <section class="patient-profile-header">
