@@ -961,3 +961,253 @@ html[dir="rtl"] .form-select,
 html[dir="rtl"] textarea {
     font-size: 0.96em;
 }
+
+
+/*
+|-------------------------------------------------------------------------- 
+| Shared mobile layout refinements across clinic pages
+|-------------------------------------------------------------------------- 
+*/
+@media (max-width: 767.98px) {
+    .app-shell .dashboard-main {
+        min-width: 0;
+        max-width: 100%;
+        padding: 16px 12px max(18px, env(safe-area-inset-bottom));
+    }
+
+    .app-shell .dashboard-main > *,
+    .app-shell .dashboard-main .page-header,
+    .app-shell .dashboard-main .form-page-header,
+    .app-shell .dashboard-main .section-heading,
+    .app-shell .dashboard-main .patients-toolbar,
+    .app-shell .dashboard-main .visits-toolbar,
+    .app-shell .dashboard-main .prescriptions-toolbar,
+    .app-shell .dashboard-main .payments-toolbar,
+    .app-shell .dashboard-main .expenses-toolbar,
+    .app-shell .dashboard-main .users-toolbar,
+    .app-shell .dashboard-main .report-filter-panel,
+    .app-shell .dashboard-main .patient-form-panel,
+    .app-shell .dashboard-main .visit-form-panel,
+    .app-shell .dashboard-main .template-form-panel,
+    .app-shell .dashboard-main .payment-form-panel,
+    .app-shell .dashboard-main .expense-form-panel,
+    .app-shell .dashboard-main .user-form-panel,
+    .app-shell .dashboard-main .patients-panel,
+    .app-shell .dashboard-main .visits-panel,
+    .app-shell .dashboard-main .prescriptions-panel,
+    .app-shell .dashboard-main .payments-panel,
+    .app-shell .dashboard-main .expenses-panel,
+    .app-shell .dashboard-main .users-panel,
+    .app-shell .dashboard-main .report-panel,
+    .app-shell .dashboard-main .dashboard-panel {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patient-stats-grid,
+        .visit-summary-grid,
+        .prescription-summary-grid,
+        .payment-summary-grid,
+        .expense-summary-grid,
+        .users-summary-grid,
+        .report-summary-grid,
+        .summary-grid
+    ) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patient-stat-card,
+        .visit-summary-card,
+        .prescription-summary-card,
+        .payment-summary-card,
+        .expense-summary-card,
+        .user-summary-card,
+        .report-summary-card,
+        .summary-card
+    ) {
+        min-width: 0;
+        padding: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patient-stat-card strong,
+        .visit-summary-card strong,
+        .prescription-summary-card strong,
+        .payment-summary-card strong,
+        .expense-summary-card strong,
+        .user-summary-card strong,
+        .report-summary-card strong,
+        .summary-card h3
+    ) {
+        font-size: clamp(16px, 5vw, 20px);
+        overflow-wrap: anywhere;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patients-panel,
+        .visits-panel,
+        .prescriptions-panel,
+        .payments-panel,
+        .expenses-panel,
+        .users-panel,
+        .dashboard-panel,
+        .report-panel,
+        .patient-form-panel,
+        .visit-form-panel,
+        .template-form-panel,
+        .payment-form-panel,
+        .expense-form-panel,
+        .user-form-panel
+    ) {
+        padding: 14px;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patient-filters,
+        .orders-filter-grid,
+        .report-filter-grid,
+        .report-filter-panel,
+        .patients-toolbar-actions,
+        .visits-toolbar-actions,
+        .prescriptions-toolbar-actions,
+        .payments-toolbar-actions,
+        .expenses-toolbar-actions,
+        .users-toolbar-actions
+    ) {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patient-filters,
+        .orders-filter-grid,
+        .report-filter-grid
+    ) > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .app-shell .dashboard-main .table-responsive {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patient-form-grid,
+        .visit-form-grid,
+        .template-form-grid,
+        .payment-form-grid,
+        .expense-form-grid,
+        .user-form-grid,
+        .settings-form-grid
+    ) > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patient-form-actions,
+        .visit-form-actions,
+        .template-form-actions,
+        .payment-form-actions,
+        .expense-form-actions,
+        .user-form-actions,
+        .prescription-toolbar-actions,
+        .payment-toolbar-actions,
+        .expense-toolbar-actions
+    ) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patient-form-actions .btn,
+        .visit-form-actions .btn,
+        .template-form-actions .btn,
+        .payment-form-actions .btn,
+        .expense-form-actions .btn,
+        .user-form-actions .btn
+    ) {
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .pa-app {
+        min-width: 0;
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    .pa-app .pa-content,
+    .pa-app .pa-main,
+    .pa-app .pa-page {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .pa-app .pa-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .pa-app .pa-stat,
+    .pa-app .pa-panel {
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .pa-app .pa-panel {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 479.98px) {
+    .app-shell .dashboard-main :is(
+        .patients-toolbar,
+        .visits-toolbar,
+        .prescriptions-toolbar,
+        .payments-toolbar,
+        .expenses-toolbar,
+        .users-toolbar
+    ) {
+        gap: 10px;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patients-toolbar-actions,
+        .visits-toolbar-actions,
+        .prescriptions-toolbar-actions,
+        .payments-toolbar-actions,
+        .expenses-toolbar-actions,
+        .users-toolbar-actions
+    ) {
+        flex-wrap: wrap;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patients-toolbar-actions .form-select,
+        .visits-toolbar-actions .form-select,
+        .prescriptions-toolbar-actions .form-select,
+        .payments-toolbar-actions .form-select,
+        .expenses-toolbar-actions .form-select,
+        .users-toolbar-actions .form-select
+    ) {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patients-pagination,
+        .pagination
+    ) {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+}
