@@ -1316,6 +1316,8 @@ html[dir="rtl"] textarea {
     .app-sidebar .sidebar-brand .bi,
     .app-sidebar .sidebar-link .bi.app-icon,
     .app-sidebar .sidebar-signout > .bi,
+    .app-sidebar .language-switcher-trigger > .bi,
+    .app-sidebar .language-switcher-option > .bi,
     .dashboard-main .summary-icon > .bi.app-icon,
     .dashboard-main .quick-action-icon > .bi.app-icon {
         display: none !important;
@@ -1342,6 +1344,18 @@ html[dir="rtl"] textarea {
         width: 20px;
         height: 20px;
         flex-basis: 20px;
+    }
+
+    .app-sidebar .language-switcher-trigger > .language-mobile-icon {
+        width: 18px;
+        height: 18px;
+        flex-basis: 18px;
+    }
+
+    .app-sidebar .language-switcher-option > .language-check-mobile-icon {
+        width: 16px;
+        height: 16px;
+        flex-basis: 16px;
     }
 
     .dashboard-main .summary-icon > .mobile-bootstrap-icon {
