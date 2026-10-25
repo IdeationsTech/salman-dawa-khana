@@ -1312,6 +1312,15 @@ html[dir="rtl"] textarea {
 }
 
 @media (max-width: 991.98px) {
+    .language-switcher-trigger > .bi,
+    .language-switcher-option > .bi {
+        display: none !important;
+    }
+
+    .language-switcher .mobile-bootstrap-icon {
+        display: inline-block;
+    }
+
     .app-sidebar .clinic-sidebar-expand > .bi,
     .app-sidebar .sidebar-brand .bi,
     .app-sidebar .sidebar-link .bi.app-icon,
