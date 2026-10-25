@@ -854,3 +854,110 @@ img {
 .quick-action-icon {
     font-size: 29px !important;
 }
+
+/*
+|-------------------------------------------------------------------------- 
+| Mobile dashboard cards, scrolling and compact Urdu typography
+|-------------------------------------------------------------------------- 
+*/
+@media (max-width: 767.98px) {
+    body:has(.app-shell .dashboard-section) {
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    .app-shell:has(.dashboard-section) {
+        height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+        align-items: stretch;
+    }
+
+    .dashboard-main:has(.dashboard-section) {
+        height: 100dvh;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        padding: 16px 12px max(18px, env(safe-area-inset-bottom));
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dashboard-main:has(.dashboard-section) .section-heading {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .dashboard-main:has(.dashboard-section) .section-heading > div {
+        min-width: 0;
+    }
+
+    .dashboard-main:has(.dashboard-section) .section-heading h2 {
+        font-size: 16px;
+    }
+
+    .dashboard-main:has(.dashboard-section) .section-heading .btn {
+        flex: 0 0 auto;
+        min-height: 34px;
+        padding: 6px 9px;
+        font-size: 12px;
+    }
+
+    .dashboard-main:has(.dashboard-section) .summary-grid,
+    .app-shell:has(.prescription-summary-grid) .prescription-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .dashboard-main:has(.dashboard-section) .summary-card {
+        min-width: 0;
+        gap: 8px;
+        padding: 12px 10px;
+    }
+
+    .dashboard-main:has(.dashboard-section) .summary-icon {
+        flex-basis: 32px;
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+    }
+
+    .dashboard-main:has(.dashboard-section) .summary-card p {
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .dashboard-main:has(.dashboard-section) .summary-card h3 {
+        font-size: 16px;
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-main:has(.dashboard-section) .summary-positive,
+    .dashboard-main:has(.dashboard-section) .summary-warning {
+        font-size: 10px;
+        line-height: 1.4;
+    }
+
+    .app-shell:has(.prescription-summary-grid) .prescription-summary-card {
+        min-width: 0;
+        padding: 12px;
+    }
+
+    .app-shell:has(.prescription-summary-grid) .prescription-summary-card strong {
+        font-size: 19px;
+    }
+}
+
+html[dir="rtl"] body {
+    font-size: 14px;
+    line-height: 1.85;
+}
+
+html[dir="rtl"] .form-label,
+html[dir="rtl"] .form-control,
+html[dir="rtl"] .form-select,
+html[dir="rtl"] textarea {
+    font-size: 0.96em;
+}
