@@ -36,7 +36,7 @@ function initializeMobileBootstrapIcons() {
 
     if (!compactViewport.matches) return;
 
-    document.querySelectorAll('.app-shell .dashboard-main i.bi').forEach((icon) => {
+    document.querySelectorAll('.app-shell .dashboard-main i.bi, .pa-app i.bi').forEach((icon) => {
         // Sidebar and dashboard icons already have an official SVG sibling.
         if (icon.nextElementSibling?.classList.contains('mobile-bootstrap-icon')) {
             return;
