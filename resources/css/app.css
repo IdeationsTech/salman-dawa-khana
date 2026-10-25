@@ -1356,3 +1356,17 @@ html[dir="rtl"] textarea {
         flex-basis: 26px;
     }
 }
+
+
+/* Inline official Bootstrap paths for icon-font uses across mobile pages. */
+.mobile-page-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    flex: 0 0 auto;
+    fill: currentColor;
+    line-height: 1;
+    vertical-align: -0.125em;
+}
