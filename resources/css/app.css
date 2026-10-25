@@ -1211,3 +1211,43 @@ html[dir="rtl"] textarea {
         gap: 4px;
     }
 }
+
+
+/* Sidebar icons use inline SVG so they render even when icon fonts fail. */
+.sidebar-vector-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.55;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vertical-align: middle;
+}
+
+.sidebar-expand-icon {
+    width: 18px;
+    height: 18px;
+    flex-basis: 18px;
+}
+
+.app-sidebar .sidebar-logo .sidebar-vector-icon {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+}
+
+.app-sidebar .sidebar-link > span:first-child .sidebar-vector-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+}
+
+.app-sidebar:is(:hover, .is-expanded, :focus-within) .sidebar-link > span:first-child .sidebar-vector-icon {
+    width: 20px;
+    height: 20px;
+}
