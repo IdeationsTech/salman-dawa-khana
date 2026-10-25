@@ -1,10 +1,12 @@
 import 'bootstrap';
 import { Offcanvas } from 'bootstrap';
 import intlTelInput from 'intl-tel-input';
+import bootstrapIconPaths from './generated-bootstrap-icons.js';
 import 'intl-tel-input/styles';
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeMobileSidebar();
+    initializeMobileBootstrapIcons();
     initializeLanguageSwitcher();
     initPasswordToggles();
     initAlerts();
@@ -28,6 +30,50 @@ document.addEventListener('DOMContentLoaded', () => {
 | Global
 |--------------------------------------------------------------------------
 */
+
+function initializeMobileBootstrapIcons() {
+    const compactViewport = window.matchMedia('(max-width: 991.98px)');
+
+    if (!compactViewport.matches) return;
+
+    document.querySelectorAll('.app-shell .dashboard-main i.bi').forEach((icon) => {
+        // Sidebar and dashboard icons already have an official SVG sibling.
+        if (icon.nextElementSibling?.classList.contains('mobile-bootstrap-icon')) {
+            return;
+        }
+
+        const name = [...icon.classList].find((className) =>
+            className.startsWith('bi-')
+        )?.slice(3);
+        const definition = name ? bootstrapIconPaths[name] : null;
+
+        if (!definition) return;
+
+        const svg = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'svg'
+        );
+        const retainedClasses = [...icon.classList].filter((className) =>
+            className !== 'bi' && !className.startsWith('bi-')
+        );
+
+        svg.setAttribute(
+            'class',
+            [...retainedClasses, 'mobile-page-icon'].join(' ')
+        );
+        svg.setAttribute('viewBox', definition.viewBox);
+        svg.setAttribute('fill', 'currentColor');
+        svg.setAttribute('aria-hidden', icon.getAttribute('aria-hidden') || 'true');
+        svg.setAttribute('focusable', 'false');
+
+        if (icon.hasAttribute('title')) {
+            svg.setAttribute('title', icon.getAttribute('title'));
+        }
+
+        svg.innerHTML = definition.markup;
+        icon.replaceWith(svg);
+    });
+}
 
 function initPasswordToggles() {
     document
