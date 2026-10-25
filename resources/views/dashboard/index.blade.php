@@ -84,7 +84,7 @@
             <div class="summary-grid">
 
                 <article class="summary-card">
-                    <div class="summary-icon teal-icon"><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></div>
+                    <div class="summary-icon teal-icon"><svg class="app-icon sidebar-vector-icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#sidebar-icon-person-vcard"></use></svg></div>
 
                     <div>
                         <p>{{ __('Total Patients') }}</p>
@@ -100,7 +100,7 @@
                 </article>
 
                 <article class="summary-card">
-                    <div class="summary-icon blue-icon"><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></div>
+                    <div class="summary-icon blue-icon"><svg class="app-icon sidebar-vector-icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#sidebar-icon-calendar-check"></use></svg></div>
 
                     <div>
                         <p>{{ __('Today\'s Visits') }}</p>
@@ -116,7 +116,7 @@
                 </article>
 
                 <article class="summary-card">
-                    <div class="summary-icon orange-icon"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></div>
+                    <div class="summary-icon orange-icon"><svg class="app-icon sidebar-vector-icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#sidebar-icon-cash-coin"></use></svg></div>
 
                     <div>
                         <p>{{ __('Today\'s Income') }}</p>
@@ -229,7 +229,7 @@
                         href="{{ route('patients.create') }}"
                         class="quick-action"
                     >
-                        <span class="quick-action-icon"><i class="bi bi-person-vcard app-icon" aria-hidden="true"></i></span>
+                        <span class="quick-action-icon"><svg class="app-icon sidebar-vector-icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#sidebar-icon-person-vcard"></use></svg></span>
 
                         <span>
                             <strong>{{ __('Add patient') }}</strong>
@@ -243,7 +243,7 @@
                         href="{{ route('visits.create') }}"
                         class="quick-action"
                     >
-                        <span class="quick-action-icon"><i class="bi bi-calendar-check app-icon" aria-hidden="true"></i></span>
+                        <span class="quick-action-icon"><svg class="app-icon sidebar-vector-icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#sidebar-icon-calendar-check"></use></svg></span>
 
                         <span>
                             <strong>{{ __('Create visit') }}</strong>
@@ -257,7 +257,7 @@
                         href="{{ route('prescriptions.create') }}"
                         class="quick-action"
                     >
-                        <span class="quick-action-icon"><i class="bi bi-prescription app-icon" aria-hidden="true"></i></span>
+                        <span class="quick-action-icon"><svg class="app-icon sidebar-vector-icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#sidebar-icon-prescription"></use></svg></span>
 
                         <span>
                             <strong>{{ __('Create prescription') }}</strong>
@@ -271,7 +271,7 @@
                         href="{{ route('payments.create') }}"
                         class="quick-action"
                     >
-                        <span class="quick-action-icon"><i class="bi bi-cash-coin app-icon" aria-hidden="true"></i></span>
+                        <span class="quick-action-icon"><svg class="app-icon sidebar-vector-icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#sidebar-icon-cash-coin"></use></svg></span>
 
                         <span>
                             <strong>{{ __('Record payment') }}</strong>
