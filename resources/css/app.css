@@ -1299,3 +1299,59 @@ html[dir="rtl"] textarea {
     font-style: normal !important;
     font-weight: 400 !important;
 }
+
+
+/* Match Bootstrap icon shapes on mobile without depending on icon-font rendering. */
+.mobile-bootstrap-icon {
+    display: none;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    fill: currentColor;
+    vertical-align: middle;
+}
+
+@media (max-width: 991.98px) {
+    .app-sidebar .clinic-sidebar-expand > .bi,
+    .app-sidebar .sidebar-brand .bi,
+    .app-sidebar .sidebar-link .bi.app-icon,
+    .app-sidebar .sidebar-signout > .bi,
+    .dashboard-main .bi.app-icon {
+        display: none !important;
+    }
+
+    .app-sidebar .mobile-bootstrap-icon,
+    .dashboard-main .mobile-bootstrap-icon {
+        display: block;
+    }
+
+    .app-sidebar .clinic-sidebar-expand > .mobile-bootstrap-icon {
+        width: 18px;
+        height: 18px;
+        flex-basis: 18px;
+    }
+
+    .app-sidebar .sidebar-logo > .mobile-bootstrap-icon {
+        width: 22px;
+        height: 22px;
+        flex-basis: 22px;
+    }
+
+    .app-sidebar .sidebar-link > span:first-child > .mobile-bootstrap-icon {
+        width: 20px;
+        height: 20px;
+        flex-basis: 20px;
+    }
+
+    .dashboard-main .summary-icon > .mobile-bootstrap-icon {
+        width: 22px;
+        height: 22px;
+        flex-basis: 22px;
+    }
+
+    .dashboard-main .quick-action-icon > .mobile-bootstrap-icon {
+        width: 26px;
+        height: 26px;
+        flex-basis: 26px;
+    }
+}
