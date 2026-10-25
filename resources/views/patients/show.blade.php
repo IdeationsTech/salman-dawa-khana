@@ -247,7 +247,7 @@
                     </div>
                 @endif
 
-                <div class="patient-detail-panel" id="patient-visits">
+                <div class="patient-detail-panel" id="patient-visits" data-print-empty="{{ $recentVisits->isEmpty() ? 'true' : 'false' }}">
                     <div class="profile-panel-heading">
                         <div>
                             <h2>{{ __('Visit history') }}</h2>
@@ -295,7 +295,7 @@
                     </div>
                 </div>
 
-                <div class="patient-detail-panel" id="patient-prescriptions">
+                <div class="patient-detail-panel" id="patient-prescriptions" data-print-empty="{{ $recentPrescriptions->isEmpty() ? 'true' : 'false' }}">
                     <div class="profile-panel-heading">
                         <div>
                             <h2>{{ __('Prescriptions') }}</h2>
