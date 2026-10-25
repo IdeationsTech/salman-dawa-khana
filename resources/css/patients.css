@@ -1058,3 +1058,22 @@
         -webkit-print-color-adjust: exact;
     }
 }
+
+
+@media print {
+    .large-patient-avatar {
+        border: 1px solid #9bd8d1;
+        background: #e7f8f5 !important;
+        color: #078f8c !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .patient-profile-header .status-badge {
+        border: 1px solid #b8ddc8;
+        background: #edf8f1 !important;
+        color: #236447 !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+}
