@@ -1762,8 +1762,18 @@ function initializeInternationalPhoneInputs() {
 let phoneFlagObserverInitialized = false;
 
 function initializePhoneFlags() {
-    const addFlagEmoji = () => {
-        document.querySelectorAll('.iti__flag:not(.iti__globe)').forEach((flag) => {
+    const addFlagEmoji = (root = document) => {
+        const flags = [];
+
+        if (root instanceof Element && root.matches('.iti__flag:not(.iti__globe)')) {
+            flags.push(root);
+        }
+
+        root.querySelectorAll?.('.iti__flag:not(.iti__globe)').forEach((flag) => {
+            flags.push(flag);
+        });
+
+        flags.forEach((flag) => {
             const countryClass = [...flag.classList].find((className) =>
                 /^iti__[a-z]{2}$/.test(className)
             );
@@ -1783,14 +1793,30 @@ function initializePhoneFlags() {
                 flag.append(emoji);
             }
 
-            emoji.textContent = flagEmoji;
+            if (emoji.textContent !== flagEmoji) {
+                emoji.textContent = flagEmoji;
+            }
+
             flag.classList.add('iti-phone-emoji-flag');
         });
     };
 
     if (!phoneFlagObserverInitialized && document.body) {
         phoneFlagObserverInitialized = true;
-        const observer = new MutationObserver(addFlagEmoji);
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (!(node instanceof Element)) return;
+
+                    if (
+                        node.matches('.iti__flag:not(.iti__globe)') ||
+                        node.querySelector('.iti__flag:not(.iti__globe)')
+                    ) {
+                        addFlagEmoji(node);
+                    }
+                });
+            });
+        });
         observer.observe(document.body, {
             childList: true,
             subtree: true,
