@@ -1644,6 +1644,8 @@ function initializeInternationalPhoneInputs() {
             loadUtils: () => import('intl-tel-input/utils'),
         });
 
+        initializeMobilePhoneFlags(wrapper);
+
         if (!formFields.has(form)) {
             formFields.set(form, []);
         }
@@ -1755,6 +1757,47 @@ function initializeInternationalPhoneInputs() {
             }
         }, true);
     });
+}
+
+function initializeMobilePhoneFlags(wrapper) {
+    if (!window.matchMedia('(max-width: 991.98px)').matches) {
+        return;
+    }
+
+    const addFlagEmoji = () => {
+        wrapper.querySelectorAll('.iti__flag:not(.iti__globe)').forEach((flag) => {
+            const countryClass = [...flag.classList].find((className) =>
+                /^iti__[a-z]{2}$/.test(className)
+            );
+
+            if (!countryClass) return;
+
+            const countryCode = countryClass.slice(5).toUpperCase();
+            const flagEmoji = [...countryCode]
+                .map((letter) => String.fromCodePoint(127397 + letter.charCodeAt(0)))
+                .join('');
+            let emoji = flag.querySelector('.iti-mobile-flag-emoji');
+
+            if (!emoji) {
+                emoji = document.createElement('span');
+                emoji.className = 'iti-mobile-flag-emoji';
+                emoji.setAttribute('aria-hidden', 'true');
+                flag.append(emoji);
+            }
+
+            emoji.textContent = flagEmoji;
+            flag.classList.add('iti-mobile-flag');
+        });
+    };
+
+    const observer = new MutationObserver(addFlagEmoji);
+    observer.observe(wrapper, {
+        attributes: true,
+        attributeFilter: ['class'],
+        childList: true,
+        subtree: true,
+    });
+    addFlagEmoji();
 }
 
 if (document.readyState === 'loading') {
@@ -2978,15 +3021,16 @@ function initializeLanguageSwitcher() {
             setOpen(!menu.classList.contains('is-open'));
         });
 
-        menu.addEventListener('mouseenter', () => setOpen(true));
-        menu.addEventListener('mouseleave', () => {
-            if (!menu.contains(document.activeElement)) setOpen(false);
-        });
+        const hoverCapable = window.matchMedia(
+            '(hover: hover) and (pointer: fine)'
+        ).matches;
 
-        menu.addEventListener('focusin', () => setOpen(true));
-        menu.addEventListener('focusout', (event) => {
-            if (!menu.contains(event.relatedTarget)) setOpen(false);
-        });
+        if (hoverCapable) {
+            menu.addEventListener('mouseenter', () => setOpen(true));
+            menu.addEventListener('mouseleave', () => {
+                if (!menu.contains(document.activeElement)) setOpen(false);
+            });
+        }
 
         menu.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
