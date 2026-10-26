@@ -1505,3 +1505,46 @@ html[dir="rtl"] textarea {
 .security-backup-command-list p:last-child {
     margin-bottom: 0;
 }
+
+
+/* Mobile button labels: keep every action on one line across clinic pages. */
+@media (max-width: 767.98px) {
+    .app-shell .dashboard-main .btn,
+    .pa-app .pa-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        max-width: 100%;
+        padding: 0.45rem 0.58rem;
+        font-size: clamp(10px, 2.8vw, 12px);
+        line-height: 1.2;
+        white-space: nowrap !important;
+        word-break: normal;
+        overflow-wrap: normal;
+    }
+
+    .app-shell .dashboard-main .btn > .bi,
+    .app-shell .dashboard-main .btn > .mobile-page-icon,
+    .pa-app .pa-button > svg {
+        flex: 0 0 auto;
+    }
+
+    .app-shell .dashboard-main :is(
+        .patient-form-actions,
+        .visit-form-actions,
+        .template-form-actions,
+        .payment-form-actions,
+        .expense-form-actions,
+        .user-form-actions,
+        .settings-panel-actions,
+        .clinic-alert-actions,
+        .order-form-actions,
+        .prescription-form-actions
+    ) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+}
