@@ -1797,7 +1797,9 @@ function initializePhoneFlags() {
                 emoji.textContent = flagEmoji;
             }
 
-            flag.classList.add('iti-phone-emoji-flag');
+            if (!flag.classList.contains('iti-phone-emoji-flag')) {
+                flag.classList.add('iti-phone-emoji-flag');
+            }
         });
     };
 
