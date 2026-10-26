@@ -6,6 +6,7 @@
 
 @import "bootstrap/dist/css/bootstrap.min.css";
 @import "bootstrap-icons/font/bootstrap-icons.css";
+@import "intl-tel-input/styles";
 
 /*
 |--------------------------------------------------------------------------
@@ -1392,4 +1393,91 @@ html[dir="rtl"] textarea {
     fill: currentColor;
     line-height: 1;
     vertical-align: -0.125em;
+}
+
+
+/* International phone fields: keep country picker and number input compact on mobile. */
+.international-phone-field,
+.international-phone-field .iti {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.international-phone-field .iti input.iti__tel-input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 44px;
+    padding-inline-start: 88px;
+    direction: ltr;
+    text-align: left;
+}
+
+.international-phone-field .iti__country-container {
+    max-width: 84px;
+}
+
+.international-phone-field .iti__selected-country-primary {
+    gap: 4px;
+    padding-inline: 8px;
+}
+
+.international-phone-field .iti__flag,
+.international-phone-field .iti__globe {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 15px;
+}
+
+.international-phone-field .iti__globe .iti__globe-svg {
+    width: 18px;
+    height: 18px;
+}
+
+.international-phone-field .iti__dropdown-content {
+    z-index: 1050;
+    max-width: min(360px, calc(100vw - 28px));
+}
+
+.international-phone-field > small {
+    display: block;
+    margin-top: 5px;
+}
+
+@media (max-width: 767.98px) {
+    .international-phone-field .iti input.iti__tel-input {
+        padding-inline-start: 82px;
+    }
+
+    .template-form-actions .btn,
+    .prescription-form-actions .btn,
+    .template-card-actions .btn {
+        min-width: max-content;
+        white-space: nowrap;
+    }
+
+    .template-form-actions,
+    .prescription-form-actions {
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .template-form-actions .btn,
+    .prescription-form-actions .btn {
+        padding-inline: 12px;
+        font-size: 12px;
+    }
+
+    .settings-panel code {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .settings-panel p {
+        overflow-wrap: anywhere;
+    }
 }
