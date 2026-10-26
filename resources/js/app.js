@@ -1805,6 +1805,15 @@ function initializePhoneFlags() {
         phoneFlagObserverInitialized = true;
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
+                if (
+                    mutation.type === 'attributes' &&
+                    mutation.target instanceof Element &&
+                    mutation.target.matches('.iti__flag:not(.iti__globe)')
+                ) {
+                    addFlagEmoji(mutation.target);
+                    return;
+                }
+
                 mutation.addedNodes.forEach((node) => {
                     if (!(node instanceof Element)) return;
 
@@ -1818,6 +1827,8 @@ function initializePhoneFlags() {
             });
         });
         observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class'],
             childList: true,
             subtree: true,
         });
