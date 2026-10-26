@@ -8,9 +8,11 @@
 @php
     $inputId = $id ?? str_replace(['[', ']'], ['_', ''], $name);
     $currentValue = old($name, $value);
+    $clinicCountry = auth()->user()?->clinic?->country_code;
+    $phoneCountry = strtolower(substr((string) ($defaultCountry ?: $clinicCountry ?: 'AE'), 0, 2));
 @endphp
 
-<div class="international-phone-field" data-phone-field>
+<div class="international-phone-field" data-phone-field data-default-country="{{ $phoneCountry }}">
     {{-- Visible number input; the complete number is submitted below. --}}
     <input
         type="tel"
