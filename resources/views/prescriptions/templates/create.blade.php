@@ -247,6 +247,7 @@
                         class="btn btn-outline-primary"
                         data-print-nuskha
                     >
+                        <i class="bi bi-printer app-icon" aria-hidden="true"></i>
                         {{ __('Print for Pansar') }}
                     </button>
                 @endif
