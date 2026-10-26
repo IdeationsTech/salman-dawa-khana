@@ -1644,7 +1644,7 @@ function initializeInternationalPhoneInputs() {
             loadUtils: () => import('intl-tel-input/utils'),
         });
 
-        initializeMobilePhoneFlags(wrapper);
+        initializePhoneFlags();
 
         if (!formFields.has(form)) {
             formFields.set(form, []);
@@ -1759,13 +1759,11 @@ function initializeInternationalPhoneInputs() {
     });
 }
 
-function initializeMobilePhoneFlags(wrapper) {
-    if (!window.matchMedia('(max-width: 991.98px)').matches) {
-        return;
-    }
+let phoneFlagObserverInitialized = false;
 
+function initializePhoneFlags() {
     const addFlagEmoji = () => {
-        wrapper.querySelectorAll('.iti__flag:not(.iti__globe)').forEach((flag) => {
+        document.querySelectorAll('.iti__flag:not(.iti__globe)').forEach((flag) => {
             const countryClass = [...flag.classList].find((className) =>
                 /^iti__[a-z]{2}$/.test(className)
             );
@@ -1776,27 +1774,29 @@ function initializeMobilePhoneFlags(wrapper) {
             const flagEmoji = [...countryCode]
                 .map((letter) => String.fromCodePoint(127397 + letter.charCodeAt(0)))
                 .join('');
-            let emoji = flag.querySelector('.iti-mobile-flag-emoji');
+            let emoji = flag.querySelector('.iti-phone-flag-emoji');
 
             if (!emoji) {
                 emoji = document.createElement('span');
-                emoji.className = 'iti-mobile-flag-emoji';
+                emoji.className = 'iti-phone-flag-emoji';
                 emoji.setAttribute('aria-hidden', 'true');
                 flag.append(emoji);
             }
 
             emoji.textContent = flagEmoji;
-            flag.classList.add('iti-mobile-flag');
+            flag.classList.add('iti-phone-emoji-flag');
         });
     };
 
-    const observer = new MutationObserver(addFlagEmoji);
-    observer.observe(wrapper, {
-        attributes: true,
-        attributeFilter: ['class'],
-        childList: true,
-        subtree: true,
-    });
+    if (!phoneFlagObserverInitialized && document.body) {
+        phoneFlagObserverInitialized = true;
+        const observer = new MutationObserver(addFlagEmoji);
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+        });
+    }
+
     addFlagEmoji();
 }
 
