@@ -514,3 +514,96 @@
     width: 100%;
     text-align: left;
 }
+
+/* PRESCRIPTION DETAILS — compact nuskha table */
+.clh-prescription-area {
+    min-height: 0;
+}
+
+.clh-nuskha {
+    flex: 1 1 auto;
+    width: 100%;
+}
+
+.clh-nuskha-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    color: #254252;
+    font: 11px/1.45 Arial, sans-serif;
+}
+
+.clh-nuskha-table th,
+.clh-nuskha-table td {
+    padding: 8px 7px;
+    border: 1px solid #dce9ed;
+    text-align: start;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.clh-nuskha-table thead th {
+    background: #f2f9f7;
+    color: #52717e;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+}
+
+.clh-nuskha-table th:first-child,
+.clh-nuskha-table td:first-child {
+    width: 32%;
+}
+
+.clh-nuskha-table th:nth-child(2),
+.clh-nuskha-table td:nth-child(2) {
+    width: 18%;
+}
+
+.clh-nuskha-table th:nth-child(3),
+.clh-nuskha-table td:nth-child(3) {
+    width: 50%;
+}
+
+.clh-nuskha-table td:first-child strong {
+    color: #174866;
+    font-weight: 600;
+}
+
+.clh-nuskha-table .clh-nuskha-quantity {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.clh-nuskha-directions span {
+    display: inline;
+}
+
+.clh-nuskha-directions span + span::before {
+    content: " · ";
+    color: #8aa0a8;
+    white-space: pre;
+}
+
+@media screen and (max-width: 540px) {
+    .clh-nuskha-table {
+        font-size: 9px;
+    }
+
+    .clh-nuskha-table th,
+    .clh-nuskha-table td {
+        padding: 6px 5px;
+    }
+}
+
+@media print {
+    .clh-nuskha-table {
+        font-size: 9.5px;
+    }
+
+    .clh-nuskha-table tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
