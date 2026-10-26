@@ -221,8 +221,15 @@
             <section class="settings-panel mt-4">
                 <h2>{{ __('Encrypted backups') }}</h2>
                 <p>{{ __('Server backups include the database and uploaded clinic files. The daily schedule keeps 30 days of backups.') }}</p>
-                <p>{{ __('Server operator: run') }} <code>php artisan clinic:backup</code> {{ __('to create a backup. Run') }} <code>php artisan clinic:restore /absolute/path/to/file.backup</code> {{ __('to verify one without changing data.') }}</p>
-                <p>{{ __('Enable the Laravel scheduler on your server with') }} <code>php artisan schedule:run</code> every minute. Keep a secure copy of backups and the original APP_KEY outside the server.</p>
+                <details class="security-backup-commands">
+                    <summary>{{ __('Show backup and scheduler commands') }}</summary>
+                    <div class="security-backup-command-list">
+                        <p>{{ __('Create an encrypted backup:') }} <code>php artisan clinic:backup</code></p>
+                        <p>{{ __('Verify a backup without restoring it:') }} <code>php artisan clinic:restore /absolute/path/to/file.backup</code></p>
+                        <p>{{ __('Run the Laravel scheduler every minute:') }} <code>php artisan schedule:run</code></p>
+                    </div>
+                </details>
+                <p>{{ __('Keep a secure copy of backups and the original APP_KEY outside the server.') }}</p>
             </section>
         @endif
     </main>
