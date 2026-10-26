@@ -2,7 +2,6 @@ import 'bootstrap';
 import { Offcanvas } from 'bootstrap';
 import intlTelInput from 'intl-tel-input';
 import bootstrapIconPaths from './generated-bootstrap-icons.js';
-import 'intl-tel-input/styles';
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeMobileSidebar();
