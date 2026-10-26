@@ -82,32 +82,57 @@
                 <div class="clh-nuskha">
                     <h3 class="clh-section-title">{{ __('Prescribed nuskhay') }}</h3>
 
-                    @forelse ($prescription->nuskhas as $nuskha)
-                        <div class="rx-patient-nuskha">
-                            <h3 class="clh-nuskha-name">
-                                {{ $loop->iteration }}. {{ $nuskha->nuskha_name }}
-                            </h3>
-                            <p class="rx-patient-quantity">
-                                {{ __('Total quantity:') }}
-                                <strong>{{ rtrim(rtrim((string) $nuskha->quantity, '0'), '.') }} {{ $nuskha->unit }}</strong>
-                            </p>
-                            @if ($nuskha->frequency || $nuskha->duration || $nuskha->timing)
-                                <p class="rx-patient-directions">
-                                    @if ($nuskha->frequency)<span>{{ __('Frequency') }}: {{ $nuskha->frequency }}</span>@endif
-                                    @if ($nuskha->duration)<span>{{ __('Duration') }}: {{ $nuskha->duration }}</span>@endif
-                                    @if ($nuskha->timing)<span>{{ __('Timing') }}: {{ $nuskha->timing }}</span>@endif
-                                </p>
-                            @endif
-                            @if ($nuskha->instructions)
-                                <p class="rx-patient-directions">{{ $nuskha->instructions }}</p>
-                            @endif
-                        </div>
-                    @empty
-                        {{-- Legacy ingredient rows must never appear in a patient copy. --}}
-                        <h3 class="clh-nuskha-name">
-                            {{ $prescription->nuskha_name ?: 'Nuskha name not recorded' }}
-                        </h3>
-                    @endforelse
+                    <table class="clh-nuskha-table">
+                        <thead>
+                            <tr>
+                                <th>{{ __('Nuskha') }}</th>
+                                <th>{{ __('Total quantity') }}</th>
+                                <th>{{ __('Dosage / directions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($prescription->nuskhas as $nuskha)
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            {{ $loop->iteration }}. {{ $nuskha->nuskha_name }}
+                                        </strong>
+                                    </td>
+                                    <td class="clh-nuskha-quantity">
+                                        {{ rtrim(rtrim((string) $nuskha->quantity, '0'), '.') }} {{ $nuskha->unit }}
+                                    </td>
+                                    <td>
+                                        <div class="clh-nuskha-directions">
+                                            @if ($nuskha->frequency)
+                                                <span><b>{{ __('Frequency') }}:</b> {{ $nuskha->frequency }}</span>
+                                            @endif
+                                            @if ($nuskha->duration)
+                                                <span><b>{{ __('Duration') }}:</b> {{ $nuskha->duration }}</span>
+                                            @endif
+                                            @if ($nuskha->timing)
+                                                <span><b>{{ __('Timing') }}:</b> {{ $nuskha->timing }}</span>
+                                            @endif
+                                            @if ($nuskha->instructions)
+                                                <span>{{ $nuskha->instructions }}</span>
+                                            @endif
+                                            @if (!$nuskha->frequency && !$nuskha->duration && !$nuskha->timing && !$nuskha->instructions)
+                                                <span>—</span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                {{-- Legacy ingredient rows must never appear in a patient copy. --}}
+                                <tr>
+                                    <td>
+                                        <strong>{{ $prescription->nuskha_name ?: 'Nuskha name not recorded' }}</strong>
+                                    </td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
