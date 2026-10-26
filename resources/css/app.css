@@ -1586,3 +1586,37 @@ html[dir="rtl"] textarea {
     border-color: #d7e1e9 !important;
     box-shadow: 0 10px 24px rgba(9, 36, 61, 0.16) !important;
 }
+
+
+/* Mobile language menu: open only through an explicit tap. */
+@media (max-width: 991.98px) {
+    .language-switcher:hover .language-switcher-options,
+    .language-switcher:focus-within .language-switcher-options {
+        display: none;
+    }
+
+    .language-switcher.is-open .language-switcher-options {
+        display: grid;
+        gap: 3px;
+    }
+}
+
+/* Mobile country flags use native emoji so they do not depend on a sprite image URL. */
+@media (max-width: 991.98px) {
+    .international-phone-field .iti__flag.iti-mobile-flag {
+        position: relative;
+        background: none !important;
+        background-image: none !important;
+    }
+
+    .international-phone-field .iti-mobile-flag-emoji {
+        position: absolute;
+        inset: 50% auto auto 50%;
+        display: block;
+        transform: translate(-50%, -50%);
+        font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+        font-size: 15px;
+        line-height: 1;
+        white-space: nowrap;
+    }
+}
