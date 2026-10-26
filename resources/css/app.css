@@ -1460,8 +1460,9 @@ html[dir="rtl"] textarea {
 
     .template-form-actions,
     .prescription-form-actions {
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         align-items: center;
+        justify-content: flex-start;
         gap: 8px;
     }
 
@@ -1480,4 +1481,27 @@ html[dir="rtl"] textarea {
     .settings-panel p {
         overflow-wrap: anywhere;
     }
+}
+
+
+.security-backup-commands {
+    margin: 14px 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-soft);
+}
+
+.security-backup-commands summary {
+    color: var(--brand-teal-dark);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.security-backup-command-list {
+    margin-top: 10px;
+}
+
+.security-backup-command-list p:last-child {
+    margin-bottom: 0;
 }
