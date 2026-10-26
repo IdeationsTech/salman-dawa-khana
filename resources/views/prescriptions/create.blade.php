@@ -327,6 +327,7 @@
             <div class="template-form-actions">
                 <a href="{{ route('prescriptions.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
                 <button type="submit" class="btn btn-primary" @disabled($doctors->isEmpty())>
+                    <i class="bi bi-check2-circle app-icon" aria-hidden="true"></i>
                     {{ $editing ? 'Update prescription' : 'Save prescription' }}
                 </button>
             </div>
