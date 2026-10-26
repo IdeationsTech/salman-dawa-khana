@@ -1548,3 +1548,42 @@ html[dir="rtl"] textarea {
         gap: 8px;
     }
 }
+
+
+/* Raised white cards across clinic pages, with a visible soft edge shadow. */
+.app-shell .dashboard-main :is(
+    .surface-card,
+    .summary-card,
+    .patient-stat-card,
+    .visit-summary-card,
+    .prescription-summary-card,
+    .payment-summary-card,
+    .expense-summary-card,
+    .user-summary-card,
+    .report-summary-card,
+    .patients-panel,
+    .visits-panel,
+    .prescriptions-panel,
+    .payments-panel,
+    .expenses-panel,
+    .users-panel,
+    .dashboard-panel,
+    .report-panel,
+    .patient-form-panel,
+    .visit-form-panel,
+    .template-form-panel,
+    .payment-form-panel,
+    .expense-form-panel,
+    .user-form-panel,
+    .settings-panel,
+    .orders-panel,
+    .nuskha-template-card,
+    .order-item-row,
+    .clinic-alert,
+    .balance-summary-grid > div,
+    .settings-navigation
+) {
+    box-shadow:
+        0 2px 5px rgba(255, 255, 255, 0.72),
+        0 12px 28px rgba(9, 36, 61, 0.19) !important;
+}
