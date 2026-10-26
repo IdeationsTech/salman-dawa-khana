@@ -70,19 +70,12 @@
     "src": "resources/fonts/noto-sans-arabic.woff2"
   },
   "resources/js/app.js": {
-    "file": "assets/app-DZPo73zY.js",
+    "file": "assets/app-mCtw4vLH.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
       "node_modules/intl-tel-input/dist/js/utils.js"
-    ],
-    "css": [
-      "assets/app-Dpre4D-Q.css"
-    ],
-    "assets": [
-      "assets/flags-DjVgN9ag.webp",
-      "assets/flags@2x-QBzdwbZ8.webp"
     ]
   }
 }
