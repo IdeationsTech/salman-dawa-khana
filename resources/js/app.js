@@ -1629,9 +1629,9 @@ function initializeInternationalPhoneInputs() {
         };
 
         state.instance = intlTelInput(input, {
-            // No country is assumed for an empty field.
-            // Existing international numbers select their country.
-            initialCountry: '',
+            // Show the clinic's country flag for empty phone fields.
+            // International values still select the country from their dial code.
+            initialCountry: wrapper.dataset.defaultCountry || 'ae',
             countryOrder: ['ae', 'pk'],
             countrySearch: true,
             countrySelectorMode: 'AUTO',
