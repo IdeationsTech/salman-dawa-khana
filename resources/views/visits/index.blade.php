@@ -205,6 +205,7 @@
                             <th>{{ __('Phone') }}</th>
                             <th>{{ __('Tashkhees') }}</th>
                             <th>{{ __('Status') }}</th>
+                            <th>{{ __('Dues / Bill') }}</th>
                             <th class="text-end">{{ __('Action') }}</th>
                         </tr>
                     </thead>
@@ -262,6 +263,23 @@
                                     @endif
                                 </td>
 
+                                <td class="visit-dues-cell">
+                                    @php($patientDues = $patientDuesById[$visit->patient_id] ?? 0)
+                                    <strong>{{ $currency }} {{ number_format((float) $patientDues, 2) }}</strong>
+                                    @if ($visit->patient)
+                                        @clinicCan('payments.create')
+                                            <a
+                                                href="{{ route('payments.create', (float) $patientDues > 0
+                                                    ? ['mode' => 'existing_bill', 'patient_id' => $visit->patient_id]
+                                                    : ['mode' => 'new_bill', 'patient_id' => $visit->patient_id, 'visit_id' => $visit->visit_id]) }}"
+                                                class="table-action visit-billing-action"
+                                            >
+                                                {{ (float) $patientDues > 0 ? __('Record payment') : __('Make bill') }}
+                                            </a>
+                                        @endclinicCan
+                                    @endif
+                                </td>
+
                                 <td class="text-end">
                                     <a
                                         href="{{ route('visits.show', $visit) }}"
@@ -273,7 +291,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-4">
+                                <td colspan="9" class="text-center py-4">
                                     {{ __('No visits match the selected filters.') }}
                                 </td>
                             </tr>
