@@ -20,6 +20,10 @@
         ? $payment->patient_id
         : old('patient_id', request('patient_id', '')));
 
+    $lockPatient = !$editing
+        && $selectedPatient !== ''
+        && (request()->boolean('lock_patient') || old('lock_patient') === '1');
+
     $selectedBill = (string) ($editing
         ? $payment->bill_id
         : old('bill_id', request('bill_id', '')));
@@ -81,6 +85,9 @@
         >
             @csrf
             <input type="hidden" name="request_key" value="{{ old('request_key', (string) \Illuminate\Support\Str::uuid()) }}">
+            @if ($lockPatient)
+                <input type="hidden" name="lock_patient" value="1">
+            @endif
             @if ($editing)
                 @method('PUT')
                 <input type="hidden" name="mode" value="{{ $defaultMode }}">
@@ -137,12 +144,16 @@
                         </select>
                     </div>
 
-                    <x-patient-search :patient="$patients->first()" :locked="$editing" :billing="true" />
+                    <x-patient-search :patient="$patients->first()" :locked="$editing || $lockPatient" :billing="true" />
                 </div>
 
                 @if ($editing)
                     <small class="text-muted d-block mt-3">
                         {{ __('Patient, bill and original payment currency remain fixed.') }}
+                    </small>
+                @elseif ($lockPatient)
+                    <small class="text-muted d-block mt-3">
+                        {{ __('Patient selected from this visit. The patient cannot be changed.') }}
                     </small>
                 @endif
             </section>
