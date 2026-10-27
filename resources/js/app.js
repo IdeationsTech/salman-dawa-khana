@@ -31,22 +31,24 @@ document.addEventListener('DOMContentLoaded', () => {
 */
 
 function initializeMobileBootstrapIcons() {
-    const compactViewport = window.matchMedia('(max-width: 991.98px)');
-
-    if (!compactViewport.matches) return;
-
-    document.querySelectorAll('.app-shell .dashboard-main i.bi, .pa-app i.bi').forEach((icon) => {
-        // Sidebar and dashboard icons already have an official SVG sibling.
-        if (icon.nextElementSibling?.classList.contains('mobile-bootstrap-icon')) {
-            return;
-        }
-
+    document.querySelectorAll('i.bi').forEach((icon) => {
+        const fallback = icon.nextElementSibling?.classList.contains('mobile-bootstrap-icon')
+            ? icon.nextElementSibling
+            : null;
         const name = [...icon.classList].find((className) =>
             className.startsWith('bi-')
         )?.slice(3);
         const definition = name ? bootstrapIconPaths[name] : null;
 
-        if (!definition) return;
+        if (!definition) {
+            if (fallback) {
+                fallback.classList.remove('mobile-bootstrap-icon');
+                fallback.classList.add('mobile-page-icon');
+                icon.replaceWith(fallback);
+            }
+
+            return;
+        }
 
         const svg = document.createElementNS(
             'http://www.w3.org/2000/svg',
@@ -71,6 +73,7 @@ function initializeMobileBootstrapIcons() {
 
         svg.innerHTML = definition.markup;
         icon.replaceWith(svg);
+        fallback?.remove();
     });
 }
 
