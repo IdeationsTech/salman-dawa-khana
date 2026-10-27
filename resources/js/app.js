@@ -1644,8 +1644,6 @@ function initializeInternationalPhoneInputs() {
             loadUtils: () => import('intl-tel-input/utils'),
         });
 
-        initializePhoneFlags();
-
         if (!formFields.has(form)) {
             formFields.set(form, []);
         }
@@ -1757,86 +1755,6 @@ function initializeInternationalPhoneInputs() {
             }
         }, true);
     });
-}
-
-let phoneFlagObserverInitialized = false;
-
-function initializePhoneFlags() {
-    const addFlagEmoji = (root = document) => {
-        const flags = [];
-
-        if (root instanceof Element && root.matches('.iti__flag:not(.iti__globe)')) {
-            flags.push(root);
-        }
-
-        root.querySelectorAll?.('.iti__flag:not(.iti__globe)').forEach((flag) => {
-            flags.push(flag);
-        });
-
-        flags.forEach((flag) => {
-            const countryClass = [...flag.classList].find((className) =>
-                /^iti__[a-z]{2}$/.test(className)
-            );
-
-            if (!countryClass) return;
-
-            const countryCode = countryClass.slice(5).toUpperCase();
-            const flagEmoji = [...countryCode]
-                .map((letter) => String.fromCodePoint(127397 + letter.charCodeAt(0)))
-                .join('');
-            let emoji = flag.querySelector('.iti-phone-flag-emoji');
-
-            if (!emoji) {
-                emoji = document.createElement('span');
-                emoji.className = 'iti-phone-flag-emoji';
-                emoji.setAttribute('aria-hidden', 'true');
-                flag.append(emoji);
-            }
-
-            if (emoji.textContent !== flagEmoji) {
-                emoji.textContent = flagEmoji;
-            }
-
-            if (!flag.classList.contains('iti-phone-emoji-flag')) {
-                flag.classList.add('iti-phone-emoji-flag');
-            }
-        });
-    };
-
-    if (!phoneFlagObserverInitialized && document.body) {
-        phoneFlagObserverInitialized = true;
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (
-                    mutation.type === 'attributes' &&
-                    mutation.target instanceof Element &&
-                    mutation.target.matches('.iti__flag:not(.iti__globe)')
-                ) {
-                    addFlagEmoji(mutation.target);
-                    return;
-                }
-
-                mutation.addedNodes.forEach((node) => {
-                    if (!(node instanceof Element)) return;
-
-                    if (
-                        node.matches('.iti__flag:not(.iti__globe)') ||
-                        node.querySelector('.iti__flag:not(.iti__globe)')
-                    ) {
-                        addFlagEmoji(node);
-                    }
-                });
-            });
-        });
-        observer.observe(document.body, {
-            attributes: true,
-            attributeFilter: ['class'],
-            childList: true,
-            subtree: true,
-        });
-    }
-
-    addFlagEmoji();
 }
 
 if (document.readyState === 'loading') {
