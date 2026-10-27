@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Patient;
+use App\Models\Role;
 use App\Models\Setting;
+use App\Models\User;
+use App\Models\Visit;
 use App\Rules\InternationalPhone;
 use App\Services\ClinicNotificationService;
 use App\Support\ClinicClock;
@@ -232,18 +235,29 @@ class PatientController extends Controller
     public function create()
     {
         $idCountry = $this->patientIdCountry();
+        $doctors = $this->visitDoctorOptions();
 
-        return view('patients.create', compact('idCountry'));
+        return view('patients.create', compact('idCountry', 'doctors'));
     }
 
     public function store(Request $request)
     {
         $validated = $this->validatePatient($request);
+        $visitData = $request->boolean('add_visit')
+            ? $this->validateNewVisit($request)
+            : null;
+        $clinicId = (int) Auth::user()->clinic_id;
+        $recordedByUserId = (int) Auth::id();
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use (
+            $validated,
+            $visitData,
+            $clinicId,
+            $recordedByUserId
+        ) {
             $patient = Patient::create([
                 ...$validated,
-                'clinic_id' => Auth::user()->clinic_id,
+                'clinic_id' => $clinicId,
                 'patient_code' => 'TMP-'.(string) Str::ulid(),
                 'status' => 'active',
             ]);
@@ -257,11 +271,23 @@ class PatientController extends Controller
                 ),
             ]);
 
+            if ($visitData !== null) {
+                Visit::create([
+                    ...$visitData,
+                    'clinic_id' => $clinicId,
+                    'patient_id' => $patient->patient_id,
+                    'recorded_by_user_id' => $recordedByUserId,
+                ]);
+            }
+
             app(ClinicNotificationService::class)->patientAdded($patient);
         });
 
-        return redirect()->route('patients.index')
-            ->with('success', 'Patient created successfully.');
+        return redirect()
+            ->route($visitData === null ? 'patients.index' : 'visits.index')
+            ->with('success', $visitData === null
+                ? 'Patient created successfully.'
+                : 'Patient and first visit created successfully.');
     }
 
     public function show(Patient $patient)
@@ -425,6 +451,79 @@ class PatientController extends Controller
             (int) $patient->clinic_id === (int) Auth::user()->clinic_id,
             404
         );
+    }
+
+    private function visitDoctorOptions()
+    {
+        $roleIds = Role::query()
+            ->whereIn('name', ['Owner', 'Doctor'])
+            ->pluck('role_id')
+            ->all();
+
+        return User::query()
+            ->where('clinic_id', Auth::user()->clinic_id)
+            ->where('is_active', true)
+            ->whereIn('role_id', $roleIds)
+            ->with('role')
+            ->orderBy('name')
+            ->get(['user_id', 'clinic_id', 'role_id', 'name', 'is_active']);
+    }
+
+    private function validateNewVisit(Request $request): array
+    {
+        $clinicId = (int) Auth::user()->clinic_id;
+        $roleIds = Role::query()
+            ->whereIn('name', ['Owner', 'Doctor'])
+            ->pluck('role_id')
+            ->all();
+
+        $doctorRule = Rule::exists('users', 'user_id')
+            ->where('clinic_id', $clinicId)
+            ->where(function ($query) use ($roleIds) {
+                $query->where('is_active', true)
+                    ->whereIn('role_id', $roleIds);
+            });
+
+        $visit = $request->validate([
+            'add_visit' => ['accepted'],
+            'visit_doctor_user_id' => ['required', 'integer', $doctorRule],
+            'visit_date' => [
+                'required', 'date_format:Y-m-d',
+                'after_or_equal:1000-01-01', 'before_or_equal:9999-12-31',
+            ],
+            'visit_time' => ['required', 'date_format:H:i'],
+            'visit_reason' => [
+                'required',
+                Rule::in([
+                    'General visit', 'Follow-up', 'New consultation',
+                    'Prescription refill',
+                ]),
+            ],
+            'visit_status' => [
+                'required',
+                Rule::in([
+                    'in_progress', 'completed', 'follow_up_required', 'cancelled',
+                ]),
+            ],
+            'diagnosis_name' => ['nullable', 'string', 'max:255'],
+            'visit_notes' => ['nullable', 'string'],
+        ], [
+            'visit_doctor_user_id.required' => 'Please select the treating Doctor/Hakeem.',
+            'visit_doctor_user_id.exists' => 'Select an active Owner or Doctor from your clinic.',
+            'visit_date.required' => 'Please select the visit date.',
+            'visit_time.required' => 'Please enter the visit time.',
+            'visit_reason.required' => 'Please select the visit type.',
+            'visit_status.required' => 'Please select the visit status.',
+        ]);
+
+        return [
+            'doctor_user_id' => (int) $visit['visit_doctor_user_id'],
+            'visit_date' => $visit['visit_date'].' '.$visit['visit_time'].':00',
+            'visit_reason' => $visit['visit_reason'],
+            'status' => $visit['visit_status'],
+            'diagnosis_name' => $visit['diagnosis_name'] ?? null,
+            'general_notes' => $visit['visit_notes'] ?? null,
+        ];
     }
 
     private function validatePatient(Request $request, ?Patient $patient = null): array

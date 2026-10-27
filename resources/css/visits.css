@@ -41,6 +41,55 @@
     font-size: 11px;
 }
 
+.visit-dues-field {
+    min-width: 0;
+}
+
+.visit-dues-control {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.visit-dues-control > .form-field {
+    flex: 1 1 220px;
+}
+
+.visit-dues-control > .form-control {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.visit-dues-control > .btn {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+}
+
+.visit-account-panel {
+    margin-bottom: 20px;
+}
+
+.visit-bill-paid {
+    align-self: center;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: #e8f7ef;
+    color: #18794e;
+    font-weight: 600;
+}
+
+@media (max-width: 575.98px) {
+    .visit-dues-control {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .visit-dues-control > .btn {
+        width: 100%;
+    }
+}
+
 /*
 |--------------------------------------------------------------------------
 | VISITS — Table Panel

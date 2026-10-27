@@ -9,6 +9,7 @@ use App\Models\LedgerEntry;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\Setting;
+use App\Models\Visit;
 use App\Services\ClinicNotificationService;
 use App\Support\ClinicClock;
 use App\Support\ClinicLocaleCatalog;
@@ -300,7 +301,7 @@ class PaymentController extends Controller
                     'clinic_id' => $this->clinicId(),
                     'currency' => strtoupper($clinic->currency ?: 'AED'),
                     'patient_id' => $data['patient_id'],
-                    'visit_id' => null,
+                    'visit_id' => $data['visit_id'] ?? null,
                     'created_by_user_id' => auth()->id(),
                     'bill_no' => 'B-'.Str::ulid(),
                     'bill_date' => $data['payment_date'],
@@ -653,6 +654,13 @@ class PaymentController extends Controller
             $rules['description'] = ['required', 'string', 'max:255'];
             $rules['subtotal'] = [...$moneyRules, 'min:0.01'];
             $rules['discount'] = $moneyRules;
+            $rules['visit_id'] = [
+                'nullable',
+                'integer',
+                Rule::exists('visits', 'visit_id')
+                    ->where('clinic_id', $clinicId)
+                    ->where('patient_id', $patientId),
+            ];
         } elseif ($mode === 'existing_bill') {
             $rules['bill_id'] = [
                 'required', 'integer',

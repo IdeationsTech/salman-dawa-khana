@@ -1604,17 +1604,25 @@ html[dir="rtl"] textarea {
 /* Country flags use emoji so the picker does not depend on an external sprite image. */
 .iti__flag.iti-phone-emoji-flag {
     position: relative;
+    display: block;
+    overflow: visible;
     background: none !important;
     background-image: none !important;
+    isolation: isolate;
 }
 
 .iti-phone-flag-emoji {
     position: absolute;
     inset: 50% auto auto 50%;
     display: block;
+    z-index: 2;
     transform: translate(-50%, -50%);
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
-    font-size: 15px;
+    font-family: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+    font-size: 17px;
+    font-variant-emoji: emoji;
     line-height: 1;
     white-space: nowrap;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: none;
 }

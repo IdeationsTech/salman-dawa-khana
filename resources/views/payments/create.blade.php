@@ -88,6 +88,12 @@
                 @if ($payment->bill_id)
                     <input type="hidden" name="bill_id" value="{{ $payment->bill_id }}">
                 @endif
+            @elseif ($mode === 'new_bill' && request()->filled('visit_id'))
+                <input
+                    type="hidden"
+                    name="visit_id"
+                    value="{{ old('visit_id', request('visit_id')) }}"
+                >
             @endif
 
             <section class="payment-form-panel">

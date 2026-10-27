@@ -146,6 +146,26 @@
     color: var(--text-light);
 }
 
+.patient-add-visit-toggle {
+    margin-bottom: 0;
+}
+
+.patient-add-visit-fields {
+    width: 100%;
+    min-width: 0;
+    margin: 16px 0 0;
+    padding: 0;
+    border: 0;
+}
+
+.patient-add-visit-fields[hidden] {
+    display: none !important;
+}
+
+.patient-add-visit-wide {
+    grid-column: 1 / -1;
+}
+
 .filter-clear {
     border: 1px solid var(--border);
     color: var(--text-muted);

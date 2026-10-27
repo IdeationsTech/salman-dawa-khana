@@ -329,6 +329,161 @@
                 </div>
             </section>
 
+            @unless($editing)
+                <section class="patient-form-panel">
+                    <div class="form-section-heading">
+                        <div class="form-section-number">05</div>
+                        <div>
+                            <h2>{{ __('First visit') }}</h2>
+                            <p>{{ __('Record a first visit together with this patient, if needed.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="form-check patient-add-visit-toggle">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="add_visit"
+                            name="add_visit"
+                            value="1"
+                            data-patient-add-visit-toggle
+                            @checked(old('add_visit'))
+                        >
+                        <label class="form-check-label" for="add_visit">
+                            {{ __('Add visit') }}
+                        </label>
+                    </div>
+
+                    <fieldset
+                        class="patient-add-visit-fields"
+                        data-patient-add-visit-fields
+                        data-visit-calendar-form
+                        @disabled(!old('add_visit'))
+                        @if(!old('add_visit')) hidden @endif
+                    >
+                        <legend class="visually-hidden">{{ __('First visit details') }}</legend>
+
+                        @if ($doctors->isEmpty())
+                            <div class="alert alert-warning mb-3">
+                                {{ __('No active Owner/Doctor is available. The clinic owner must activate or add a practitioner first.') }}
+                            </div>
+                        @endif
+
+                        <div class="patient-form-grid">
+                            <div class="form-field">
+                                <label for="visit_doctor_user_id" class="form-label">
+                                    {{ __('Treating Doctor / Hakeem') }} *
+                                </label>
+                                <select
+                                    id="visit_doctor_user_id"
+                                    name="visit_doctor_user_id"
+                                    class="form-select @error('visit_doctor_user_id') is-invalid @enderror"
+                                    required
+                                >
+                                    <option value="">{{ __('Select Doctor / Hakeem') }}</option>
+                                    @foreach ($doctors as $doctor)
+                                        <option
+                                            value="{{ $doctor->user_id }}"
+                                            @selected((string) old('visit_doctor_user_id', auth()->id()) === (string) $doctor->user_id)
+                                        >{{ $doctor->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('visit_doctor_user_id')
+                                    <div class="invalid-feedback">{{ __($message) }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-field">
+                                <label for="visit_date" class="form-label">{{ __('Gregorian date') }} *</label>
+                                <input
+                                    type="date"
+                                    id="visit_date"
+                                    name="visit_date"
+                                    class="form-control @error('visit_date') is-invalid @enderror"
+                                    value="{{ old('visit_date', \App\Support\ClinicClock::now()->format('Y-m-d')) }}"
+                                    min="1000-01-01"
+                                    max="9999-12-31"
+                                    data-visit-date
+                                    required
+                                >
+                                @error('visit_date')
+                                    <div class="invalid-feedback">{{ __($message) }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-field">
+                                <label for="visit_day" class="form-label">{{ __('Day') }}</label>
+                                <input type="text" id="visit_day" class="form-control" data-visit-weekday readonly>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="visit_hijri_date" class="form-label">{{ __('Hijri date — Umm al-Qura') }}</label>
+                                <input type="text" id="visit_hijri_date" class="form-control" data-visit-hijri readonly>
+                                <small class="form-help" data-visit-calendar-message aria-live="polite"></small>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="visit_time" class="form-label">{{ __('Visit time — UAE') }} *</label>
+                                <input
+                                    type="time"
+                                    id="visit_time"
+                                    name="visit_time"
+                                    class="form-control @error('visit_time') is-invalid @enderror"
+                                    value="{{ old('visit_time', \App\Support\ClinicClock::now()->format('H:i')) }}"
+                                    required
+                                >
+                                @error('visit_time')
+                                    <div class="invalid-feedback">{{ __($message) }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-field">
+                                <label for="visit_reason" class="form-label">{{ __('Visit type') }} *</label>
+                                <select id="visit_reason" name="visit_reason" class="form-select" required>
+                                    @foreach (['General visit', 'Follow-up', 'New consultation', 'Prescription refill'] as $reason)
+                                        <option value="{{ $reason }}" @selected(old('visit_reason', 'General visit') === $reason)>{{ __($reason) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-field">
+                                <label for="visit_status" class="form-label">{{ __('Status') }} *</label>
+                                <select id="visit_status" name="visit_status" class="form-select" required>
+                                    @foreach ([
+                                        'in_progress' => __('In progress'),
+                                        'completed' => __('Completed'),
+                                        'follow_up_required' => __('Follow-up required'),
+                                        'cancelled' => __('Cancelled'),
+                                    ] as $value => $label)
+                                        <option value="{{ $value }}" @selected(old('visit_status', 'in_progress') === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="form-field patient-add-visit-wide">
+                                <label for="diagnosis_name" class="form-label">{{ __('Tashkhees / Illness name') }}</label>
+                                <input
+                                    type="text"
+                                    id="diagnosis_name"
+                                    name="diagnosis_name"
+                                    class="form-control @error('diagnosis_name') is-invalid @enderror"
+                                    value="{{ old('diagnosis_name') }}"
+                                    maxlength="255"
+                                >
+                                @error('diagnosis_name')
+                                    <div class="invalid-feedback">{{ __($message) }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-field patient-add-visit-wide">
+                                <label for="visit_notes" class="form-label">{{ __('Visit notes') }}</label>
+                                <textarea id="visit_notes" name="visit_notes" class="form-control" rows="4">{{ old('visit_notes') }}</textarea>
+                            </div>
+                        </div>
+                    </fieldset>
+                </section>
+            @endunless
+
             <div class="patient-form-actions">
                 <a href="{{ route('patients.index') }}" class="btn btn-light">{{ __('Cancel') }}</a>
                 <button type="submit" class="btn btn-primary">

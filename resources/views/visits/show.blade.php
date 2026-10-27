@@ -65,6 +65,76 @@
             </div>
         </div>
 
+        @if ($visit->patient)
+            <section class="visit-form-panel visit-account-panel no-print">
+                <div class="visit-form-heading">
+                    <div>
+                        <h2>{{ __('Patient dues') }}</h2>
+                        <p>{{ __('Outstanding bills in the clinic currency.') }}</p>
+                    </div>
+                </div>
+
+                <div class="visit-dues-control">
+                    <div class="form-field">
+                        <label for="visit_patient_dues" class="form-label">
+                            {{ __('Previous dues') }}
+                        </label>
+                        <input
+                            type="text"
+                            id="visit_patient_dues"
+                            class="form-control"
+                            value="{{ $currency }} {{ number_format((float) $patientOutstanding, 2) }}"
+                            readonly
+                        >
+                    </div>
+
+                    @clinicCan('payments.create')
+                        @if (!$visitBill)
+                            <a
+                                href="{{ route('payments.create', [
+                                    'mode' => 'new_bill',
+                                    'patient_id' => $visit->patient_id,
+                                    'visit_id' => $visit->visit_id,
+                                ]) }}"
+                                class="btn btn-primary"
+                            >
+                                {{ __('Make bill') }}
+                            </a>
+                        @endif
+
+                        @if ((float) $patientOutstanding > 0)
+                            @if ($visitBill && (float) $visitBill->due_amount > 0)
+                                <a
+                                    href="{{ route('payments.create', [
+                                        'mode' => 'existing_bill',
+                                        'patient_id' => $visit->patient_id,
+                                        'bill_id' => $visitBill->bill_id,
+                                    ]) }}"
+                                    class="btn btn-outline-primary"
+                                >
+                                    {{ __('Record payment') }}
+                                </a>
+                            @else
+                                <a
+                                    href="{{ route('payments.create', [
+                                        'mode' => 'existing_bill',
+                                        'patient_id' => $visit->patient_id,
+                                    ]) }}"
+                                    class="btn btn-outline-primary"
+                                >
+                                    {{ __('Record payment') }}
+                                </a>
+                            @endif
+                        @elseif ($visitBill)
+                            <span class="visit-bill-paid">
+                                {{ __('Bill paid') }}
+                            </span>
+                        @endif
+                    @endclinicCan
+                </div>
+            </section>
+        @endif
+
         @if (!$visit->doctor)
             <div class="alert alert-warning clh-screen-notice no-print">
                 {{ __('No doctor is assigned to this visit. Open Edit visit to select the treating Doctor / Hakeem.') }}

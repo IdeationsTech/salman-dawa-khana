@@ -147,10 +147,15 @@ class PrescriptionController extends Controller
         }
 
         // Treat SQL wildcard characters literally, not as a match-all query.
-        $prefix = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search).'%';
+        $escapedSearch = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $search);
+        $prefix = $escapedSearch.'%';
+        $codeSearch = '%'.$escapedSearch.'%';
         $matches = Patient::query()
             ->where('clinic_id', Auth::user()->clinic_id)
-            ->whereRaw("full_name LIKE ? ESCAPE '!'", [$prefix])
+            ->where(function ($query) use ($prefix, $codeSearch) {
+                $query->whereRaw("full_name LIKE ? ESCAPE '!'", [$prefix])
+                    ->orWhereRaw("patient_code LIKE ? ESCAPE '!'", [$codeSearch]);
+            })
             ->orderBy('full_name')->orderBy('patient_id')
             ->limit(21)
             ->get(['patient_id', 'full_name', 'patient_code', 'phone']);

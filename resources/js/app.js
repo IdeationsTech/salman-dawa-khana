@@ -2423,7 +2423,10 @@ function initializeCurrencyPaymentForm() {
         billsFailed = false;
         billsLoading = Boolean(patient.value);
         rebuildBills('');
-        if (!patient.value) return;
+        if (!patient.value) {
+            submit.disabled = false;
+            return;
+        }
         const patientId = patient.value;
         billsRequest = new AbortController();
         help.textContent = 'Loading patient bills…';
@@ -2437,6 +2440,7 @@ function initializeCurrencyPaymentForm() {
             if (patient.value !== patientId) return;
             bills = data.bills;
             billsLoading = false;
+            submit.disabled = false;
             rebuildBills('');
         } catch (error) {
             if (error.name !== 'AbortError' && patient.value === patientId) {
@@ -2485,6 +2489,120 @@ if (document.readyState === 'loading') {
     );
 } else {
     initializeCurrencyPaymentForm();
+}
+
+function initializePatientAddVisitFields() {
+    document.querySelectorAll('[data-patient-add-visit-toggle]').forEach((toggle) => {
+        const form = toggle.closest('form');
+        const fields = form?.querySelector('[data-patient-add-visit-fields]');
+
+        if (!fields || toggle.dataset.initialized === '1') return;
+        toggle.dataset.initialized = '1';
+
+        const update = () => {
+            fields.hidden = !toggle.checked;
+            fields.disabled = !toggle.checked;
+        };
+
+        toggle.addEventListener('change', update);
+        update();
+    });
+}
+
+function initializeVisitOutstandingDues() {
+    document.querySelectorAll('[data-visit-dues]').forEach((root) => {
+        if (root.dataset.initialized === '1') return;
+        root.dataset.initialized = '1';
+
+        const form = root.closest('form');
+        const patient = form?.querySelector('[data-rx-patient]');
+        const amount = root.querySelector('[data-visit-dues-amount]');
+        const makeBill = root.querySelector('[data-visit-make-bill]');
+        const currency = String(root.dataset.currency || '').toUpperCase();
+        let request;
+
+        if (!patient || !amount) return;
+
+        const updateBillLink = () => {
+            if (!makeBill) return;
+
+            if (!patient.value) {
+                makeBill.hidden = true;
+                makeBill.removeAttribute('href');
+                return;
+            }
+
+            const url = new URL(root.dataset.paymentUrl, window.location.origin);
+            url.searchParams.set('mode', 'new_bill');
+            url.searchParams.set('patient_id', patient.value);
+
+            if (root.dataset.visitId) {
+                url.searchParams.set('visit_id', root.dataset.visitId);
+            }
+
+            makeBill.href = url.toString();
+            makeBill.hidden = false;
+        };
+
+        const load = async () => {
+            request?.abort();
+            updateBillLink();
+
+            if (!patient.value) {
+                amount.value = '—';
+                return;
+            }
+
+            const patientId = patient.value;
+            request = new AbortController();
+            amount.value = 'Loading…';
+
+            try {
+                const url = root.dataset.billsUrl.replace(
+                    '__PATIENT__',
+                    encodeURIComponent(patientId)
+                );
+                const response = await fetch(url, {
+                    signal: request.signal,
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: { Accept: 'application/json' },
+                });
+
+                if (!response.ok) throw new Error('Patient bills unavailable');
+
+                const data = await response.json();
+                if (patient.value !== patientId) return;
+
+                const cents = (data.bills || [])
+                    .filter((bill) => String(bill.currency || '').toUpperCase() === currency)
+                    .reduce((total, bill) => total + BigInt(bill.due_cents || 0), 0n);
+
+                amount.value = currency + ' '
+                    + (cents / 100n).toLocaleString('en-US')
+                    + '.' + String(cents % 100n).padStart(2, '0');
+            } catch (error) {
+                if (error.name !== 'AbortError' && patient.value === patientId) {
+                    amount.value = 'Could not load dues';
+                }
+            }
+        };
+
+        patient.addEventListener('change', load);
+        updateBillLink();
+
+        if (patient.value) load();
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initializePatientAddVisitFields();
+        initializeVisitOutstandingDues();
+    });
+} else {
+    initializePatientAddVisitFields();
+    initializeVisitOutstandingDues();
 }
 
 /*
@@ -2918,7 +3036,7 @@ function initializePrescriptionPatientSearch() {
         results.hidden = matches.length === 0;
         input.setAttribute('aria-expanded', matches.length ? 'true' : 'false');
         feedback.textContent = !matches.length
-            ? 'No matching patients. Check the name or register the patient first.'
+            ? 'No matching patients. Check the name or patient code, or register the patient first.'
             : data.has_more
                 ? 'Showing the first 20 matches. Type more of the name to narrow the list.'
                 : `${matches.length} matching ${matches.length === 1 ? 'patient' : 'patients'}. Select one.`;

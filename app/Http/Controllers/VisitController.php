@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Patient;
+use App\Models\Bill;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Visit;
 use App\Support\ClinicClock;
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -192,7 +194,41 @@ class VisitController extends Controller
             'doctor' => fn ($query) => $query->where('clinic_id', $clinicId)->with('role'),
         ]);
 
-        return view('visits.show', compact('visit'));
+        $currency = strtoupper($visit->clinic?->currency ?: 'AED');
+        $patientBills = $visit->patient
+            ? Bill::query()
+                ->where('clinic_id', $clinicId)
+                ->where('patient_id', $visit->patient_id)
+                ->where('currency', $currency)
+                ->where(fn ($query) => $query->whereNull('status')
+                    ->orWhereNotIn('status', ['cancelled', 'void']))
+                ->withSum([
+                    'payments as recorded_paid' => fn ($query) => $query
+                        ->where('clinic_id', $clinicId)
+                        ->whereColumn('payments.patient_id', 'bills.patient_id')
+                        ->whereColumn('payments.currency', 'bills.currency'),
+                ], 'amount')
+                ->get(['bill_id', 'patient_id', 'total_amount'])
+            : collect();
+
+        $outstandingCents = $patientBills->sum(fn ($bill) => max(
+            0,
+            Money::scaled($bill->total_amount)
+                - Money::scaled($bill->recorded_paid ?? '0')
+        ));
+        $patientOutstanding = Money::decimal($outstandingCents);
+
+        $visitBill = $visit->bill()
+            ->where('clinic_id', $clinicId)
+            ->where('patient_id', $visit->patient_id)
+            ->first();
+
+        return view('visits.show', compact(
+            'visit',
+            'currency',
+            'patientOutstanding',
+            'visitBill'
+        ));
     }
 
     public function edit(Visit $visit)

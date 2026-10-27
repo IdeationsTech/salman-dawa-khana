@@ -97,6 +97,38 @@
                 <div class="visit-form-grid">
                     <x-patient-search :patient="$patients->first()" :locked="$editing" />
 
+                    <div
+                        class="form-field visit-dues-field"
+                        data-visit-dues
+                        data-bills-url="{{ route('payments.patient-bills', ['patient' => '__PATIENT__']) }}"
+                        data-payment-url="{{ route('payments.create') }}"
+                        data-currency="{{ strtoupper(auth()->user()->clinic?->currency ?: 'AED') }}"
+                        data-visit-id="{{ $editing ? $visit->visit_id : '' }}"
+                    >
+                        <label for="visit_previous_dues" class="form-label">
+                            {{ __('Previous dues') }}
+                        </label>
+                        <div class="visit-dues-control">
+                            <input
+                                type="text"
+                                id="visit_previous_dues"
+                                class="form-control"
+                                value="—"
+                                data-visit-dues-amount
+                                readonly
+                                aria-live="polite"
+                            >
+                            @clinicCan('payments.create')<a
+                                href="{{ route('payments.create') }}"
+                                class="btn btn-outline-primary"
+                                data-visit-make-bill
+                                hidden
+                            >
+                                {{ __('Make bill') }}
+                            </a>@endclinicCan
+                        </div>
+                    </div>
+
                     <div class="form-field">
                         <label for="doctor_user_id" class="form-label">
                             {{ __('Treating Doctor / Hakeem') }} *
