@@ -85,7 +85,6 @@
     --shadow-card: 0 14px 34px rgba(9, 36, 61, 0.15);
     --shadow-lg: 0 22px 48px rgba(9, 36, 61, 0.18);
 }
-
 /*
 |--------------------------------------------------------------------------
 | Global Base Styles
@@ -1599,30 +1598,4 @@ html[dir="rtl"] textarea {
         display: grid;
         gap: 3px;
     }
-}
-
-/* Country flags use emoji so the picker does not depend on an external sprite image. */
-.iti__flag.iti-phone-emoji-flag {
-    position: relative;
-    display: block;
-    overflow: visible;
-    background: none !important;
-    background-image: none !important;
-    isolation: isolate;
-}
-
-.iti-phone-flag-emoji {
-    position: absolute;
-    inset: 50% auto auto 50%;
-    display: block;
-    z-index: 2;
-    transform: translate(-50%, -50%);
-    font-family: "Noto Color Emoji", "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
-    font-size: 17px;
-    font-variant-emoji: emoji;
-    line-height: 1;
-    white-space: nowrap;
-    visibility: visible;
-    opacity: 1;
-    pointer-events: none;
 }
