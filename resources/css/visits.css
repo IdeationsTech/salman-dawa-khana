@@ -177,6 +177,23 @@
     display: block;
 }
 
+.visits-table .visit-dues-cell {
+    min-width: 150px;
+    white-space: normal;
+}
+
+.visit-dues-cell strong,
+.visit-dues-cell .visit-billing-action {
+    display: block;
+}
+
+.visit-dues-cell .visit-billing-action {
+    width: fit-content;
+    margin-top: 5px;
+    padding: 3px 8px;
+    font-size: 11px;
+}
+
 .visits-table td small {
     color: var(--text-muted);
     font-size: 11px;
