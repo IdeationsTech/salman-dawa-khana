@@ -131,6 +131,40 @@ class VisitController extends Controller
             ->paginate(100)
             ->withQueryString();
 
+        $currency = strtoupper(Auth::user()->clinic?->currency ?: 'AED');
+        $patientIds = $visits->getCollection()
+            ->pluck('patient_id')
+            ->filter()
+            ->unique()
+            ->values();
+        $patientDuesById = [];
+
+        if ($patientIds->isNotEmpty()) {
+            $bills = Bill::query()
+                ->where('clinic_id', $clinicId)
+                ->whereIn('patient_id', $patientIds)
+                ->where('currency', $currency)
+                ->where(fn ($query) => $query->whereNull('status')
+                    ->orWhereNotIn('status', ['cancelled', 'void']))
+                ->withSum([
+                    'payments as recorded_paid' => fn ($query) => $query
+                        ->where('clinic_id', $clinicId)
+                        ->whereColumn('payments.patient_id', 'bills.patient_id')
+                        ->whereColumn('payments.currency', 'bills.currency'),
+                ], 'amount')
+                ->get(['bill_id', 'patient_id', 'total_amount']);
+
+            foreach ($bills->groupBy('patient_id') as $patientId => $patientBills) {
+                $dueCents = $patientBills->sum(fn ($bill) => max(
+                    0,
+                    Money::scaled($bill->total_amount)
+                        - Money::scaled($bill->recorded_paid ?? '0')
+                ));
+
+                $patientDuesById[$patientId] = Money::decimal($dueCents);
+            }
+        }
+
         $base = Visit::query()->where('clinic_id', $clinicId);
 
         $totalVisits = (clone $base)->count();
@@ -151,6 +185,8 @@ class VisitController extends Controller
 
         return view('visits.index', compact(
             'visits',
+            'currency',
+            'patientDuesById',
             'totalVisits',
             'todayVisits',
             'monthVisits',
@@ -194,41 +230,7 @@ class VisitController extends Controller
             'doctor' => fn ($query) => $query->where('clinic_id', $clinicId)->with('role'),
         ]);
 
-        $currency = strtoupper($visit->clinic?->currency ?: 'AED');
-        $patientBills = $visit->patient
-            ? Bill::query()
-                ->where('clinic_id', $clinicId)
-                ->where('patient_id', $visit->patient_id)
-                ->where('currency', $currency)
-                ->where(fn ($query) => $query->whereNull('status')
-                    ->orWhereNotIn('status', ['cancelled', 'void']))
-                ->withSum([
-                    'payments as recorded_paid' => fn ($query) => $query
-                        ->where('clinic_id', $clinicId)
-                        ->whereColumn('payments.patient_id', 'bills.patient_id')
-                        ->whereColumn('payments.currency', 'bills.currency'),
-                ], 'amount')
-                ->get(['bill_id', 'patient_id', 'total_amount'])
-            : collect();
-
-        $outstandingCents = $patientBills->sum(fn ($bill) => max(
-            0,
-            Money::scaled($bill->total_amount)
-                - Money::scaled($bill->recorded_paid ?? '0')
-        ));
-        $patientOutstanding = Money::decimal($outstandingCents);
-
-        $visitBill = $visit->bill()
-            ->where('clinic_id', $clinicId)
-            ->where('patient_id', $visit->patient_id)
-            ->first();
-
-        return view('visits.show', compact(
-            'visit',
-            'currency',
-            'patientOutstanding',
-            'visitBill'
-        ));
+        return view('visits.show', compact('visit'));
     }
 
     public function edit(Visit $visit)
